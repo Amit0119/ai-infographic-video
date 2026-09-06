@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storyboard Review Control Panel</title>
+    <style>
+        /* Dark theme CSS matching video aesthetics */
+        body { 
+            background: #0f172a; 
+            color: #e2e8f0; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            padding: 2rem; 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        .card { 
+            background: #1e293b; 
+            padding: 2rem; 
+            border-radius: 12px; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+        }
+        h1, h2 { color: #ffffff; }
+        input[type="file"] { margin-bottom: 1rem; color: #94a3b8; }
+        
+        button { 
+            background: #38bdf8; 
+            color: #0f172a; 
+            border: none; 
+            padding: 12px 24px; 
+            font-size: 1rem;
+            font-weight: 700; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background 0.2s;
+        }
+        button:hover { background: #0ea5e9; }
+        button:disabled { background: #475569; cursor: not-allowed; }
+        
+        .scene-editor { 
+            border: 1px solid #334155; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            margin-bottom: 1.5rem; 
+            background: #0f172a; 
+        }
+        .scene-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1.5rem; 
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.75rem;
+        }
+        .scene-header h3 { margin: 0; color: #38bdf8; font-size: 1.2rem; }
+        
+        .form-group { margin-bottom: 1.25rem; }
+        label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            font-size: 0.875rem; 
+            font-weight: 600;
+            color: #94a3b8; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 0.75rem; 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            color: white; 
+            font-family: inherit;
+            border-radius: 6px; 
+            box-sizing: border-box; 
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+        textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
+        
+        .hidden { display: none; }
+        .statusMessage { margin-top: 1rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <h1>AI Video Control Panel</h1>
+    
+    <div class="card" id="uploadSection">
+        <h2>1. Upload Sales Data</h2>
+        <form id="uploadForm">
+            <input type="file" id="excelFile" accept=".xls,.xlsx" required>
+            <br><br>
+            <button type="submit" id="analyzeBtn">Analyze & Generate Storyboard</button>
+        </form>
+        <div id="uploadStatus" class="statusMessage"></div>
+    </div>
+
+    <div class="card hidden" id="reviewSection">
+        <h2>2. Storyboard Review</h2>
+        <p style="color: #94a3b8; margin-bottom: 2rem;">
+            Review and tweak the AI-generated titles and narration scripts. Once approved, the TTS audio will be generated and the video will hot-reload.
+        </p>
+        
+        <div class="scene-editor" style="background: #1e293b; border-color: #38bdf8;">
+            <h3 style="color: #38bdf8; margin-top: 0; margin-bottom: 1rem;">✨ AI Revision Loop</h3>
+            <div class="form-group">
+                <label>Instruct AI to modify the storyboard</label>
+                <input type="text" id="aiInstruction" placeholder="e.g., 'Make the tone more energetic' or 'Change Scene 2 to a bar chart'">
+            </div>
+            <button id="applyEditBtn">Apply AI Edit</button>
+            <div id="editStatus" class="statusMessage"></div>
+        </div>
+
+        <div id="scenesContainer"></div>
+        
+        <div class="scene-editor" style="background: #1e293b; border-color: #facc15; margin-top: 2rem;">
+            <h3 style="color: #facc15; margin-top: 0; margin-bottom: 1rem;">🎨 Branding & Styling</h3>
+            <div class="form-group">
+                <label>Background Color</label>
+                <input type="color" id="styleBgColor" value="#0f172a" style="width: 100px; height: 40px; padding: 0; cursor: pointer; border: none; background: none;">
+            </div>
+            <div class="form-group">
+                <label>Company Watermark</label>
+                <input type="text" id="styleWatermark" placeholder="e.g., ACME Corp">
+            </div>
+        </div>
+
+        <button id="approveBtn" style="background: #34d399; margin-top: 1rem;">Approve & Render Video</button>
+        <div id="approveStatus" class="statusMessage"></div>
+    </div>
+
+    <script>
+        let currentStoryboard = null;
+
+        // Form Submission for Analysis
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const uploadStatus = document.getElementById('uploadStatus');
+            
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerText = 'Analyzing with AI... (Takes ~30s)';
+            uploadStatus.innerText = '';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                currentStoryboard = await response.json();
+                uploadStatus.innerText = 'Analysis complete!';
+                uploadStatus.style.color = '#34d399';
+                
+                // Populate branding
+                if (currentStoryboard.style) {
+                    const bgColor = currentStoryboard.style.backgroundColor || currentStoryboard.style.background || '#0f172a';
+                    document.getElementById('styleBgColor').value = bgColor;
+                    document.getElementById('styleWatermark').value = currentStoryboard.style.companyWatermark || '';
+                }
+                
+                renderReviewForm(currentStoryboard.scenes);
+                document.getElementById('reviewSection').classList.remove('hidden');
+                
+            } catch (err) {
+                uploadStatus.innerText = 'Error: ' + err.message;
+                uploadStatus.style.color = '#ef4444';
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerText = 'Analyze & Generate Storyboard';
+            }
+        });
+
+        // Dynamic Form Rendering for Review
+        function renderReviewForm(scenes) {
+            const container = document.getElementById('scenesContainer');
+            container.innerHTML = '';
+            
+            scenes.forEach((scene, index) => {
+                // Determine if this scene type uses 'title' or 'metric' as its primary text
+                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : null);
+                
+                const editor = document.createElement('div');
+                editor.className = 'scene-editor';
+                
+                let html = `
+                    <div class="scene-header">
+                        <h3>Scene ${scene.id} — ${scene.type.replace('_', ' ').toUpperCase()}</h3>
+                        <span style="color: #94a3b8; font-size: 0.9rem; font-weight: 600;">${scene.durationInSeconds} SEC</span>
+                    </div>
+                `;
+                
+                if (titleField) {
+                    html += `
+                        <div class="form-group">
+                            <label>Scene Title / Heading</label>
+                            <input type="text" id="scene_${index}_title" value="${scene[titleField].replace(/"/g, '&quot;')}">
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="form-group">
+                        <label>Voiceover Script (Edge-TTS)</label>
+                        <textarea id="scene_${index}_narration">${scene.narration}</textarea>
+                    </div>
+                `;
+                
+                editor.innerHTML = html;
+                container.appendChild(editor);
+            });
+        }
+
+        // Apply AI Edit
+        document.getElementById('applyEditBtn').addEventListener('click', async () => {
+            const instructionInput = document.getElementById('aiInstruction');
+            const instruction = instructionInput.value.trim();
+            if (!instruction) return;
+            
+            const applyEditBtn = document.getElementById('applyEditBtn');
+            const editStatus = document.getElementById('editStatus');
+            
+            // Sync current edits before sending to AI so user manual tweaks aren't lost
+            currentStoryboard.scenes.forEach((scene, index) => {
+                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : null);
+                if (titleField) {
+                    const titleInput = document.getElementById(`scene_${index}_title`);
+                    if (titleInput) scene[titleField] = titleInput.value;
+                }
+                const narrationInput = document.getElementById(`scene_${index}_narration`);
+                if (narrationInput) scene.narration = narrationInput.value;
+            });
+
+            applyEditBtn.disabled = true;
+            applyEditBtn.innerText = 'AI is revising...';
+            editStatus.innerText = '';
+
+            try {
+                const response = await fetch('/edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        storyboard: currentStoryboard,
+                        instruction: instruction
+                    })
+                });
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                currentStoryboard = await response.json();
+                
+                // Re-render the form with new AI changes
+                renderReviewForm(currentStoryboard.scenes);
+                
+                editStatus.innerText = 'AI successfully applied your edits!';
+                editStatus.style.color = '#34d399';
+            } catch (err) {
+                editStatus.innerText = 'Error: ' + err.message;
+                editStatus.style.color = '#ef4444';
+            } finally {
+                applyEditBtn.disabled = false;
+                applyEditBtn.innerText = 'Apply AI Edit';
+            }
+        });
+
+        // Form Submission for Approval
+        document.getElementById('approveBtn').addEventListener('click', async () => {
+            const approveBtn = document.getElementById('approveBtn');
+            const approveStatus = document.getElementById('approveStatus');
+            
+            // Sync edited form data back into the original JSON object
+            currentStoryboard.scenes.forEach((scene, index) => {
+                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : null);
+                if (titleField) {
+                    const titleInput = document.getElementById(`scene_${index}_title`);
+                    if (titleInput) scene[titleField] = titleInput.value;
+                }
+                
+                const narrationInput = document.getElementById(`scene_${index}_narration`);
+                if (narrationInput) scene.narration = narrationInput.value;
+            });
+            
+            // Sync branding
+            if (!currentStoryboard.style) currentStoryboard.style = {};
+            currentStoryboard.style.backgroundColor = document.getElementById('styleBgColor').value;
+            currentStoryboard.style.companyWatermark = document.getElementById('styleWatermark').value;
+
+            approveBtn.disabled = true;
+            approveBtn.innerText = 'Saving and Generating Audio...';
+            approveStatus.innerText = '';
+
+            try {
+                const response = await fetch('/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentStoryboard)
+                });
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                approveStatus.innerText = 'Success! Storyboard approved. Check your Remotion Studio to see the hot-reloaded video!';
+                approveStatus.style.color = '#34d399';
+            } catch (err) {
+                approveStatus.innerText = 'Error: ' + err.message;
+                approveStatus.style.color = '#ef4444';
+            } finally {
+                approveBtn.disabled = false;
+                approveBtn.innerText = 'Approve & Render Video';
+            }
+        });
+    </script>
+</body>
+</html>

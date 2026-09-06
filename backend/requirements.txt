@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pandas
+openpyxl
+google-generativeai
+edge-tts
+python-multipart
+python-dotenv

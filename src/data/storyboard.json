@@ -1,0 +1,275 @@
+{
+  "video": {
+    "title": "FY2026 Sales Performance",
+    "fps": 30,
+    "width": 1920,
+    "height": 1080
+  },
+  "style": {
+    "background": "#0f172a",
+    "primary": "#38bdf8",
+    "secondary": "#818cf8",
+    "textPrimary": "#ffffff",
+    "textSecondary": "#94a3b8",
+    "fontFamily": "Inter"
+  },
+  "scenes": [
+    {
+      "id": 1,
+      "durationInSeconds": 5,
+      "narration": "Welcome to our 2026 Sales Performance Review. Let's dive into the year's achievements and key insights.",
+      "type": "title",
+      "title": "2026 Annual Sales Performance",
+      "subtitle": "Comprehensive Review & Insights"
+    },
+    {
+      "id": 2,
+      "durationInSeconds": 7,
+      "narration": "For the entire year 2026, our total revenue reached 310.8 Crores. We achieved 105.1 percent of our ambitious target, resulting in a variance of 14.8 Crores.",
+      "type": "kpi",
+      "metric": "Total Revenue",
+      "value": 310.8,
+      "unit": "Cr",
+      "prefix": "",
+      "growth": 5.1,
+      "growthLabel": "vs Target"
+    },
+    {
+      "id": 3,
+      "durationInSeconds": 8,
+      "narration": "Looking at our regional performance, the West region significantly led in revenue generation, followed by North and South. The East region, while contributing, showed lower total figures.",
+      "type": "bar_chart",
+      "title": "Total Revenue by Region (Cr)",
+      "items": [
+        {
+          "name": "West",
+          "value": 160
+        },
+        {
+          "name": "North",
+          "value": 90.3
+        },
+        {
+          "name": "South",
+          "value": 91.1
+        },
+        {
+          "name": "East",
+          "value": 60.1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "durationInSeconds": 8,
+      "narration": "When comparing actual revenue against our targets, the West and South regions consistently exceeded expectations, demonstrating strong market penetration. The North and East regions, however, had room for improvement to meet their targets.",
+      "type": "comparison",
+      "title": "Regional Revenue: Actual vs. Target (Cr)",
+      "items": [
+        {
+          "name": "West",
+          "actual": 160,
+          "target": 144.5
+        },
+        {
+          "name": "South",
+          "actual": 91.1,
+          "target": 83.2
+        },
+        {
+          "name": "East",
+          "actual": 60.1,
+          "target": 59.8
+        },
+        {
+          "name": "North",
+          "actual": 90.3,
+          "target": 97.6
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "durationInSeconds": 6,
+      "narration": "Breaking down by product, Industrial Motors were our primary revenue driver, significantly outpacing Pumps throughout the year.",
+      "type": "bar_chart",
+      "title": "Total Revenue by Product (Cr)",
+      "items": [
+        {
+          "name": "Industrial Motors",
+          "value": 196.5
+        },
+        {
+          "name": "Pumps",
+          "value": 114.3
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "durationInSeconds": 10,
+      "narration": "Observing the monthly trend, our revenue saw a steady increase throughout the year, with a notable surge towards the latter half. Our actual revenue generally mirrored our target, staying above it for most months, indicating consistent performance.",
+      "type": "line_chart",
+      "title": "Monthly Revenue Trend (Cr)",
+      "items": [
+        {
+          "name": "Jan",
+          "value": 48.7
+        },
+        {
+          "name": "Feb",
+          "value": 50.9
+        },
+        {
+          "name": "Mar",
+          "value": 53
+        },
+        {
+          "name": "Apr",
+          "value": 55.1
+        },
+        {
+          "name": "May",
+          "value": 57.2
+        },
+        {
+          "name": "Jun",
+          "value": 59.4
+        },
+        {
+          "name": "Jul",
+          "value": 60.9
+        },
+        {
+          "name": "Aug",
+          "value": 62.9
+        },
+        {
+          "name": "Sep",
+          "value": 63.8
+        },
+        {
+          "name": "Oct",
+          "value": 65.5
+        },
+        {
+          "name": "Nov",
+          "value": 67.3
+        },
+        {
+          "name": "Dec",
+          "value": 69.1
+        }
+      ],
+      "targetItems": [
+        {
+          "name": "Jan",
+          "value": 48.2
+        },
+        {
+          "name": "Feb",
+          "value": 49.3
+        },
+        {
+          "name": "Mar",
+          "value": 50.8
+        },
+        {
+          "name": "Apr",
+          "value": 52.2
+        },
+        {
+          "name": "May",
+          "value": 53.9
+        },
+        {
+          "name": "Jun",
+          "value": 55.6
+        },
+        {
+          "name": "Jul",
+          "value": 57.2
+        },
+        {
+          "name": "Aug",
+          "value": 58.6
+        },
+        {
+          "name": "Sep",
+          "value": 60.1
+        },
+        {
+          "name": "Oct",
+          "value": 61.6
+        },
+        {
+          "name": "Nov",
+          "value": 63.3
+        },
+        {
+          "name": "Dec",
+          "value": 65.1
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "durationInSeconds": 7,
+      "narration": "Our standout performer was the West region with Industrial Motors sales, achieving an impressive 111.7% of its target, with a positive variance of 10.6 Crores. This segment truly drove our success.",
+      "type": "highlight",
+      "metric": "West - Industrial Motors Revenue",
+      "value": 100.9,
+      "unit": "Cr",
+      "badge": "Top Performer",
+      "achievement": 111.7,
+      "variance": 10.6,
+      "sentiment": "positive"
+    },
+    {
+      "id": 8,
+      "durationInSeconds": 7,
+      "narration": "Conversely, the North region's Pumps segment struggled slightly, achieving 91.8% of its target with a variance of -8.0 Crores. This highlights an area requiring strategic focus and improvement.",
+      "type": "highlight",
+      "metric": "North - Pumps Revenue",
+      "value": 90.1,
+      "unit": "Cr",
+      "badge": "Area for Focus",
+      "achievement": 91.8,
+      "variance": -8,
+      "sentiment": "negative"
+    },
+    {
+      "id": 9,
+      "durationInSeconds": 6,
+      "narration": "Customer acquisition also mirrored revenue trends, with the West leading in new customer numbers, reinforcing its strong market position.",
+      "type": "bar_chart",
+      "title": "Total Customers by Region",
+      "items": [
+        {
+          "name": "West",
+          "value": 2420
+        },
+        {
+          "name": "South",
+          "value": 1546
+        },
+        {
+          "name": "North",
+          "value": 1787
+        },
+        {
+          "name": "East",
+          "value": 1130
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "durationInSeconds": 5,
+      "narration": "In summary, 2026 was a year of strong performance, particularly in our West and South regions and for Industrial Motors. We will continue to leverage these strengths while addressing areas needing improvement. Thank you.",
+      "type": "title",
+      "title": "2026 Performance Summary",
+      "subtitle": "Leveraging Strengths, Addressing Opportunities"
+    }
+  ]
+}
