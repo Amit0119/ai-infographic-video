@@ -118,10 +118,14 @@
         <div id="scenesContainer"></div>
         
         <div class="scene-editor" style="background: #1e293b; border-color: #facc15; margin-top: 2rem;">
-            <h3 style="color: #facc15; margin-top: 0; margin-bottom: 1rem;">🎨 Branding & Styling</h3>
+            <h3 style="color: #facc15; margin-top: 0; margin-bottom: 1rem;">🎨 Branding &amp; Styling</h3>
             <div class="form-group">
                 <label>Background Color</label>
                 <input type="color" id="styleBgColor" value="#0f172a" style="width: 100px; height: 40px; padding: 0; cursor: pointer; border: none; background: none;">
+            </div>
+            <div class="form-group">
+                <label>Currency Symbol</label>
+                <input type="text" id="styleCurrency" placeholder="e.g., ₹, $, €" style="max-width: 120px;">
             </div>
             <div class="form-group">
                 <label>Company Watermark</label>
@@ -167,8 +171,9 @@
                 
                 // Populate branding
                 if (currentStoryboard.style) {
-                    const bgColor = currentStoryboard.style.backgroundColor || currentStoryboard.style.background || '#0f172a';
+                    const bgColor = currentStoryboard.style.backgroundColor || '#0f172a';
                     document.getElementById('styleBgColor').value = bgColor;
+                    document.getElementById('styleCurrency').value = currentStoryboard.style.currencySymbol || '';
                     document.getElementById('styleWatermark').value = currentStoryboard.style.companyWatermark || '';
                 }
                 
@@ -296,6 +301,7 @@
             // Sync branding
             if (!currentStoryboard.style) currentStoryboard.style = {};
             currentStoryboard.style.backgroundColor = document.getElementById('styleBgColor').value;
+            currentStoryboard.style.currencySymbol = document.getElementById('styleCurrency').value;
             currentStoryboard.style.companyWatermark = document.getElementById('styleWatermark').value;
 
             approveBtn.disabled = true;

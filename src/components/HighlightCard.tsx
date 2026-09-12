@@ -297,7 +297,7 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {varianceSign}₹{Math.abs(variance).toFixed(1)} Cr
+            {varianceSign}{style.currencySymbol ?? ""}{Math.abs(variance).toFixed(1)} Cr
             </span>
             <span
               style={{

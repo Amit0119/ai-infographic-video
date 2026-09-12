@@ -32,22 +32,10 @@ const InfographicVideo: React.FC = () => {
   const { fps } = data.video;
   const { style, scenes } = data;
 
-  // Map backend JSON style keys to expected React props for dark theme
-  const resolvedStyle = {
-    ...style,
-    textColor: (style as any).textPrimary || '#ffffff',
-    subtextColor: (style as any).textSecondary || '#e2e8f0',
-    primaryColor: (style as any).primary || '#38bdf8',
-    secondaryColor: (style as any).secondary || '#34d399',
-    accentColor: (style as any).accentColor || '#facc15',
-    backgroundColor: (style as any).backgroundColor || (style as any).background || '#0f172a',
-    companyWatermark: (style as any).companyWatermark || '',
-  };
-
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: resolvedStyle.backgroundColor,
+        backgroundColor: style.backgroundColor,
       }}
     >
       <Series>
@@ -62,7 +50,7 @@ const InfographicVideo: React.FC = () => {
                 <TitleScene
                   title={scene.title}
                   subtitle={scene.subtitle}
-                  style={resolvedStyle}
+                  style={style}
                 />
               </Series.Sequence>
             );
@@ -81,7 +69,7 @@ const InfographicVideo: React.FC = () => {
                   prefix={scene.prefix}
                   growth={scene.growth}
                   growthLabel={scene.growthLabel}
-                  style={resolvedStyle}
+                  style={style}
                 />
               </Series.Sequence>
             );
@@ -97,7 +85,7 @@ const InfographicVideo: React.FC = () => {
                   title={scene.title}
                   items={scene.items}
                   color={scene.color}
-                  style={resolvedStyle}
+                  style={style}
                 />
               </Series.Sequence>
             );
@@ -114,7 +102,7 @@ const InfographicVideo: React.FC = () => {
                   items={scene.items}
                   targetItems={scene.targetItems}
                   color={scene.color}
-                  style={resolvedStyle}
+                  style={style}
                 />
               </Series.Sequence>
             );
@@ -135,7 +123,7 @@ const InfographicVideo: React.FC = () => {
                   achievement={scene.achievement}
                   variance={scene.variance}
                   sentiment={scene.sentiment}
-                  style={resolvedStyle}
+                  style={style}
                 />
               </Series.Sequence>
             );
@@ -150,7 +138,7 @@ const InfographicVideo: React.FC = () => {
                 <ComparisonChart
                   title={scene.title}
                   items={scene.items}
-                  style={resolvedStyle}
+                  style={style}
                 />
               </Series.Sequence>
             );
@@ -160,21 +148,21 @@ const InfographicVideo: React.FC = () => {
         }
       })}
       </Series>
-      {resolvedStyle.companyWatermark && (
+      {style.companyWatermark && (
         <div
           style={{
             position: 'absolute',
             bottom: 40,
             right: 60,
-            color: resolvedStyle.textColor,
+            color: style.textColor,
             fontSize: 32,
             fontWeight: 'bold',
             opacity: 0.2,
-            fontFamily: (resolvedStyle as any).fontFamily || 'Inter',
-            zIndex: 1000
+            fontFamily: style.fontFamily,
+            zIndex: 1000,
           }}
         >
-          {resolvedStyle.companyWatermark}
+          {style.companyWatermark}
         </div>
       )}
     </AbsoluteFill>

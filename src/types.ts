@@ -5,15 +5,19 @@
 // storyboard JSON and the Remotion visual component library.
 // ============================================================
 
-/** Shared style/theme configuration passed to every scene. */
+/** Shared style/theme configuration passed to every scene.
+ *  Keys match the backend JSON output exactly — no mapping needed.
+ */
 export interface SceneStyle {
-  backgroundColor: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor: string;
-  textColor: string;
-  subtextColor: string;
-  fontFamily: string;
+  backgroundColor: string; // e.g. "#0f172a"
+  primaryColor: string;    // e.g. "#38bdf8"
+  secondaryColor: string;  // e.g. "#818cf8"
+  accentColor: string;     // e.g. "#34d399"
+  textColor: string;       // e.g. "#ffffff"
+  subtextColor: string;    // e.g. "#94a3b8"
+  fontFamily: string;      // e.g. "Inter"
+  currencySymbol?: string; // e.g. "₹", "$", "€" — used by HighlightCard
+  companyWatermark?: string; // e.g. "ACME Corp"
 }
 
 // ── Scene Prop Interfaces ────────────────────────────────────
