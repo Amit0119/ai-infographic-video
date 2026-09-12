@@ -1,23 +1,56 @@
 import os
 import json
+import glob
 import asyncio
+from contextlib import asynccontextmanager
+from typing import Any, Optional
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, field_validator, ValidationError
 import pandas as pd
-import google.generativeai as genai
+from google import genai
 import edge_tts
 from dotenv import load_dotenv
 
-# Load environment variables
+# ── Environment Setup ─────────────────────────────────────────
+
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# New SDK: create a module-level client (replaces genai.configure)
+GEMINI_CLIENT: Optional[genai.Client] = None
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+    GEMINI_CLIENT = genai.Client(api_key=GEMINI_API_KEY)
 
-app = FastAPI()
+# ── Fix 3: Cache Gemini model name at startup ─────────────────
 
-# Enable CORS for Remotion frontend
+GEMINI_MODEL: Optional[str] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup: discover and cache a valid Gemini model once."""
+    global GEMINI_MODEL
+    if GEMINI_CLIENT:
+        try:
+            # New SDK: iterate via client.models.list()
+            for m in GEMINI_CLIENT.models.list():
+                # Filter for models that support generateContent
+                if hasattr(m, 'name') and 'gemini' in m.name:
+                    GEMINI_MODEL = m.name
+                    break
+            if GEMINI_MODEL:
+                print(f"✅ Gemini model cached at startup: {GEMINI_MODEL}")
+            else:
+                print("⚠️  No suitable Gemini model found.")
+        except Exception as e:
+            print(f"⚠️  Could not cache Gemini model: {e}")
+    yield  # app runs here
+
+app = FastAPI(lifespan=lifespan)
+
+# ── CORS ──────────────────────────────────────────────────────
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -26,18 +59,134 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Fix 2: Pydantic Schema Validation ─────────────────────────
+
+class SceneStyleModel(BaseModel):
+    backgroundColor: str
+    primaryColor: str
+    secondaryColor: str
+    accentColor: str
+    textColor: str
+    subtextColor: str
+    fontFamily: str
+    currencySymbol: Optional[str] = ""
+    companyWatermark: Optional[str] = ""
+
+class VideoMetaModel(BaseModel):
+    title: str
+    fps: int
+    width: int
+    height: int
+
+class StoryboardModel(BaseModel):
+    video: VideoMetaModel
+    style: SceneStyleModel
+    scenes: list[dict[str, Any]]
+
+    @field_validator("scenes")
+    @classmethod
+    def scenes_must_have_required_fields(cls, scenes):
+        for i, scene in enumerate(scenes):
+            for key in ("id", "durationInSeconds", "type"):
+                if key not in scene:
+                    raise ValueError(f"Scene {i} missing required field: '{key}'")
+            if scene["type"] not in (
+                "title", "kpi", "bar_chart", "line_chart", "highlight", "comparison"
+            ):
+                raise ValueError(f"Scene {i} has unknown type: '{scene['type']}'")
+        return scenes
+
+# ── Fix 2 Helper: Parse + Validate Gemini Output ──────────────
+
+def _strip_markdown_fences(text: str) -> str:
+    """Remove accidental ```json ... ``` code fences from Gemini output."""
+    text = text.strip()
+    if text.startswith("```"):
+        parts = text.split("```")
+        text = parts[1] if len(parts) > 1 else text
+        if text.startswith("json"):
+            text = text[4:].strip()
+    if text.endswith("```"):
+        text = text[:-3].strip()
+    return text
+
+def _call_gemini_with_retry(prompt: str, max_attempts: int = 3) -> str:
+    """Call Gemini with up to max_attempts retries on JSON/validation failure."""
+    if not GEMINI_CLIENT or not GEMINI_MODEL:
+        raise HTTPException(
+            status_code=500,
+            detail="No Gemini client/model available. Check your API key and restart the server."
+        )
+    last_error = None
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            # New SDK: client.models.generate_content()
+            response = GEMINI_CLIENT.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+            )
+            raw = _strip_markdown_fences(response.text)
+            json.loads(raw)  # Quick sanity: must be parseable JSON
+            return raw
+        except Exception as e:
+            last_error = e
+            print(f"⚠️  Gemini attempt {attempt}/{max_attempts} failed: {e}")
+
+    raise HTTPException(
+        status_code=500,
+        detail=f"Gemini returned unparseable JSON after {max_attempts} attempts: {last_error}"
+    )
+
+# ── Fix 5: Stale Audio Cleanup ────────────────────────────────
+
+def _cleanup_old_audio(public_dir: str):
+    """Delete all old scene_N.mp3 files before generating new ones."""
+    pattern = os.path.join(public_dir, "scene_*.mp3")
+    old_files = glob.glob(pattern)
+    for f in old_files:
+        try:
+            os.remove(f)
+        except OSError as e:
+            print(f"⚠️  Could not delete {f}: {e}")
+    if old_files:
+        print(f"🧹 Cleaned up {len(old_files)} stale audio file(s).")
+
+# ── TTS Helper ────────────────────────────────────────────────
+
 async def generate_tts(text: str, output_path: str):
     """Generate TTS audio from text and save to output_path."""
     communicate = edge_tts.Communicate(text, "en-US-AriaNeural")
     await communicate.save(output_path)
 
+# ── Default Style (unified keys matching SceneStyle) ──────────
+
+DEFAULT_STYLE = {
+    "backgroundColor": "#0f172a",
+    "primaryColor": "#38bdf8",
+    "secondaryColor": "#818cf8",
+    "accentColor": "#34d399",
+    "textColor": "#ffffff",
+    "subtextColor": "#94a3b8",
+    "fontFamily": "Inter",
+    "currencySymbol": "",
+    "companyWatermark": "",
+}
+
+# ── Endpoint: /analyze ────────────────────────────────────────
+
 @app.post("/analyze")
 async def analyze_data(file: UploadFile = File(...)):
     if not GEMINI_API_KEY:
-        raise HTTPException(status_code=500, detail="Gemini API Key is missing in environment variables.")
-    
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing.")
+    if not GEMINI_CLIENT or not GEMINI_MODEL:
+        raise HTTPException(status_code=500, detail="No Gemini client/model available. Restart the server.")
+
+    # Fix 4: Derive video title from uploaded filename
+    raw_filename = file.filename or "Sales Data"
+    video_title = os.path.splitext(raw_filename)[0].replace("_", " ").replace("-", " ").title()
+
     try:
-        # Read uploaded Excel file using pandas
         contents = await file.read()
         import io
         df = pd.read_excel(io.BytesIO(contents))
@@ -45,20 +194,19 @@ async def analyze_data(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to read Excel file: {e}")
 
-    # Prompt Gemini to generate scenes according to the strict frontend schema
     prompt = f"""
-    You are an expert data analyst and video producer. Analyze the following corporate sales data provided as CSV:
+    You are an expert data analyst and video producer. Analyze the following corporate data provided as CSV:
     {csv_data}
 
     Generate a strict JSON array of scene objects for a Remotion video storyboard.
     Every scene MUST have the following keys: `id` (number), `durationInSeconds` (number), and `narration` (string script to be spoken).
-    
+
     Choose one of the following scene types for each scene and include its specific required keys:
-    
+
     1. type: "title"
        - title (string)
        - subtitle (string, optional)
-    
+
     2. type: "kpi"
        - metric (string, e.g., "Total Revenue")
        - value (number)
@@ -66,16 +214,16 @@ async def analyze_data(file: UploadFile = File(...)):
        - prefix (string, optional, e.g., "$")
        - growth (number)
        - growthLabel (string, optional, e.g., "vs last year")
-       
+
     3. type: "bar_chart"
        - title (string)
        - items (array of objects with `name` (string) and `value` (number))
-       
+
     4. type: "line_chart"
        - title (string)
        - items (array of objects with `name` (string) and `value` (number))
        - targetItems (optional array of objects with `name` (string) and `value` (number))
-       
+
     5. type: "highlight"
        - metric (string)
        - value (number)
@@ -85,7 +233,7 @@ async def analyze_data(file: UploadFile = File(...)):
        - achievement (number)
        - variance (number)
        - sentiment (string, exactly "positive" or "negative")
-       
+
     6. type: "comparison"
        - title (string)
        - items (array of objects with `name` (string), `actual` (number), `target` (number))
@@ -94,156 +242,145 @@ async def analyze_data(file: UploadFile = File(...)):
     """
 
     try:
-        valid_model_name = None
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                valid_model_name = m.name
-                break
-                
-        if not valid_model_name:
-            raise HTTPException(status_code=500, detail="The provided API key lacks access to generative models with 'generateContent' capability.")
-            
-        model = genai.GenerativeModel(valid_model_name)
-        response = model.generate_content(prompt)
-        raw_text = response.text.strip()
-        
-        # Strip markdown code blocks if Gemini accidentally includes them
-        if raw_text.startswith("```"):
-            raw_text = raw_text.split("```")[1]
-            if raw_text.startswith("json"):
-                raw_text = raw_text[4:].strip()
-        if raw_text.endswith("```"):
-            raw_text = raw_text[:-3].strip()
-
+        raw_text = _call_gemini_with_retry(prompt)
         generated_scenes = json.loads(raw_text)
-        
-        # Wrap inside the global storyboard structure expected by Remotion
+
         storyboard_data = {
             "video": {
-                "title": "FY2026 Sales Performance",
+                "title": video_title,
                 "fps": 30,
                 "width": 1920,
-                "height": 1080
+                "height": 1080,
             },
-            "style": {
-                "background": "#0f172a",
-                "primary": "#38bdf8",
-                "secondary": "#818cf8",
-                "textPrimary": "#ffffff",
-                "textSecondary": "#94a3b8",
-                "fontFamily": "Inter"
-            },
-            "scenes": generated_scenes
+            "style": DEFAULT_STYLE.copy(),
+            "scenes": generated_scenes,
         }
+
+        # Fix 2: Validate full storyboard
+        StoryboardModel.model_validate(storyboard_data)
 
         return storyboard_data
 
+    except HTTPException:
+        raise
+    except ValidationError as e:
+        raise HTTPException(status_code=500, detail=f"AI returned invalid storyboard schema: {e}")
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Analysis pipeline error: {e}")
 
+
+# ── Endpoint: /approve ────────────────────────────────────────
+
 @app.post("/approve")
 async def approve_storyboard(storyboard_data: dict):
+    # Fix 2: Validate before writing
     try:
-        # Save storyboard.json to frontend src/data directory
-        absolute_storyboard_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "data", "storyboard.json"))
+        StoryboardModel.model_validate(storyboard_data)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=f"Invalid storyboard schema: {e}")
+
+    try:
+        absolute_storyboard_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "src", "data", "storyboard.json")
+        )
         os.makedirs(os.path.dirname(absolute_storyboard_path), exist_ok=True)
         with open(absolute_storyboard_path, "w", encoding="utf-8") as f:
             json.dump(storyboard_data, f, indent=2)
 
-        # Ensure public directory exists with a strict absolute path
-        absolute_public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "public"))
+        absolute_public_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "public")
+        )
         os.makedirs(absolute_public_dir, exist_ok=True)
-        
-        # Process TTS for each scene concurrently
+
+        # Fix 5: Clean stale audio before generating new
+        _cleanup_old_audio(absolute_public_dir)
+
         tasks = []
-        scenes = storyboard_data.get('scenes', [])
-        
+        scenes = storyboard_data.get("scenes", [])
         for scene in scenes:
-            scene_id = scene.get('id')
-            narration = scene.get('narration')
-            
+            scene_id = scene.get("id")
+            narration = scene.get("narration")
             if scene_id is not None and narration:
-                audio_filename = f"scene_{scene_id}.mp3"
-                audio_path = os.path.abspath(os.path.join(absolute_public_dir, audio_filename))
+                audio_path = os.path.join(absolute_public_dir, f"scene_{scene_id}.mp3")
                 tasks.append(generate_tts(narration, audio_path))
             else:
-                print(f"Warning: Scene {scene_id} is missing narration or ID.")
+                print(f"⚠️  Scene {scene_id} missing narration — skipping TTS.")
 
         if tasks:
             await asyncio.gather(*tasks)
 
-        return {"status": "success", "message": "Storyboard approved and scene audio tracks generated successfully!"}
+        return {
+            "status": "success",
+            "message": f"Storyboard approved! {len(tasks)} audio track(s) generated successfully.",
+        }
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Approval pipeline error: {e}")
 
+
+# ── Endpoint: /edit ───────────────────────────────────────────
+
 @app.post("/edit")
 async def edit_storyboard(payload: dict):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing.")
+    if not GEMINI_CLIENT or not GEMINI_MODEL:
+        raise HTTPException(status_code=500, detail="No Gemini client/model available. Restart the server.")
+
     storyboard_data = payload.get("storyboard")
     instruction = payload.get("instruction")
-    
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=500, detail="Gemini API Key is missing in environment variables.")
-        
+
+    if not storyboard_data or not instruction:
+        raise HTTPException(status_code=400, detail="Both 'storyboard' and 'instruction' are required.")
+
     prompt = f"""
     You are an expert video producer. I am providing you with the current JSON state of a Remotion video storyboard.
     The user has requested the following natural language edit:
     "{instruction}"
-    
+
     Current Storyboard JSON:
     {json.dumps(storyboard_data, indent=2)}
-    
-    Please apply the requested edits to the scenes. 
+
+    Please apply the requested edits to the scenes.
     You MUST maintain the exact same strict Remotion-compatible JSON schema.
-    Every scene MUST still have `id`, `durationInSeconds`, and `narration`, along with the specific properties for its type (e.g., `title`, `metric`, `items`, etc.).
+    Every scene MUST still have `id`, `durationInSeconds`, and `narration`, along with the specific properties for its type.
     Do not change the root structure (`video`, `style`, `scenes`).
-    
+
     Return ONLY the completely updated full JSON object, with no markdown formatting, no code blocks, and no extra text.
     """
 
     try:
-        valid_model_name = None
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                valid_model_name = m.name
-                break
-                
-        if not valid_model_name:
-            raise HTTPException(status_code=500, detail="The provided API key lacks access to generative models with 'generateContent' capability.")
-            
-        model = genai.GenerativeModel(valid_model_name)
-        response = model.generate_content(prompt)
-        raw_text = response.text.strip()
-        
-        # Strip markdown code blocks if Gemini accidentally includes them
-        if raw_text.startswith("```"):
-            raw_text = raw_text.split("```")[1]
-            if raw_text.startswith("json"):
-                raw_text = raw_text[4:].strip()
-        if raw_text.endswith("```"):
-            raw_text = raw_text[:-3].strip()
+        raw_text = _call_gemini_with_retry(prompt)
+        updated = json.loads(raw_text)
 
-        updated_storyboard = json.loads(raw_text)
-        
-        # Robustness check: if it returned just the scenes array
-        if isinstance(updated_storyboard, list):
-            storyboard_data["scenes"] = updated_storyboard
-            return storyboard_data
-        elif "scenes" in updated_storyboard:
-            return updated_storyboard
-        else:
+        # Robustness: if Gemini returned just the scenes array
+        if isinstance(updated, list):
+            storyboard_data["scenes"] = updated
+            updated = storyboard_data
+        elif "scenes" not in updated:
             raise Exception("AI returned an invalid JSON structure (missing 'scenes' array).")
 
+        # Fix 2: Validate edited storyboard
+        StoryboardModel.model_validate(updated)
+
+        return updated
+
+    except HTTPException:
+        raise
+    except ValidationError as e:
+        raise HTTPException(status_code=500, detail=f"AI returned invalid storyboard schema: {e}")
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Editing pipeline error: {e}")
 
-# Mount static files at the root
+
+# ── Static Files (Control Panel) ─────────────────────────────
+
 from fastapi.staticfiles import StaticFiles
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 os.makedirs(static_dir, exist_ok=True)
