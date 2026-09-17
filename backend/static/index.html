@@ -83,20 +83,50 @@
         
         .hidden { display: none; }
         .statusMessage { margin-top: 1rem; font-weight: 600; }
+        .tabs { display: flex; margin-bottom: 1rem; border-bottom: 1px solid #334155; }
+        .tab { padding: 10px 20px; cursor: pointer; color: #94a3b8; font-weight: 600; border-bottom: 2px solid transparent; }
+        .tab.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; }
     </style>
 </head>
 <body>
 
     <h1>AI Video Control Panel</h1>
     
+    <div class="tabs">
+        <div class="tab active" id="tabData" onclick="switchTab('data')">Data to Video</div>
+        <div class="tab" id="tabTopic" onclick="switchTab('topic')">Topic to Video</div>
+    </div>
+    
     <div class="card" id="uploadSection">
         <h2>1. Upload Sales Data</h2>
         <form id="uploadForm">
             <input type="file" id="excelFile" accept=".xls,.xlsx" required>
             <br><br>
+            <div class="form-group">
+                <label>Initial Instructions (Optional)</label>
+                <textarea id="initialPrompt" placeholder="e.g., Focus on Q3 growth, use a professional tone..."></textarea>
+            </div>
+            <br>
             <button type="submit" id="analyzeBtn">Analyze & Generate Storyboard</button>
         </form>
         <div id="uploadStatus" class="statusMessage"></div>
+    </div>
+
+    <div class="card hidden" id="topicSection">
+        <h2>1. Generate from Topic</h2>
+        <form id="topicForm">
+            <div class="form-group">
+                <label>Topic (e.g., Annual Budget)</label>
+                <input type="text" id="topicInput" required style="width: 100%; padding: 0.75rem; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px;">
+            </div>
+            <div class="form-group">
+                <label>Initial Instructions (Optional)</label>
+                <textarea id="topicInitialPrompt" placeholder="e.g., Use an educational tone..."></textarea>
+            </div>
+            <br>
+            <button type="submit" id="generateBtn">Generate Storyboard</button>
+        </form>
+        <div id="topicStatus" class="statusMessage"></div>
     </div>
 
     <div class="card hidden" id="reviewSection">
@@ -140,6 +170,14 @@
     <script>
         let currentStoryboard = null;
 
+        function switchTab(tab) {
+            document.getElementById('tabData').classList.toggle('active', tab === 'data');
+            document.getElementById('tabTopic').classList.toggle('active', tab === 'topic');
+            document.getElementById('uploadSection').classList.toggle('hidden', tab !== 'data');
+            document.getElementById('topicSection').classList.toggle('hidden', tab !== 'topic');
+            document.getElementById('reviewSection').classList.add('hidden');
+        }
+
         // Form Submission for Analysis
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -149,6 +187,11 @@
 
             const formData = new FormData();
             formData.append('file', file);
+            
+            const initialPrompt = document.getElementById('initialPrompt').value.trim();
+            if (initialPrompt) {
+                formData.append('initial_prompt', initialPrompt);
+            }
 
             const analyzeBtn = document.getElementById('analyzeBtn');
             const uploadStatus = document.getElementById('uploadStatus');
@@ -189,14 +232,60 @@
             }
         });
 
+        // Form Submission for Topic Explainer
+        document.getElementById('topicForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const topic = document.getElementById('topicInput').value.trim();
+            const initialPrompt = document.getElementById('topicInitialPrompt').value.trim();
+            if (!topic) return;
+
+            const generateBtn = document.getElementById('generateBtn');
+            const topicStatus = document.getElementById('topicStatus');
+            
+            generateBtn.disabled = true;
+            generateBtn.innerText = 'Generating with AI... (Takes ~30s)';
+            topicStatus.innerText = '';
+
+            try {
+                const response = await fetch('/generate-explainer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, initial_prompt: initialPrompt })
+                });
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                currentStoryboard = await response.json();
+                topicStatus.innerText = 'Generation complete!';
+                topicStatus.style.color = '#34d399';
+                
+                if (currentStoryboard.style) {
+                    const bgColor = currentStoryboard.style.backgroundColor || '#0f172a';
+                    document.getElementById('styleBgColor').value = bgColor;
+                    document.getElementById('styleCurrency').value = currentStoryboard.style.currencySymbol || '';
+                    document.getElementById('styleWatermark').value = currentStoryboard.style.companyWatermark || '';
+                }
+                
+                renderReviewForm(currentStoryboard.scenes);
+                document.getElementById('reviewSection').classList.remove('hidden');
+                
+            } catch (err) {
+                topicStatus.innerText = 'Error: ' + err.message;
+                topicStatus.style.color = '#ef4444';
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerText = 'Generate Storyboard';
+            }
+        });
+
         // Dynamic Form Rendering for Review
         function renderReviewForm(scenes) {
             const container = document.getElementById('scenesContainer');
             container.innerHTML = '';
             
             scenes.forEach((scene, index) => {
-                // Determine if this scene type uses 'title' or 'metric' as its primary text
-                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : null);
+                // Determine if this scene type uses 'title' or 'metric' or 'heading' as its primary text
+                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : (scene.heading !== undefined ? 'heading' : null));
                 
                 const editor = document.createElement('div');
                 editor.className = 'scene-editor';
@@ -213,6 +302,15 @@
                         <div class="form-group">
                             <label>Scene Title / Heading</label>
                             <input type="text" id="scene_${index}_title" value="${scene[titleField].replace(/"/g, '&quot;')}">
+                        </div>
+                    `;
+                }
+
+                if (scene.content_points !== undefined) {
+                    html += `
+                        <div class="form-group">
+                            <label>Content Points (One per line)</label>
+                            <textarea id="scene_${index}_points">${scene.content_points.join('\n')}</textarea>
                         </div>
                     `;
                 }
@@ -240,10 +338,14 @@
             
             // Sync current edits before sending to AI so user manual tweaks aren't lost
             currentStoryboard.scenes.forEach((scene, index) => {
-                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : null);
+                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : (scene.heading !== undefined ? 'heading' : null));
                 if (titleField) {
                     const titleInput = document.getElementById(`scene_${index}_title`);
                     if (titleInput) scene[titleField] = titleInput.value;
+                }
+                const pointsInput = document.getElementById(`scene_${index}_points`);
+                if (pointsInput) {
+                    scene.content_points = pointsInput.value.split('\n').map(p => p.trim()).filter(p => p);
                 }
                 const narrationInput = document.getElementById(`scene_${index}_narration`);
                 if (narrationInput) scene.narration = narrationInput.value;
@@ -288,12 +390,17 @@
             
             // Sync edited form data back into the original JSON object
             currentStoryboard.scenes.forEach((scene, index) => {
-                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : null);
+                const titleField = scene.title !== undefined ? 'title' : (scene.metric !== undefined ? 'metric' : (scene.heading !== undefined ? 'heading' : null));
                 if (titleField) {
                     const titleInput = document.getElementById(`scene_${index}_title`);
                     if (titleInput) scene[titleField] = titleInput.value;
                 }
                 
+                const pointsInput = document.getElementById(`scene_${index}_points`);
+                if (pointsInput) {
+                    scene.content_points = pointsInput.value.split('\n').map(p => p.trim()).filter(p => p);
+                }
+
                 const narrationInput = document.getElementById(`scene_${index}_narration`);
                 if (narrationInput) scene.narration = narrationInput.value;
             });

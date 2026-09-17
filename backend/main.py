@@ -5,7 +5,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Any, Optional
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator, ValidationError
 import pandas as pd
@@ -91,7 +91,7 @@ class StoryboardModel(BaseModel):
                 if key not in scene:
                     raise ValueError(f"Scene {i} missing required field: '{key}'")
             if scene["type"] not in (
-                "title", "kpi", "bar_chart", "line_chart", "highlight", "comparison"
+                "title", "kpi", "bar_chart", "line_chart", "highlight", "comparison", "bullet_points", "numbered_steps"
             ):
                 raise ValueError(f"Scene {i} has unknown type: '{scene['type']}'")
         return scenes
@@ -173,10 +173,87 @@ DEFAULT_STYLE = {
     "companyWatermark": "",
 }
 
+# ── Endpoint: /generate-explainer ───────────────────────────
+
+class ExplainerRequestModel(BaseModel):
+    topic: str
+    initial_prompt: Optional[str] = None
+
+@app.post("/generate-explainer")
+async def generate_explainer(payload: ExplainerRequestModel):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API Key is missing.")
+    if not GEMINI_CLIENT or not GEMINI_MODEL:
+        raise HTTPException(status_code=500, detail="No Gemini client/model available. Restart the server.")
+
+    topic = payload.topic
+    initial_prompt = payload.initial_prompt
+    video_title = topic.title()
+
+    prompt = f"""
+    You are an educational scriptwriter and expert video producer.
+    I need you to create a 4-5 scene storyboard explaining the topic: "{topic}".
+    The video should use steps and bullet points.
+    """
+
+    if initial_prompt:
+        prompt += f"\n    The user has provided specific instructions: {initial_prompt}. You must prioritize this instruction while writing the script.\n"
+
+    prompt += """
+    Generate a strict JSON array of scene objects for a Remotion video storyboard.
+    Every scene MUST have the following keys: `id` (number), `durationInSeconds` (number), and `narration` (string script to be spoken).
+
+    Choose one of the following scene types for each scene and include its specific required keys:
+
+    1. type: "title"
+       - title (string)
+       - subtitle (string, optional)
+
+    2. type: "bullet_points"
+       - heading (string)
+       - content_points (array of strings)
+
+    3. type: "numbered_steps"
+       - heading (string)
+       - content_points (array of strings)
+
+    Return ONLY the valid JSON array of these scene objects, with no markdown formatting, no code blocks, and no extra text.
+    """
+
+    try:
+        raw_text = _call_gemini_with_retry(prompt)
+        generated_scenes = json.loads(raw_text)
+
+        storyboard_data = {
+            "video": {
+                "title": video_title,
+                "fps": 30,
+                "width": 1920,
+                "height": 1080,
+            },
+            "style": DEFAULT_STYLE.copy(),
+            "scenes": generated_scenes,
+        }
+
+        StoryboardModel.model_validate(storyboard_data)
+        return storyboard_data
+
+    except HTTPException:
+        raise
+    except ValidationError as e:
+        raise HTTPException(status_code=500, detail=f"AI returned invalid storyboard schema: {e}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Explainer pipeline error: {e}")
+
 # ── Endpoint: /analyze ────────────────────────────────────────
 
 @app.post("/analyze")
-async def analyze_data(file: UploadFile = File(...)):
+async def analyze_data(
+    file: UploadFile = File(...),
+    initial_prompt: Optional[str] = Form(None)
+):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=500, detail="Gemini API Key is missing.")
     if not GEMINI_CLIENT or not GEMINI_MODEL:
@@ -197,7 +274,12 @@ async def analyze_data(file: UploadFile = File(...)):
     prompt = f"""
     You are an expert data analyst and video producer. Analyze the following corporate data provided as CSV:
     {csv_data}
+"""
 
+    if initial_prompt:
+        prompt += f"\n    The user has provided specific instructions: {initial_prompt}. You must prioritize this instruction while analyzing the data and deciding the scenes.\n"
+
+    prompt += """
     Generate a strict JSON array of scene objects for a Remotion video storyboard.
     Every scene MUST have the following keys: `id` (number), `durationInSeconds` (number), and `narration` (string script to be spoken).
 

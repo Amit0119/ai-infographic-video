@@ -87,6 +87,18 @@ export interface ComparisonSceneProps {
   style: SceneStyle;
 }
 
+export interface BulletPointsSceneProps {
+  heading: string;
+  content_points: string[];
+  style: SceneStyle;
+}
+
+export interface NumberedStepsSceneProps {
+  heading: string;
+  content_points: string[];
+  style: SceneStyle;
+}
+
 // ── Storyboard Scene Definitions ─────────────────────────────
 
 export interface TitleSceneData {
@@ -150,6 +162,22 @@ export interface ComparisonSceneData {
   items: ComparisonItem[];
 }
 
+export interface BulletPointsSceneData {
+  id: number;
+  type: "bullet_points";
+  durationInSeconds: number;
+  heading: string;
+  content_points: string[];
+}
+
+export interface NumberedStepsSceneData {
+  id: number;
+  type: "numbered_steps";
+  durationInSeconds: number;
+  heading: string;
+  content_points: string[];
+}
+
 /** Union of all possible scene types in a storyboard. */
 export type StoryboardScene = (
   | TitleSceneData
@@ -158,6 +186,8 @@ export type StoryboardScene = (
   | LineChartSceneData
   | HighlightSceneData
   | ComparisonSceneData
+  | BulletPointsSceneData
+  | NumberedStepsSceneData
 ) & { narration?: string; };
 
 // ── Root Storyboard Type ─────────────────────────────────────

@@ -1,252 +1,77 @@
 {
   "video": {
-    "title": "Ai Corporate Infographic Poc Sales Data",
+    "title": "How Photosynthesis Works",
     "fps": 30,
     "width": 1920,
     "height": 1080
   },
   "style": {
-    "backgroundColor": "#f0a8e0",
+    "backgroundColor": "#0e3502",
     "primaryColor": "#38bdf8",
     "secondaryColor": "#818cf8",
     "accentColor": "#34d399",
     "textColor": "#ffffff",
     "subtextColor": "#94a3b8",
     "fontFamily": "Inter",
-    "currencySymbol": "$",
+    "currencySymbol": "",
     "companyWatermark": "IWERK Infosolution"
   },
   "scenes": [
     {
       "id": 1,
-      "durationInSeconds": 5,
-      "narration": "Welcome to the 2026 Annual Business Performance Review. Let's dive into our results for the year.",
+      "durationInSeconds": 8,
+      "narration": "Welcome to a fascinating journey into the secret life of plants! Today, we're uncovering the magic behind how plants create their own food: Photosynthesis.",
       "type": "title",
-      "title": "2026 Annual Business Performance Review",
-      "subtitle": "Driving Growth and Achievement"
+      "title": "How Photosynthesis Works",
+      "subtitle": "The Secret Life of Plants"
     },
     {
       "id": 2,
-      "durationInSeconds": 7,
-      "narration": "For the entire year of 2026, our total revenue reached an impressive 806.9 Crores, exceeding our target by a significant 23.0 Crores. This translates to an overall achievement of 103.0%.",
-      "type": "kpi",
-      "metric": "Total Revenue",
-      "value": 806.9,
-      "unit": "Cr",
-      "growth": 23,
-      "growthLabel": "above target",
-      "prefix": ""
+      "durationInSeconds": 15,
+      "narration": "So, what exactly is photosynthesis? It's a vital biological process that sustains almost all life on Earth, converting light energy into chemical energy.",
+      "type": "bullet_points",
+      "heading": "What is Photosynthesis?",
+      "content_points": [
+        "Process used by plants, algae, and some bacteria.",
+        "Converts light energy into chemical energy (glucose).",
+        "Essential for producing oxygen in our atmosphere.",
+        "Foundation of most food chains."
+      ]
     },
     {
       "id": 3,
-      "durationInSeconds": 10,
-      "narration": "Looking at our monthly performance, we see a consistent upward trend in revenue throughout the year. While we saw some minor fluctuations, the overall trajectory shows healthy growth and strong performance, consistently meeting or exceeding targets in the latter half.",
-      "type": "line_chart",
-      "title": "Monthly Revenue Performance (Jan-Dec 2026)",
-      "items": [
-        {
-          "name": "Jan",
-          "value": 47.7
-        },
-        {
-          "name": "Feb",
-          "value": 48.9
-        },
-        {
-          "name": "Mar",
-          "value": 51.2
-        },
-        {
-          "name": "Apr",
-          "value": 53.2
-        },
-        {
-          "name": "May",
-          "value": 55.5
-        },
-        {
-          "name": "Jun",
-          "value": 57.4
-        },
-        {
-          "name": "Jul",
-          "value": 58.3
-        },
-        {
-          "name": "Aug",
-          "value": 60
-        },
-        {
-          "name": "Sep",
-          "value": 60.9
-        },
-        {
-          "name": "Oct",
-          "value": 61.9
-        },
-        {
-          "name": "Nov",
-          "value": 63.1
-        },
-        {
-          "name": "Dec",
-          "value": 64.8
-        }
-      ],
-      "targetItems": [
-        {
-          "name": "Jan",
-          "value": 49.7
-        },
-        {
-          "name": "Feb",
-          "value": 50.7
-        },
-        {
-          "name": "Mar",
-          "value": 52
-        },
-        {
-          "name": "Apr",
-          "value": 53.7
-        },
-        {
-          "name": "May",
-          "value": 55.6
-        },
-        {
-          "name": "Jun",
-          "value": 57.5
-        },
-        {
-          "name": "Jul",
-          "value": 58.9
-        },
-        {
-          "name": "Aug",
-          "value": 60.4
-        },
-        {
-          "name": "Sep",
-          "value": 61.4
-        },
-        {
-          "name": "Oct",
-          "value": 62.4
-        },
-        {
-          "name": "Nov",
-          "value": 63.6
-        },
-        {
-          "name": "Dec",
-          "value": 64.7
-        }
+      "durationInSeconds": 18,
+      "narration": "To begin this incredible process, plants need three main ingredients. Think of it as a recipe from nature's kitchen.",
+      "type": "numbered_steps",
+      "heading": "The Ingredients of Photosynthesis",
+      "content_points": [
+        "**Sunlight:** The energy source, absorbed by chlorophyll.",
+        "**Water (H\u2082O):** Absorbed from the soil by roots.",
+        "**Carbon Dioxide (CO\u2082):** Taken from the air through tiny pores called stomata."
       ]
     },
     {
       "id": 4,
-      "durationInSeconds": 8,
-      "narration": "Now let's break down the performance by region. The West and South regions were outstanding, significantly surpassing their revenue targets, while North and East faced some challenges.",
-      "type": "bar_chart",
-      "title": "Total Revenue by Region (2026)",
-      "items": [
-        {
-          "name": "West",
-          "value": 296.2
-        },
-        {
-          "name": "South",
-          "value": 191.9
-        },
-        {
-          "name": "North",
-          "value": 191
-        },
-        {
-          "name": "East",
-          "value": 127.8
-        }
+      "durationInSeconds": 22,
+      "narration": "Once the ingredients are gathered, the magic happens inside specialized plant cells. Let's break down the main steps.",
+      "type": "numbered_steps",
+      "heading": "The Photosynthesis Process",
+      "content_points": [
+        "**Light-Dependent Reactions:** Light energy splits water molecules, releasing oxygen and creating energy carriers (ATP, NADPH).",
+        "**Light-Independent Reactions (Calvin Cycle):** Using the energy carriers, carbon dioxide is converted into glucose (sugar)."
       ]
     },
     {
       "id": 5,
-      "durationInSeconds": 7,
-      "narration": "The West region was our top performer, generating 296.2 Crores in revenue. They achieved a remarkable 108.9% of their target, resulting in a positive variance of 24.5 Crores. Excellent work, West team!",
-      "type": "highlight",
-      "metric": "West Region Revenue",
-      "value": 296.2,
-      "unit": "Cr",
-      "badge": "Top Performer",
-      "achievement": 108.9,
-      "variance": 24.5,
-      "sentiment": "positive"
-    },
-    {
-      "id": 6,
-      "durationInSeconds": 7,
-      "narration": "Conversely, the North region generated 191.0 Crores, but fell short of its target, achieving 95.3%. This led to a variance of negative 9.5 Crores. We need to analyze the specific factors impacting this region and develop strategies for improvement.",
-      "type": "highlight",
-      "metric": "North Region Revenue",
-      "value": 191,
-      "unit": "Cr",
-      "badge": "Area for Focus",
-      "achievement": 95.3,
-      "variance": -9.5,
-      "sentiment": "negative"
-    },
-    {
-      "id": 7,
-      "durationInSeconds": 8,
-      "narration": "Shifting our focus to product performance, Industrial Motors significantly outperformed its targets, while Pumps faced headwinds, ending the year below its set objectives.",
-      "type": "comparison",
-      "title": "Product Performance: Actual vs. Target Revenue (2026)",
-      "items": [
-        {
-          "name": "Industrial Motors",
-          "actual": 486.2,
-          "target": 444.6
-        },
-        {
-          "name": "Pumps",
-          "actual": 320.7,
-          "target": 339.3
-        }
+      "durationInSeconds": 12,
+      "narration": "And the remarkable outputs? Plants get their food, and we get the air we breathe! It's a perfect natural cycle.",
+      "type": "bullet_points",
+      "heading": "Key Outputs & Importance",
+      "content_points": [
+        "**Glucose (Sugar):** Plant food for energy and growth.",
+        "**Oxygen (O\u2082):** Released into the atmosphere, vital for animal life.",
+        "A continuous cycle supporting life on Earth."
       ]
-    },
-    {
-      "id": 8,
-      "durationInSeconds": 7,
-      "narration": "Industrial Motors truly drove our success, with 486.2 Crores in revenue, achieving an impressive 109.4% of its target, and generating a positive variance of 41.6 Crores. This product line continues to be a strong pillar for our business.",
-      "type": "highlight",
-      "metric": "Industrial Motors Revenue",
-      "value": 486.2,
-      "unit": "Cr",
-      "badge": "Strong Performer",
-      "achievement": 109.4,
-      "variance": 41.6,
-      "sentiment": "positive"
-    },
-    {
-      "id": 9,
-      "durationInSeconds": 7,
-      "narration": "However, our Pumps product line generated 320.7 Crores, falling short with an achievement of 94.5% and a negative variance of 18.6 Crores. This area requires strategic attention to understand market dynamics and improve performance.",
-      "type": "highlight",
-      "metric": "Pumps Revenue",
-      "value": 320.7,
-      "unit": "Cr",
-      "badge": "Needs Improvement",
-      "achievement": 94.5,
-      "variance": -18.6,
-      "sentiment": "negative"
-    },
-    {
-      "id": 10,
-      "durationInSeconds": 5,
-      "narration": "In summary, 2026 was a year of strong overall revenue growth, driven primarily by our West and South regions and the Industrial Motors product. We also identified key areas for improvement in the North and East regions and for our Pumps product line. Thank you.",
-      "type": "title",
-      "title": "Key Takeaways & Next Steps",
-      "subtitle": "Leverage strengths, address challenges for 2027"
     }
   ]
 }

@@ -5,6 +5,8 @@ import { BarChart } from "./components/BarChart";
 import { LineChart } from "./components/LineChart";
 import { HighlightCard } from "./components/HighlightCard";
 import { ComparisonChart } from "./components/ComparisonChart";
+import { BulletPointsScene } from "./components/BulletPointsScene";
+import { NumberedStepsScene } from "./components/NumberedStepsScene";
 import storyboard from "./data/storyboard.json";
 import type { Storyboard, StoryboardScene } from "./types";
 
@@ -36,7 +38,9 @@ const InfographicVideo: React.FC = () => {
     <AbsoluteFill
       style={{
         backgroundColor: style.backgroundColor,
+        translate: "5px 0px",
       }}
+      from={-228}
     >
       <Series>
         {scenes.map((scene) => {
@@ -138,6 +142,36 @@ const InfographicVideo: React.FC = () => {
                 <ComparisonChart
                   title={scene.title}
                   items={scene.items}
+                  style={style}
+                />
+              </Series.Sequence>
+            );
+
+          case "bullet_points":
+            return (
+              <Series.Sequence
+                key={scene.id}
+                durationInFrames={durationInFrames}
+              >
+                {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                <BulletPointsScene
+                  heading={scene.heading}
+                  content_points={scene.content_points}
+                  style={style}
+                />
+              </Series.Sequence>
+            );
+
+          case "numbered_steps":
+            return (
+              <Series.Sequence
+                key={scene.id}
+                durationInFrames={durationInFrames}
+              >
+                {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                <NumberedStepsScene
+                  heading={scene.heading}
+                  content_points={scene.content_points}
                   style={style}
                 />
               </Series.Sequence>
