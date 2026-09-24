@@ -1,76 +1,147 @@
 {
   "video": {
-    "title": "How Photosynthesis Works",
+    "title": "Annual Budget Creation",
     "fps": 30,
     "width": 1920,
     "height": 1080
   },
   "style": {
-    "backgroundColor": "#0e3502",
+    "backgroundColor": "#0b2c7a",
     "primaryColor": "#38bdf8",
     "secondaryColor": "#818cf8",
     "accentColor": "#34d399",
     "textColor": "#ffffff",
     "subtextColor": "#94a3b8",
     "fontFamily": "Inter",
-    "currencySymbol": "",
+    "currencySymbol": "\u20b9",
     "companyWatermark": "IWERK Infosolution"
   },
   "scenes": [
     {
       "id": 1,
       "durationInSeconds": 8,
-      "narration": "Welcome to a fascinating journey into the secret life of plants! Today, we're uncovering the magic behind how plants create their own food: Photosynthesis.",
+      "narration": "Welcome, Schindler Department Heads. Today, we're demystifying the annual budget creation process. This isn't just about numbers; it's about strategic planning, resource allocation, and driving our collective success in the elevator manufacturing world.",
       "type": "title",
-      "title": "How Photosynthesis Works",
-      "subtitle": "The Secret Life of Plants"
+      "title": "Annual Budget Creation: A Strategic Guide",
+      "subtitle": "For Schindler Department Heads"
     },
     {
       "id": 2,
-      "durationInSeconds": 15,
-      "narration": "So, what exactly is photosynthesis? It's a vital biological process that sustains almost all life on Earth, converting light energy into chemical energy.",
-      "type": "bullet_points",
-      "heading": "What is Photosynthesis?",
-      "content_points": [
-        "Process used by plants, algae, and some bacteria.",
-        "Converts light energy into chemical energy (glucose).",
-        "Essential for producing oxygen in our atmosphere.",
-        "Foundation of most food chains."
-      ]
+      "durationInSeconds": 10,
+      "narration": "A well-crafted budget directly impacts our financial health. Last year, departments achieved an impressive budget adherence rate, showcasing our commitment to efficient resource management. This year, we aim even higher for optimized operational expenditure.",
+      "type": "kpi",
+      "metric": "Budget Adherence Rate",
+      "value": 95,
+      "unit": "%",
+      "growth": 3,
+      "growthLabel": "vs last year"
     },
     {
       "id": 3,
-      "durationInSeconds": 18,
-      "narration": "To begin this incredible process, plants need three main ingredients. Think of it as a recipe from nature's kitchen.",
+      "durationInSeconds": 12,
+      "narration": "Creating your department's annual budget involves four key steps. First, define your strategic objectives for the year. Second, forecast your department's revenues and expenses. Third, justify your resource needs with data. Finally, submit and review for alignment with overall company goals.",
       "type": "numbered_steps",
-      "heading": "The Ingredients of Photosynthesis",
+      "heading": "The 4-Step Budget Creation Process",
       "content_points": [
-        "**Sunlight:** The energy source, absorbed by chlorophyll.",
-        "**Water (H\u2082O):** Absorbed from the soil by roots.",
-        "**Carbon Dioxide (CO\u2082):** Taken from the air through tiny pores called stomata."
+        "Define Strategic Objectives",
+        "Forecast Revenues & Expenses",
+        "Justify Resource Needs",
+        "Submit & Review Budget"
       ]
     },
     {
       "id": 4,
-      "durationInSeconds": 22,
-      "narration": "Once the ingredients are gathered, the magic happens inside specialized plant cells. Let's break down the main steps.",
-      "type": "numbered_steps",
-      "heading": "The Photosynthesis Process",
-      "content_points": [
-        "**Light-Dependent Reactions:** Light energy splits water molecules, releasing oxygen and creating energy carriers (ATP, NADPH).",
-        "**Light-Independent Reactions (Calvin Cycle):** Using the energy carriers, carbon dioxide is converted into glucose (sugar)."
+      "durationInSeconds": 12,
+      "narration": "Let's look at a typical breakdown of how our overall budget is strategically allocated across key operational areas. This reflects our core investments in innovation, production efficiency, and market reach.",
+      "type": "bar_chart",
+      "title": "Schindler's Strategic Budget Allocation (Example)",
+      "chart_data": [
+        {
+          "label": "R&D & Innovation",
+          "value": 35
+        },
+        {
+          "label": "Production & Operations",
+          "value": 40
+        },
+        {
+          "label": "Sales & Marketing",
+          "value": 15
+        },
+        {
+          "label": "Admin & Support",
+          "value": 10
+        }
       ]
     },
     {
       "id": 5,
       "durationInSeconds": 12,
-      "narration": "And the remarkable outputs? Plants get their food, and we get the air we breathe! It's a perfect natural cycle.",
-      "type": "bullet_points",
-      "heading": "Key Outputs & Importance",
-      "content_points": [
-        "**Glucose (Sugar):** Plant food for energy and growth.",
-        "**Oxygen (O\u2082):** Released into the atmosphere, vital for animal life.",
-        "A continuous cycle supporting life on Earth."
+      "narration": "Now, consider a departmental view \u2013 for instance, a Production department's expense breakdown. Understanding where your budget is spent is crucial for cost optimization. Raw materials and labor typically form the largest portions.",
+      "type": "pie_chart",
+      "title": "Production Department: Annual Expense Categories",
+      "chart_data": [
+        {
+          "label": "Raw Materials",
+          "value": 45
+        },
+        {
+          "label": "Direct Labor",
+          "value": 30
+        },
+        {
+          "label": "Overheads & Utilities",
+          "value": 15
+        },
+        {
+          "label": "Maintenance & Repairs",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "durationInSeconds": 12,
+      "narration": "The budget isn't a one-time event; it's a cycle. Starting in Q3, we plan and prepare. Q4 sees approvals and finalization. The new year, Q1 through Q4, is for execution and continuous monitoring against our plan.",
+      "type": "timeline",
+      "title": "Annual Budget Cycle: Planning to Execution",
+      "chart_data": [
+        {
+          "label": "Q3: Planning & Forecasting",
+          "value": 1
+        },
+        {
+          "label": "Q4: Review & Approval",
+          "value": 2
+        },
+        {
+          "label": "Q1-Q4: Execution & Monitoring",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "durationInSeconds": 10,
+      "narration": "Finally, continuous monitoring is key. Here's how a department might compare its actual spending versus its approved budget for a critical expense category. This allows for timely adjustments and better financial control throughout the year.",
+      "type": "comparison",
+      "title": "Quarterly Expense Review: Budget vs. Actual (Example)",
+      "items": [
+        {
+          "name": "Q1 Production Costs (M\u20ac)",
+          "actual": 12.5,
+          "target": 12
+        },
+        {
+          "name": "Q2 R&D Spending (M\u20ac)",
+          "actual": 8.2,
+          "target": 8.5
+        },
+        {
+          "name": "Q3 Marketing Campaigns (M\u20ac)",
+          "actual": 5.8,
+          "target": 6
+        }
       ]
     }
   ]

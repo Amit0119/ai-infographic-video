@@ -3,6 +3,8 @@ import { TitleScene } from "./components/TitleScene";
 import { KPIAnimation } from "./components/KPIAnimation";
 import { BarChart } from "./components/BarChart";
 import { LineChart } from "./components/LineChart";
+import { PieChartScene } from "./components/PieChartScene";
+import { TimelineScene } from "./components/TimelineScene";
 import { HighlightCard } from "./components/HighlightCard";
 import { ComparisonChart } from "./components/ComparisonChart";
 import { BulletPointsScene } from "./components/BulletPointsScene";
@@ -38,7 +40,6 @@ const InfographicVideo: React.FC = () => {
     <AbsoluteFill
       style={{
         backgroundColor: style.backgroundColor,
-        translate: "5px 0px",
       }}
       from={-228}
     >
@@ -87,8 +88,38 @@ const InfographicVideo: React.FC = () => {
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                 <BarChart
                   title={scene.title}
-                  items={scene.items}
+                  chart_data={scene.chart_data!}
                   color={scene.color}
+                  style={style}
+                />
+              </Series.Sequence>
+            );
+
+          case "pie_chart":
+            return (
+              <Series.Sequence
+                key={scene.id}
+                durationInFrames={durationInFrames}
+              >
+                {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                <PieChartScene
+                  title={scene.title}
+                  chart_data={scene.chart_data!}
+                  style={style}
+                />
+              </Series.Sequence>
+            );
+
+          case "timeline":
+            return (
+              <Series.Sequence
+                key={scene.id}
+                durationInFrames={durationInFrames}
+              >
+                {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                <TimelineScene
+                  title={scene.title}
+                  chart_data={scene.chart_data!}
                   style={style}
                 />
               </Series.Sequence>
@@ -103,7 +134,7 @@ const InfographicVideo: React.FC = () => {
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                 <LineChart
                   title={scene.title}
-                  items={scene.items}
+                  chart_data={scene.chart_data!}
                   targetItems={scene.targetItems}
                   color={scene.color}
                   style={style}

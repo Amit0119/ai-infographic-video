@@ -31,7 +31,7 @@ const STAGGER_FRAMES = 6; // Delay between each bar's animation start
 
 export const BarChart: React.FC<BarChartSceneProps> = ({
   title,
-  items,
+  chart_data,
   color,
   style,
 }) => {
@@ -43,11 +43,11 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
   const chartWidth = videoWidth - CHART_PADDING.left - CHART_PADDING.right;
   const chartHeight = videoHeight - CHART_PADDING.top - CHART_PADDING.bottom;
 
-  const maxValue = Math.max(...items.map((item) => item.value));
+  const maxValue = Math.max(...chart_data.map((item) => item.value));
   // Add 20% headroom above the tallest bar for value labels
   const yMax = maxValue * 1.2;
 
-  const totalBars = items.length;
+  const totalBars = chart_data.length;
   const barWidth = chartWidth / (totalBars + (totalBars - 1) * BAR_GAP_RATIO);
   const gapWidth = barWidth * BAR_GAP_RATIO;
 
@@ -144,7 +144,7 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
         />
 
         {/* Bars + Labels */}
-        {items.map((item, index) => {
+        {chart_data.map((item, index) => {
           // Staggered spring for each bar
           const barSpring = spring({
             frame: frame - 10 - index * STAGGER_FRAMES,
@@ -181,7 +181,7 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
           const gradientId = `bar-gradient-${index}`;
 
           return (
-            <g key={item.name}>
+            <g key={item.label}>
               {/* Bar gradient definition */}
               <defs>
                 <linearGradient
@@ -248,7 +248,7 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={labelOpacity}
               >
-                {item.name}
+                {item.label}
               </text>
             </g>
           );

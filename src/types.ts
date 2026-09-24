@@ -38,28 +38,35 @@ export interface KPISceneProps {
   style: SceneStyle;
 }
 
-export interface BarChartItem {
-  name: string;
+export interface ChartData {
+  label: string;
   value: number;
 }
 
 export interface BarChartSceneProps {
   title: string;
-  items: BarChartItem[];
+  chart_data: ChartData[];
   color?: string;
   style: SceneStyle;
 }
 
-export interface LineChartItem {
-  name: string;
-  value: number;
-}
-
 export interface LineChartSceneProps {
   title: string;
-  items: LineChartItem[];
-  targetItems?: LineChartItem[];
+  chart_data: ChartData[];
+  targetItems?: ChartData[];
   color?: string;
+  style: SceneStyle;
+}
+
+export interface PieChartSceneProps {
+  title: string;
+  chart_data: ChartData[];
+  style: SceneStyle;
+}
+
+export interface TimelineSceneProps {
+  title: string;
+  chart_data: ChartData[];
   style: SceneStyle;
 }
 
@@ -126,7 +133,7 @@ export interface BarChartSceneData {
   type: "bar_chart";
   durationInSeconds: number;
   title: string;
-  items: BarChartItem[];
+  chart_data: ChartData[];
   color?: string;
 }
 
@@ -135,9 +142,25 @@ export interface LineChartSceneData {
   type: "line_chart";
   durationInSeconds: number;
   title: string;
-  items: LineChartItem[];
-  targetItems?: LineChartItem[];
+  chart_data: ChartData[];
+  targetItems?: ChartData[];
   color?: string;
+}
+
+export interface PieChartSceneData {
+  id: number;
+  type: "pie_chart";
+  durationInSeconds: number;
+  title: string;
+  chart_data: ChartData[];
+}
+
+export interface TimelineSceneData {
+  id: number;
+  type: "timeline";
+  durationInSeconds: number;
+  title: string;
+  chart_data: ChartData[];
 }
 
 export interface HighlightSceneData {
@@ -184,11 +207,13 @@ export type StoryboardScene = (
   | KPISceneData
   | BarChartSceneData
   | LineChartSceneData
+  | PieChartSceneData
+  | TimelineSceneData
   | HighlightSceneData
   | ComparisonSceneData
   | BulletPointsSceneData
   | NumberedStepsSceneData
-) & { narration?: string; };
+) & { narration?: string; chart_data?: {label: string, value: number | string}[]; };
 
 // ── Root Storyboard Type ─────────────────────────────────────
 

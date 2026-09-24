@@ -26,7 +26,7 @@ const CHART_PADDING = { top: 140, right: 100, bottom: 100, left: 100 };
 
 export const LineChart: React.FC<LineChartSceneProps> = ({
   title,
-  items,
+  chart_data,
   targetItems,
   color,
   style,
@@ -41,7 +41,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
 
   // Merge all values to find Y-axis range
   const allValues = [
-    ...items.map((i) => i.value),
+    ...chart_data.map((i) => i.value),
     ...(targetItems || []).map((i) => i.value),
   ];
   const minValue = Math.min(...allValues) * 0.85;
@@ -54,7 +54,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
   // ── Helper: Map data to SVG coordinates ────────────────────
 
   const getX = (index: number) =>
-    CHART_PADDING.left + (index / (items.length - 1)) * chartWidth;
+    CHART_PADDING.left + (index / (chart_data.length - 1)) * chartWidth;
 
   const getY = (value: number) =>
     CHART_PADDING.top +
@@ -63,7 +63,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
 
   // ── Build SVG path strings ─────────────────────────────────
 
-  const buildLinePath = (data: typeof items) =>
+  const buildLinePath = (data: typeof chart_data) =>
     data
       .map((item, i) => {
         const x = getX(i);
@@ -72,7 +72,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
       })
       .join(" ");
 
-  const buildAreaPath = (data: typeof items) => {
+  const buildAreaPath = (data: typeof chart_data) => {
     const linePath = buildLinePath(data);
     const lastX = getX(data.length - 1);
     const firstX = getX(0);
@@ -80,17 +80,17 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
     return `${linePath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
   };
 
-  const actualPath = buildLinePath(items);
-  const areaPath = buildAreaPath(items);
+  const actualPath = buildLinePath(chart_data);
+  const areaPath = buildAreaPath(chart_data);
   const targetPath = targetItems ? buildLinePath(targetItems) : "";
 
   // ── Animation: Progressive line draw ───────────────────────
 
   // Calculate approximate total path length for stroke animation
   let totalPathLength = 0;
-  for (let i = 1; i < items.length; i++) {
+  for (let i = 1; i < chart_data.length; i++) {
     const dx = getX(i) - getX(i - 1);
-    const dy = getY(items[i].value) - getY(items[i - 1].value);
+    const dy = getY(chart_data[i].value) - getY(chart_data[i - 1].value);
     totalPathLength += Math.sqrt(dx * dx + dy * dy);
   }
 
@@ -264,14 +264,14 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
         />
 
         {/* Data points + labels */}
-        {items.map((item, index) => {
+        {chart_data.map((item, index) => {
           const x = getX(index);
           const y = getY(item.value);
 
           // Each dot appears when the line reaches it
           const dotProgress = interpolate(
             clampedDraw,
-            [index / items.length, (index + 0.5) / items.length],
+            [index / chart_data.length, (index + 0.5) / chart_data.length],
             [0, 1],
             { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
           );
@@ -279,13 +279,13 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
           // Value label appears after dot
           const labelProgress = interpolate(
             clampedDraw,
-            [(index + 0.3) / items.length, (index + 0.8) / items.length],
+            [(index + 0.3) / chart_data.length, (index + 0.8) / chart_data.length],
             [0, 1],
             { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
           );
 
           return (
-            <g key={item.name}>
+            <g key={item.label}>
               {/* Dot glow */}
               <circle
                 cx={x}
@@ -306,7 +306,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
               />
 
               {/* Value label (show every other to avoid clutter if many items) */}
-              {(items.length <= 6 || index % 2 === 0 || index === items.length - 1) && (
+              {(chart_data.length <= 6 || index % 2 === 0 || index === chart_data.length - 1) && (
                 <text
                   x={x}
                   y={y - 18}
@@ -332,7 +332,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={dotProgress}
               >
-                {item.name}
+                {item.label}
               </text>
             </g>
           );

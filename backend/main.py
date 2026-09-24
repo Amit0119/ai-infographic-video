@@ -91,7 +91,7 @@ class StoryboardModel(BaseModel):
                 if key not in scene:
                     raise ValueError(f"Scene {i} missing required field: '{key}'")
             if scene["type"] not in (
-                "title", "kpi", "bar_chart", "line_chart", "highlight", "comparison", "bullet_points", "numbered_steps"
+                "title", "kpi", "bar_chart", "line_chart", "highlight", "comparison", "bullet_points", "numbered_steps", "pie_chart", "timeline"
             ):
                 raise ValueError(f"Scene {i} has unknown type: '{scene['type']}'")
         return scenes
@@ -192,14 +192,20 @@ async def generate_explainer(payload: ExplainerRequestModel):
 
     prompt = f"""
     You are an educational scriptwriter and expert video producer.
-    I need you to create a 4-5 scene storyboard explaining the topic: "{topic}".
-    The video should use steps and bullet points.
+    I need you to create a storyboard explaining the topic: "{topic}".
+    
+    CRITICAL SCENE COUNT CONSTRAINT:
+    You MUST generate a storyboard containing strictly between 6 to 8 scenes. DO NOT generate fewer than 6 scenes. Expand on the topic naturally to reach this count.
     """
 
     if initial_prompt:
         prompt += f"\n    The user has provided specific instructions: {initial_prompt}. You must prioritize this instruction while writing the script.\n"
 
     prompt += """
+    VISUAL DATA & CHART GENERATION:
+    The video must be a true infographic. Stop relying only on text and bullet points. You must use dynamic visual scene types like "bar_chart", "pie_chart", "kpi", "timeline", and "comparison".
+    Whenever a chart or data-driven scene is selected (like bar_chart, pie_chart, timeline), you MUST output a `chart_data` array in the JSON structure containing `label` and `value` pairs (e.g., `"chart_data": [{"label": "Marketing", "value": 30}, {"label": "IT", "value": 20}]`).
+
     Generate a strict JSON array of scene objects for a Remotion video storyboard.
     Every scene MUST have the following keys: `id` (number), `durationInSeconds` (number), and `narration` (string script to be spoken).
 
@@ -209,13 +215,26 @@ async def generate_explainer(payload: ExplainerRequestModel):
        - title (string)
        - subtitle (string, optional)
 
-    2. type: "bullet_points"
-       - heading (string)
-       - content_points (array of strings)
+    2. type: "kpi"
+       - metric (string, e.g., "Total Revenue")
+       - value (number)
+       - unit (string, e.g., "M", "%")
+       - prefix (string, optional, e.g., "$")
+       - growth (number)
+       - growthLabel (string, optional, e.g., "vs last year")
 
-    3. type: "numbered_steps"
+    3. type: "bar_chart" or "pie_chart" or "timeline"
+       - title (string)
+       - chart_data (array of objects with `label` (string) and `value` (number))
+
+    4. type: "comparison"
+       - title (string)
+       - items (array of objects with `name` (string), `actual` (number), `target` (number))
+
+    5. type: "bullet_points" or "numbered_steps"
        - heading (string)
        - content_points (array of strings)
+       (Use these sparingly, prioritize charts!)
 
     Return ONLY the valid JSON array of these scene objects, with no markdown formatting, no code blocks, and no extra text.
     """
@@ -274,12 +293,19 @@ async def analyze_data(
     prompt = f"""
     You are an expert data analyst and video producer. Analyze the following corporate data provided as CSV:
     {csv_data}
+    
+    CRITICAL SCENE COUNT CONSTRAINT:
+    You MUST generate a storyboard containing strictly between 6 to 8 scenes. DO NOT generate fewer than 6 scenes. Expand on the topic naturally to reach this count.
 """
 
     if initial_prompt:
         prompt += f"\n    The user has provided specific instructions: {initial_prompt}. You must prioritize this instruction while analyzing the data and deciding the scenes.\n"
 
     prompt += """
+    VISUAL DATA & CHART GENERATION:
+    The video must be a true infographic. Stop relying only on text and bullet points. You must use dynamic visual scene types like "bar_chart", "pie_chart", "kpi", "timeline", and "comparison".
+    Whenever a chart or data-driven scene is selected (like bar_chart, pie_chart, timeline), you MUST output a `chart_data` array in the JSON structure containing `label` and `value` pairs (e.g., `"chart_data": [{"label": "Marketing", "value": 30}, {"label": "IT", "value": 20}]`).
+
     Generate a strict JSON array of scene objects for a Remotion video storyboard.
     Every scene MUST have the following keys: `id` (number), `durationInSeconds` (number), and `narration` (string script to be spoken).
 
@@ -297,14 +323,14 @@ async def analyze_data(
        - growth (number)
        - growthLabel (string, optional, e.g., "vs last year")
 
-    3. type: "bar_chart"
+    3. type: "bar_chart" or "pie_chart" or "timeline"
        - title (string)
-       - items (array of objects with `name` (string) and `value` (number))
+       - chart_data (array of objects with `label` (string) and `value` (number))
 
     4. type: "line_chart"
        - title (string)
-       - items (array of objects with `name` (string) and `value` (number))
-       - targetItems (optional array of objects with `name` (string) and `value` (number))
+       - chart_data (array of objects with `label` (string) and `value` (number))
+       - targetItems (optional array of objects with `label` (string) and `value` (number))
 
     5. type: "highlight"
        - metric (string)
