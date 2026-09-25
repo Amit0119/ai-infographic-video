@@ -213,7 +213,7 @@ export type StoryboardScene = (
   | ComparisonSceneData
   | BulletPointsSceneData
   | NumberedStepsSceneData
-) & { narration?: string; chart_data?: {label: string, value: number | string}[]; };
+) & { narration?: string; captions?: { word: string; start: number; end: number }[]; chart_data?: {label: string, value: number | string}[]; brollUrl?: string; };
 
 // ── Root Storyboard Type ─────────────────────────────────────
 

@@ -7,6 +7,7 @@ import {
   interpolate,
 } from "remotion";
 import type { KPISceneProps } from "../types";
+import { GlassCard } from "./GlassCard";
 
 /**
  * KPIAnimation — Metric display with smooth number-counting animation.
@@ -58,15 +59,21 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
   const labelOpacity = labelSpring;
   const labelTranslateY = interpolate(labelSpring, [0, 1], [30, 0]);
 
-  // Number counting animation
-  const clampedNumberSpring = Math.max(0, Math.min(1, numberSpring));
-  const displayValue = clampedNumberSpring * value;
+  // Safe parsing
+  const numericValue = typeof value === 'number' ? value : parseFloat(value as any);
+  const isNumeric = !isNaN(numericValue);
 
-  // Format the number: use decimals only if the value has them
-  const isInteger = Number.isInteger(value);
-  const formattedNumber = isInteger
-    ? Math.round(displayValue).toLocaleString("en-IN")
-    : displayValue.toFixed(1);
+  // Number counting animation (only if numeric)
+  const clampedNumberSpring = Math.max(0, Math.min(1, numberSpring));
+  
+  let formattedNumber: string | number = value || "";
+  if (isNumeric) {
+    const displayValue = clampedNumberSpring * numericValue;
+    const isInteger = Number.isInteger(numericValue);
+    formattedNumber = isInteger
+      ? Math.round(displayValue).toLocaleString("en-IN")
+      : displayValue.toFixed(1);
+  }
 
   // Number opacity
   const numberOpacity = interpolate(
@@ -81,9 +88,10 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
   const growthScale = clampedGrowthSpring;
   const growthOpacity = clampedGrowthSpring;
 
-  const isPositiveGrowth = growth >= 0;
+  const isPositiveGrowth = typeof growth === 'number' ? growth >= 0 : true;
   const growthColor = isPositiveGrowth ? "#10B981" : "#EF4444";
   const growthArrow = isPositiveGrowth ? "↑" : "↓";
+  const displayGrowth = typeof growth === 'number' ? `${Math.abs(growth)}%` : growth;
 
   // Background fade
   const bgOpacity = interpolate(frame, [0, 12], [0, 1], {
@@ -98,12 +106,19 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
         backgroundColor: style.backgroundColor,
         opacity: bgOpacity,
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         fontFamily: style.fontFamily,
       }}
     >
+      <GlassCard style={style} width="70%" height="auto" opacity={1}>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative"
+        }}>
       {/* Subtle gradient glow behind the number */}
       <div
         style={{
@@ -150,6 +165,7 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
             lineHeight: 1,
             letterSpacing: "-0.03em",
             fontVariantNumeric: "tabular-nums",
+            textShadow: "0px 10px 30px rgba(0,0,0,0.6)"
           }}
         >
           {prefix}
@@ -183,6 +199,7 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
             border: `2px solid ${growthColor}40`,
             opacity: growthOpacity,
             transform: `scale(${growthScale})`,
+            boxShadow: "0px 10px 30px rgba(0,0,0,0.3)"
           }}
         >
           <span style={{ fontSize: 28, color: growthColor }}>{growthArrow}</span>
@@ -194,7 +211,7 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {Math.abs(growth)}%
+            {displayGrowth}
           </span>
           <span
             style={{
@@ -208,6 +225,8 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
           </span>
         </div>
       ) : null}
+        </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

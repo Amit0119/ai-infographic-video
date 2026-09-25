@@ -7,6 +7,7 @@ import {
   interpolate,
 } from "remotion";
 import type { BarChartSceneProps } from "../types";
+import { GlassCard } from "./GlassCard";
 
 /**
  * BarChart — Fully dynamic SVG bar chart with spring animations.
@@ -43,7 +44,12 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
   const chartWidth = videoWidth - CHART_PADDING.left - CHART_PADDING.right;
   const chartHeight = videoHeight - CHART_PADDING.top - CHART_PADDING.bottom;
 
-  const maxValue = Math.max(...chart_data.map((item) => item.value));
+  // Safely parse numerical values for Y-axis scaling
+  const numericValues = chart_data.map((item) => {
+    const val = typeof item.value === 'number' ? item.value : parseFloat(item.value as any);
+    return isNaN(val) ? 0 : val;
+  });
+  const maxValue = Math.max(...numericValues, 1);
   // Add 20% headroom above the tallest bar for value labels
   const yMax = maxValue * 1.2;
 
@@ -76,44 +82,38 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
         backgroundColor: style.backgroundColor,
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
-      {/* Subtle gradient backdrop */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: `linear-gradient(180deg, ${style.primaryColor}08 0%, transparent 50%)`,
-          pointerEvents: "none",
-        }}
-      />
-
+      <GlassCard style={style} width="90%" height="80%" opacity={titleOpacity} transform={`translateY(${titleTranslateY}px)`}>
       {/* Chart Title */}
       <h2
         style={{
-          position: "absolute",
-          top: 40,
-          left: 0,
-          right: 0,
           textAlign: "center",
           fontSize: 44,
           fontWeight: 700,
           color: style.textColor,
           margin: 0,
           letterSpacing: "-0.01em",
-          opacity: titleOpacity,
-          transform: `translateY(${titleTranslateY}px)`,
         }}
       >
         {title}
       </h2>
 
       {/* SVG Chart Area */}
+      <div style={{ flex: 1, position: 'relative' }}>
       <svg
-        width={videoWidth}
-        height={videoHeight}
+        width="100%"
+        height="100%"
         viewBox={`0 0 ${videoWidth} ${videoHeight}`}
-        style={{ position: "absolute", top: 0, left: 0 }}
+        style={{ 
+          position: "absolute", 
+          top: -80, 
+          left: 0,
+          filter: "drop-shadow(0px 12px 24px rgba(0,0,0,0.4))"
+        }}
       >
         {/* Horizontal grid lines */}
         {[0.25, 0.5, 0.75, 1.0].map((fraction) => {
@@ -154,12 +154,14 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
           const clampedBarSpring = Math.max(0, Math.min(1, barSpring));
 
           // Bar geometry
-          const x =
-            CHART_PADDING.left + index * (barWidth + gapWidth);
-          const fullBarHeight = (item.value / yMax) * chartHeight;
+          const x = CHART_PADDING.left + index * (barWidth + gapWidth);
+          const rawNumeric = typeof item.value === 'number' ? item.value : parseFloat(item.value as any);
+          const isNumeric = !isNaN(rawNumeric);
+          const safeNumeric = isNumeric ? rawNumeric : 0;
+          
+          const fullBarHeight = (safeNumeric / yMax) * chartHeight;
           const currentBarHeight = fullBarHeight * clampedBarSpring;
-          const y =
-            CHART_PADDING.top + chartHeight - currentBarHeight;
+          const y = CHART_PADDING.top + chartHeight - currentBarHeight;
 
           // Value label (appears after bar is ~80% grown)
           const valueLabelOpacity = interpolate(
@@ -234,7 +236,7 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={valueLabelOpacity}
               >
-                {(item.value * clampedBarSpring).toFixed(1)}
+                {isNumeric ? (safeNumeric * clampedBarSpring).toFixed(1) : item.value}
               </text>
 
               {/* X-axis label below bar */}
@@ -254,6 +256,8 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
           );
         })}
       </svg>
+      </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

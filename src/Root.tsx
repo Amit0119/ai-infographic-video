@@ -9,8 +9,42 @@ import { HighlightCard } from "./components/HighlightCard";
 import { ComparisonChart } from "./components/ComparisonChart";
 import { BulletPointsScene } from "./components/BulletPointsScene";
 import { NumberedStepsScene } from "./components/NumberedStepsScene";
+import { Captions } from "./components/Captions";
+import { BRollBackground } from "./components/BRollBackground";
 import storyboard from "./data/storyboard.json";
-import type { Storyboard, StoryboardScene } from "./types";
+import type { Storyboard, StoryboardScene, SceneStyle } from "./types";
+import { useCurrentFrame, interpolate } from "remotion";
+
+// Load Inter Font dynamically
+import { loadFont } from "@remotion/google-fonts/Inter";
+try {
+  loadFont();
+} catch (e) {
+  console.log("Font already loaded or failed to load");
+}
+
+const Background = ({ style }: { style: SceneStyle }) => {
+  const frame = useCurrentFrame();
+  // Slow pan for the grid to make it feel alive without being distracting
+  const shift = interpolate(frame, [0, 900], [0, -100], { extrapolateRight: "extend" });
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: style.backgroundColor,
+        backgroundSize: "60px 60px",
+        backgroundImage: `linear-gradient(to right, ${style.primaryColor}08 1px, transparent 1px), linear-gradient(to bottom, ${style.primaryColor}08 1px, transparent 1px)`,
+        backgroundPosition: `${shift}px ${shift}px`,
+        zIndex: 0,
+      }}
+    >
+       <div style={{
+          position: "absolute",
+          inset: 0,
+          background: `radial-gradient(circle at center, transparent 30%, ${style.backgroundColor} 100%)`
+       }} />
+    </AbsoluteFill>
+  );
+};
 
 // ── Cast the imported JSON to our typed Storyboard ───────────
 const data = storyboard as Storyboard;
@@ -37,12 +71,12 @@ const InfographicVideo: React.FC = () => {
   const { style, scenes } = data;
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: style.backgroundColor,
-      }}
-      from={-228}
-    >
+    <AbsoluteFill from={-228}>
+      <Background style={style} />
+      
+      {/* Background Music with ducked volume so it doesn't overpower TTS */}
+      <Audio src={staticFile("bgm.mp3")} volume={0.12} loop />
+
       <Series>
         {scenes.map((scene) => {
         const durationInFrames = scene.durationInSeconds * fps;
@@ -52,11 +86,13 @@ const InfographicVideo: React.FC = () => {
             return (
               <Series.Sequence key={scene.id} durationInFrames={durationInFrames}>
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <TitleScene
                   title={scene.title}
                   subtitle={scene.subtitle}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -67,6 +103,7 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <KPIAnimation
                   metric={scene.metric}
                   value={scene.value}
@@ -76,6 +113,7 @@ const InfographicVideo: React.FC = () => {
                   growthLabel={scene.growthLabel}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -86,12 +124,14 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <BarChart
                   title={scene.title}
                   chart_data={scene.chart_data!}
                   color={scene.color}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -102,11 +142,13 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <PieChartScene
                   title={scene.title}
                   chart_data={scene.chart_data!}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -117,11 +159,13 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <TimelineScene
                   title={scene.title}
                   chart_data={scene.chart_data!}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -132,6 +176,7 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <LineChart
                   title={scene.title}
                   chart_data={scene.chart_data!}
@@ -139,6 +184,7 @@ const InfographicVideo: React.FC = () => {
                   color={scene.color}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -149,6 +195,7 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <HighlightCard
                   metric={scene.metric}
                   value={scene.value}
@@ -160,6 +207,7 @@ const InfographicVideo: React.FC = () => {
                   sentiment={scene.sentiment}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -170,11 +218,13 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <ComparisonChart
                   title={scene.title}
                   items={scene.items}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -185,11 +235,13 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <BulletPointsScene
                   heading={scene.heading}
                   content_points={scene.content_points}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -200,11 +252,13 @@ const InfographicVideo: React.FC = () => {
                 durationInFrames={durationInFrames}
               >
                 {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
                 <NumberedStepsScene
                   heading={scene.heading}
                   content_points={scene.content_points}
                   style={style}
                 />
+                <Captions captions={scene.captions} style={style} />
               </Series.Sequence>
             );
 
@@ -213,22 +267,36 @@ const InfographicVideo: React.FC = () => {
         }
       })}
       </Series>
-      {style.companyWatermark && (
+      {style.companyWatermark ? (
         <div
           style={{
             position: 'absolute',
-            bottom: 40,
+            top: 40,
             right: 60,
             color: style.textColor,
-            fontSize: 32,
+            fontSize: 28,
             fontWeight: 'bold',
-            opacity: 0.2,
+            opacity: 0.5,
             fontFamily: style.fontFamily,
             zIndex: 1000,
+            textShadow: "0px 4px 12px rgba(0,0,0,0.3)"
           }}
         >
           {style.companyWatermark}
         </div>
+      ) : (
+        <img
+          src={staticFile("logo.png")}
+          style={{
+            position: 'absolute',
+            top: 40,
+            right: 40,
+            height: 60,
+            opacity: 0.8,
+            zIndex: 1000,
+            filter: "drop-shadow(0px 8px 16px rgba(0,0,0,0.5))"
+          }}
+        />
       )}
     </AbsoluteFill>
   );

@@ -7,6 +7,7 @@ import {
   interpolate,
 } from "remotion";
 import type { TitleSceneProps } from "../types";
+import { GlassCard } from "./GlassCard";
 
 /**
  * TitleScene — Animated corporate title and subtitle.
@@ -71,12 +72,19 @@ export const TitleScene: React.FC<TitleSceneProps> = ({
         backgroundColor: style.backgroundColor,
         opacity: bgOpacity,
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         fontFamily: style.fontFamily,
       }}
     >
+      <GlassCard style={style} width="80%" height="auto" opacity={1}>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative"
+        }}>
       {/* Subtle radial gradient overlay */}
       <div
         style={{
@@ -136,6 +144,8 @@ export const TitleScene: React.FC<TitleSceneProps> = ({
           {subtitle}
         </p>
       )}
+        </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

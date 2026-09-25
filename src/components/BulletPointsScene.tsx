@@ -1,6 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useVideoConfig, useCurrentFrame, spring } from 'remotion';
 import type { BulletPointsSceneProps } from '../types';
+import { GlassCard } from './GlassCard';
 
 export const BulletPointsScene: React.FC<BulletPointsSceneProps> = ({
   heading,
@@ -25,26 +26,29 @@ export const BulletPointsScene: React.FC<BulletPointsSceneProps> = ({
     <AbsoluteFill
       style={{
         backgroundColor: style.backgroundColor,
-        padding: '80px 120px',
+        padding: '120px 160px',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         fontFamily: style.fontFamily,
       }}
     >
-      <h1
-        style={{
-          color: style.primaryColor,
-          fontSize: '80px',
-          fontWeight: 'bold',
-          marginBottom: '60px',
-          opacity: titleOpacity,
-          transform: `translateY(${100 - titleY * 100}px)`,
-        }}
-      >
-        {heading}
-      </h1>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+      <GlassCard style={style} width="100%" opacity={titleOpacity} transform={`translateY(${100 - titleY * 100}px)`}>
+        <h1
+          style={{
+            color: style.textColor,
+            fontSize: '72px',
+            fontWeight: 'bold',
+            marginBottom: '60px',
+            textAlign: 'center',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {heading}
+        </h1>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
         {content_points.map((point, index) => {
           const pointFrame = frame - (index * 15 + 20); // Stagger by 15 frames
           const pointOpacity = spring({
@@ -91,6 +95,7 @@ export const BulletPointsScene: React.FC<BulletPointsSceneProps> = ({
           );
         })}
       </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

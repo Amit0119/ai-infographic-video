@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Storyboard Review Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         /* Dark theme CSS matching video aesthetics */
         body { 
@@ -119,6 +120,16 @@
                 <label>Topic (e.g., Annual Budget)</label>
                 <input type="text" id="topicInput" required style="width: 100%; padding: 0.75rem; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px;">
             </div>
+
+            <div class="form-group" style="background: #0f172a; padding: 1rem; border-radius: 6px; border: 1px solid #334155; margin-bottom: 1.25rem;">
+                <label style="color: #38bdf8;">🧠 RAG Context (Optional)</label>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0; margin-bottom: 1rem;">Upload a large PDF (like an Annual Report) to inject exact numbers into the AI.</p>
+                <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 0.5rem; width: 100%;">
+                <br>
+                <button type="button" id="uploadPdfBtn" style="padding: 8px 16px; font-size: 0.85rem; background: #818cf8; color: white;">Upload & Index PDF</button>
+                <span id="pdfUploadStatus" style="font-size: 0.85rem; margin-left: 10px; font-weight: 600;"></span>
+            </div>
+
             <div class="form-group">
                 <label>Initial Instructions (Optional)</label>
                 <textarea id="topicInitialPrompt" placeholder="e.g., Use an educational tone..."></textarea>
@@ -229,6 +240,42 @@
             } finally {
                 analyzeBtn.disabled = false;
                 analyzeBtn.innerText = 'Analyze & Generate Storyboard';
+            }
+        });
+
+        // PDF RAG Upload Handler
+        document.getElementById('uploadPdfBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+            if (!file) return alert("Please select a PDF file first!");
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const uploadStatus = document.getElementById('pdfUploadStatus');
+            const btn = document.getElementById('uploadPdfBtn');
+            btn.disabled = true;
+            btn.innerText = "Indexing...";
+            uploadStatus.innerText = "Uploading & chunking via FAISS...";
+            uploadStatus.style.color = "#fbbf24";
+
+            try {
+                const response = await fetch('/upload-document', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                const data = await response.json();
+                uploadStatus.innerText = `Success! Extracted ${data.chunks_added} chunks.`;
+                uploadStatus.style.color = '#34d399';
+            } catch (err) {
+                uploadStatus.innerText = 'Error: ' + err.message;
+                uploadStatus.style.color = '#ef4444';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Upload & Index PDF";
             }
         });
 

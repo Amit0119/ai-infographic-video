@@ -1,6 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useVideoConfig, useCurrentFrame, spring } from 'remotion';
 import type { NumberedStepsSceneProps } from '../types';
+import { GlassCard } from './GlassCard';
 
 export const NumberedStepsScene: React.FC<NumberedStepsSceneProps> = ({
   heading,
@@ -20,19 +21,23 @@ export const NumberedStepsScene: React.FC<NumberedStepsSceneProps> = ({
     <AbsoluteFill
       style={{
         backgroundColor: style.backgroundColor,
-        padding: '80px 120px',
+        padding: '120px 160px',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         fontFamily: style.fontFamily,
       }}
     >
+      <GlassCard style={style} width="100%" opacity={titleOpacity}>
       <h1
         style={{
-          color: style.primaryColor,
-          fontSize: '80px',
+          color: style.textColor,
+          fontSize: '72px',
           fontWeight: 'bold',
           marginBottom: '60px',
-          opacity: titleOpacity,
+          textAlign: 'center',
+          letterSpacing: '-0.02em',
         }}
       >
         {heading}
@@ -94,6 +99,7 @@ export const NumberedStepsScene: React.FC<NumberedStepsSceneProps> = ({
           );
         })}
       </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

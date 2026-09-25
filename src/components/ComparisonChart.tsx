@@ -7,6 +7,7 @@ import {
   interpolate,
 } from "remotion";
 import type { ComparisonSceneProps } from "../types";
+import { GlassCard } from "./GlassCard";
 
 /**
  * ComparisonChart — Horizontal paired bar chart (Target vs Actual).
@@ -78,44 +79,33 @@ export const ComparisonChart: React.FC<ComparisonSceneProps> = ({
         backgroundColor: style.backgroundColor,
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
-      {/* Subtle gradient backdrop */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: `linear-gradient(180deg, ${style.secondaryColor}06 0%, transparent 50%)`,
-          pointerEvents: "none",
-        }}
-      />
-
+      <GlassCard style={style} width="90%" height="80%" opacity={titleOpacity} transform={`translateY(${titleTranslateY}px)`}>
       {/* Chart Title */}
       <h2
         style={{
-          position: "absolute",
-          top: 40,
-          left: 0,
-          right: 0,
           textAlign: "center",
           fontSize: 44,
           fontWeight: 700,
           color: style.textColor,
           margin: 0,
           letterSpacing: "-0.01em",
-          opacity: titleOpacity,
-          transform: `translateY(${titleTranslateY}px)`,
         }}
       >
         {title}
       </h2>
 
       {/* SVG Chart Area */}
+      <div style={{ flex: 1, position: 'relative' }}>
       <svg
-        width={videoWidth}
-        height={videoHeight}
+        width="100%"
+        height="100%"
         viewBox={`0 0 ${videoWidth} ${videoHeight}`}
-        style={{ position: "absolute", top: 0, left: 0 }}
+        style={{ position: "absolute", top: -80, left: 0 }}
       >
         {items.map((item, index) => {
           const rowY = startY + index * (BAR_PAIR_HEIGHT + ROW_GAP);
@@ -292,6 +282,8 @@ export const ComparisonChart: React.FC<ComparisonSceneProps> = ({
           );
         })()}
       </svg>
+      </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

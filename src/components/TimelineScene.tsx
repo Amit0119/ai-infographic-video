@@ -7,6 +7,7 @@ import {
   interpolate,
 } from "remotion";
 import type { TimelineSceneProps } from "../types";
+import { GlassCard } from "./GlassCard";
 
 export const TimelineScene: React.FC<TimelineSceneProps> = ({
   title,
@@ -27,7 +28,7 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
     extrapolateRight: "clamp",
   });
 
-  const timelineY = videoHeight / 2 + 20;
+  const timelineY = videoHeight / 2 - 40;
   const paddingX = 120;
   const usableWidth = videoWidth - paddingX * 2;
   const gap = usableWidth / Math.max(chart_data.length - 1, 1);
@@ -45,27 +46,27 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
         backgroundColor: style.backgroundColor,
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
+      <GlassCard style={style} width="90%" height="80%" opacity={titleSpring} transform={`translateY(${titleTranslateY}px)`}>
       <h2
         style={{
-          position: "absolute",
-          top: 40,
-          left: 0,
-          right: 0,
           textAlign: "center",
           fontSize: 44,
           fontWeight: 700,
           color: style.textColor,
           margin: 0,
-          opacity: titleSpring,
-          transform: `translateY(${titleTranslateY}px)`,
+          marginBottom: 40,
         }}
       >
         {title}
       </h2>
 
-      <svg width={videoWidth} height={videoHeight} style={{ position: "absolute", top: 0, left: 0 }}>
+      <div style={{ flex: 1, position: 'relative' }}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${videoWidth} ${videoHeight}`} style={{ position: "absolute", top: -80, left: 0 }}>
         {/* Main timeline line */}
         <line
           x1={paddingX}
@@ -133,6 +134,8 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
           );
         })}
       </svg>
+      </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };

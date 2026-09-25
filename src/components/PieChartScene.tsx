@@ -7,6 +7,7 @@ import {
   interpolate,
 } from "remotion";
 import type { PieChartSceneProps } from "../types";
+import { GlassCard } from "./GlassCard";
 
 export const PieChartScene: React.FC<PieChartSceneProps> = ({
   title,
@@ -30,7 +31,8 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
   const totalValue = chart_data.reduce((acc, curr) => acc + curr.value, 0);
   let cumulativeAngle = 0;
 
-  const radius = Math.min(videoWidth, videoHeight) * 0.25;
+  // Decrease radius to fit within card
+  const radius = Math.min(videoWidth, videoHeight) * 0.22;
   const cx = videoWidth / 2;
   const cy = videoHeight / 2 + 40;
 
@@ -40,29 +42,30 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
         backgroundColor: style.backgroundColor,
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
+      <GlassCard style={style} width="90%" height="80%" opacity={titleSpring} transform={`translateY(${titleTranslateY}px)`}>
       <h2
         style={{
-          position: "absolute",
-          top: 40,
-          left: 0,
-          right: 0,
           textAlign: "center",
           fontSize: 44,
           fontWeight: 700,
           color: style.textColor,
           margin: 0,
-          opacity: titleSpring,
-          transform: `translateY(${titleTranslateY}px)`,
+          marginBottom: 40,
         }}
       >
         {title}
       </h2>
+      <div style={{ flex: 1, position: 'relative' }}>
       <svg
-        width={videoWidth}
-        height={videoHeight}
+        width="100%"
+        height="100%"
         viewBox={`0 0 ${videoWidth} ${videoHeight}`}
+        style={{ position: "absolute", top: -80, left: 0 }}
       >
         {chart_data.map((item, index) => {
           const slicePercentage = item.value / totalValue;
@@ -114,6 +117,8 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
           );
         })}
       </svg>
+      </div>
+      </GlassCard>
     </AbsoluteFill>
   );
 };
