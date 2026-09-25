@@ -6,3 +6,9 @@ google-genai
 edge-tts
 python-multipart
 python-dotenv
+langchain
+langchain-google-genai
+PyPDF2
+faiss-cpu
+numpy
+httpx
