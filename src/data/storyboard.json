@@ -1,148 +1,92 @@
 {
   "video": {
-    "title": "Annual Budget Creation",
+    "title": "Spacex Mission To Mars",
     "fps": 30,
     "width": 1920,
     "height": 1080
   },
   "style": {
-    "backgroundColor": "#0b2c7a",
+    "backgroundColor": "#0f172a",
     "primaryColor": "#38bdf8",
     "secondaryColor": "#818cf8",
     "accentColor": "#34d399",
     "textColor": "#ffffff",
     "subtextColor": "#94a3b8",
     "fontFamily": "Inter",
-    "currencySymbol": "\u20b9",
-    "companyWatermark": "IWERK Infosolution"
+    "currencySymbol": "",
+    "companyWatermark": ""
   },
   "scenes": [
     {
       "id": 1,
-      "durationInSeconds": 8,
-      "narration": "Welcome, Schindler Department Heads. Today, we're demystifying the annual budget creation process. This isn't just about numbers; it's about strategic planning, resource allocation, and driving our collective success in the elevator manufacturing world.",
+      "durationInSeconds": 6,
       "type": "title",
-      "title": "Annual Budget Creation: A Strategic Guide",
-      "subtitle": "For Schindler Department Heads"
+      "title": "A Multi-Planetary Future",
+      "subtitle": "SpaceX and the Journey to Mars",
+      "narration": "For all of human history, our existence has been tied to a single world. But the future is calling us outward. SpaceX isn't just building rockets; they are building the bridge to a multi-planetary future\u2014and our next destination is the Red Planet.",
+      "captions": [],
+      "brollUrl": "https://videos.pexels.com/video-files/34707820/14711265_640_360_30fps.mp4"
     },
     {
       "id": 2,
-      "durationInSeconds": 10,
-      "narration": "A well-crafted budget directly impacts our financial health. Last year, departments achieved an impressive budget adherence rate, showcasing our commitment to efficient resource management. This year, we aim even higher for optimized operational expenditure.",
-      "type": "kpi",
-      "metric": "Budget Adherence Rate",
-      "value": 95,
-      "unit": "%",
-      "growth": 3,
-      "growthLabel": "vs last year"
+      "durationInSeconds": 6,
+      "type": "title",
+      "title": "Meet the Starship",
+      "subtitle": "The Vessel of the Future",
+      "narration": "Meet the Starship. Standing tall and entirely reusable, this massive spacecraft is engineered to carry up to one hundred people and critical supplies at a time. Powered by next-generation Raptor engines, it is the cornerstone of interplanetary travel.",
+      "captions": [],
+      "brollUrl": "https://videos.pexels.com/video-files/35184459/14906372_640_360_24fps.mp4"
     },
     {
       "id": 3,
-      "durationInSeconds": 12,
-      "narration": "Creating your department's annual budget involves four key steps. First, define your strategic objectives for the year. Second, forecast your department's revenues and expenses. Third, justify your resource needs with data. Finally, submit and review for alignment with overall company goals.",
-      "type": "numbered_steps",
-      "heading": "The 4-Step Budget Creation Process",
-      "content_points": [
-        "Define Strategic Objectives",
-        "Forecast Revenues & Expenses",
-        "Justify Resource Needs",
-        "Submit & Review Budget"
-      ]
+      "durationInSeconds": 5,
+      "type": "kpi",
+      "metric": "Earth to Mars Travel Time",
+      "value": 7,
+      "unit": "Months",
+      "growth": "Average",
+      "growthLabel": "Orbital Transit",
+      "narration": "How far is the leap? While planetary orbits constantly shift, the average journey aboard a SpaceX transport vessel will take approximately 7 months. Thanks to in-space refueling and advanced propulsion, this voyage is no longer science fiction\u2014it is the next frontier.",
+      "captions": [],
+      "brollUrl": "https://videos.pexels.com/video-files/854278/854278-hd_1280_720_30fps.mp4"
     },
     {
       "id": 4,
-      "durationInSeconds": 12,
-      "narration": "Let's look at a typical breakdown of how our overall budget is strategically allocated across key operational areas. This reflects our core investments in innovation, production efficiency, and market reach.",
-      "type": "bar_chart",
-      "title": "Schindler's Strategic Budget Allocation (Example)",
-      "chart_data": [
-        {
-          "label": "R&D & Innovation",
-          "value": 35
-        },
-        {
-          "label": "Production & Operations",
-          "value": 40
-        },
-        {
-          "label": "Sales & Marketing",
-          "value": 15
-        },
-        {
-          "label": "Admin & Support",
-          "value": 10
-        }
-      ]
+      "durationInSeconds": 6,
+      "type": "bullet_points",
+      "heading": "Hurdles of Martian Colonization",
+      "content_points": [
+        "Extreme radiation beyond Earth's magnetic field",
+        "Thin and unbreathable atmosphere",
+        "Brutal and freezing temperatures"
+      ],
+      "narration": "Of course, colonizing a new world doesn't come easy. The pioneers of Mars will face monumental hurdles: extreme radiation beyond Earth\u2019s magnetic field, a thin, unbreathable atmosphere, and brutal, freezing temperatures. Overcoming these challenges is the ultimate test of human ingenuity.",
+      "captions": [],
+      "brollUrl": "https://videos.pexels.com/video-files/8474869/8474869-hd_1280_720_30fps.mp4"
     },
     {
       "id": 5,
-      "durationInSeconds": 12,
-      "narration": "Now, consider a departmental view \u2013 for instance, a Production department's expense breakdown. Understanding where your budget is spent is crucial for cost optimization. Raw materials and labor typically form the largest portions.",
-      "type": "pie_chart",
-      "title": "Production Department: Annual Expense Categories",
-      "chart_data": [
-        {
-          "label": "Raw Materials",
-          "value": 45
-        },
-        {
-          "label": "Direct Labor",
-          "value": 30
-        },
-        {
-          "label": "Overheads & Utilities",
-          "value": 15
-        },
-        {
-          "label": "Maintenance & Repairs",
-          "value": 10
-        }
-      ]
+      "durationInSeconds": 6,
+      "type": "bullet_points",
+      "heading": "Building a Self-Sustaining Civilization",
+      "content_points": [
+        "Utilizing local Martian resources",
+        "Harvesting ice for water and life support",
+        "Producing rocket fuel on-site for return trips"
+      ],
+      "narration": "The ultimate goal isn't just visiting\u2014it's staying. By utilizing local resources, harvesting ice for water, and producing fuel on-site, early habitats will grow into thriving, self-sustaining cities. Mars is waiting, and humanity is ready to take its next giant leap.",
+      "captions": [],
+      "brollUrl": "https://videos.pexels.com/video-files/13849038/13849038-hd_1280_720_50fps.mp4"
     },
     {
       "id": 6,
-      "durationInSeconds": 12,
-      "narration": "The budget isn't a one-time event; it's a cycle. Starting in Q3, we plan and prepare. Q4 sees approvals and finalization. The new year, Q1 through Q4, is for execution and continuous monitoring against our plan.",
-      "type": "timeline",
-      "title": "Annual Budget Cycle: Planning to Execution",
-      "chart_data": [
-        {
-          "label": "Q3: Planning & Forecasting",
-          "value": 1
-        },
-        {
-          "label": "Q4: Review & Approval",
-          "value": 2
-        },
-        {
-          "label": "Q1-Q4: Execution & Monitoring",
-          "value": 3
-        }
-      ]
-    },
-    {
-      "id": 7,
-      "durationInSeconds": 10,
-      "narration": "Finally, continuous monitoring is key. Here's how a department might compare its actual spending versus its approved budget for a critical expense category. This allows for timely adjustments and better financial control throughout the year.",
-      "type": "comparison",
-      "title": "Quarterly Expense Review: Budget vs. Actual (Example)",
-      "items": [
-        {
-          "name": "Q1 Production Costs (M\u20ac)",
-          "actual": 12.5,
-          "target": 12
-        },
-        {
-          "name": "Q2 R&D Spending (M\u20ac)",
-          "actual": 8.2,
-          "target": 8.5
-        },
-        {
-          "name": "Q3 Marketing Campaigns (M\u20ac)",
-          "actual": 5.8,
-          "target": 6
-        }
-      ]
+      "durationInSeconds": 4,
+      "type": "title",
+      "title": "The Next Giant Leap",
+      "subtitle": "Humanity is Ready",
+      "narration": "Mars is waiting, and humanity is ready to take its next giant leap.",
+      "captions": [],
+      "brollUrl": "https://videos.pexels.com/video-files/30233173/12961784_640_360_60fps.mp4"
     }
   ]
 }
