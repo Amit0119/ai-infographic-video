@@ -39,7 +39,7 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
         display: 'flex',

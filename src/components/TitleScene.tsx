@@ -69,7 +69,7 @@ export const TitleScene: React.FC<TitleSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         opacity: bgOpacity,
         display: "flex",
         alignItems: "center",

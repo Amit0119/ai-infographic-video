@@ -1,6 +1,6 @@
 {
   "video": {
-    "title": "Spacex Mission To Mars",
+    "title": "2027 Comprehensive Annual Budget & Strategic Ai Investment Plan",
     "fps": 30,
     "width": 1920,
     "height": 1080
@@ -19,74 +19,130 @@
   "scenes": [
     {
       "id": 1,
-      "durationInSeconds": 6,
-      "type": "title",
-      "title": "A Multi-Planetary Future",
-      "subtitle": "SpaceX and the Journey to Mars",
-      "narration": "For all of human history, our existence has been tied to a single world. But the future is calling us outward. SpaceX isn't just building rockets; they are building the bridge to a multi-planetary future\u2014and our next destination is the Red Planet.",
+      "durationInSeconds": 8,
+      "type": "kpi",
+      "narration": "Members of the Board, welcome. Today, we present the 2027 Comprehensive Annual Budget\u2014a defining roadmap for our enterprise. We are entering this fiscal year from a position of undeniable strength, anchored by a total capital framework of $1.25 billion. This represents a rigorous 14.5% year-over-year expansion, engineered to aggressively outpace market growth and secure our long-term industry dominance.",
       "captions": [],
-      "brollUrl": "https://videos.pexels.com/video-files/34707820/14711265_640_360_30fps.mp4"
+      "metric": "Total Addressable Budget",
+      "value": "1.25",
+      "unit": "Billion",
+      "prefix": "$",
+      "growth": "+14.5%",
+      "growthLabel": "YoY Growth",
+      "brollUrl": "https://videos.pexels.com/video-files/5849607/5849607-hd_1920_1080_30fps.mp4"
     },
     {
       "id": 2,
-      "durationInSeconds": 6,
-      "type": "title",
-      "title": "Meet the Starship",
-      "subtitle": "The Vessel of the Future",
-      "narration": "Meet the Starship. Standing tall and entirely reusable, this massive spacecraft is engineered to carry up to one hundred people and critical supplies at a time. Powered by next-generation Raptor engines, it is the cornerstone of interplanetary travel.",
+      "durationInSeconds": 8,
+      "type": "pie_chart",
+      "narration": "A disciplined enterprise demands precise capital allocation. As detailed in our primary distribution model, we have decoupled legacy overhead to fuel high-yield domains. Engineering and R&D command the largest share at $500 million, while Global Operations absorbs $350 million. Crucially, we have carved out an unprecedented $250 million dedicated entirely to our Strategic AI Investment Plan.",
       "captions": [],
-      "brollUrl": "https://videos.pexels.com/video-files/35184459/14906372_640_360_24fps.mp4"
+      "title": "Departmental Budget Allocation",
+      "chart_data": [
+        {
+          "label": "Engineering & R&D",
+          "value": 500
+        },
+        {
+          "label": "Global Operations",
+          "value": 350
+        },
+        {
+          "label": "Strategic AI Initiatives",
+          "value": 250
+        },
+        {
+          "label": "Corporate Infrastructure",
+          "value": 150
+        }
+      ],
+      "color": null,
+      "targetItems": null,
+      "brollUrl": "https://videos.pexels.com/video-files/29758663/12789468_640_360_25fps.mp4"
     },
     {
       "id": 3,
-      "durationInSeconds": 5,
-      "type": "kpi",
-      "metric": "Earth to Mars Travel Time",
-      "value": 7,
-      "unit": "Months",
-      "growth": "Average",
-      "growthLabel": "Orbital Transit",
-      "narration": "How far is the leap? While planetary orbits constantly shift, the average journey aboard a SpaceX transport vessel will take approximately 7 months. Thanks to in-space refueling and advanced propulsion, this voyage is no longer science fiction\u2014it is the next frontier.",
+      "durationInSeconds": 8,
+      "type": "bar_chart",
+      "narration": "Let us examine the crown jewel of this fiscal strategy: our $250 million Strategic AI Investment Plan. This is not an expense; it is a high-yield capital deployment. Phased evenly at $62.5 million per quarter, this initiative is modeled to drive a 300% cumulative ROI over three years, while instantaneously slashing transactional operational friction by 40% across all customer-facing workflows.",
       "captions": [],
-      "brollUrl": "https://videos.pexels.com/video-files/854278/854278-hd_1280_720_30fps.mp4"
+      "title": "AI Investment Phased Deployment (Milestones)",
+      "chart_data": [
+        {
+          "label": "Q1 Deployment",
+          "value": 62.5
+        },
+        {
+          "label": "Q2 Deployment",
+          "value": 62.5
+        },
+        {
+          "label": "Q3 Deployment",
+          "value": 62.5
+        },
+        {
+          "label": "Q4 Deployment",
+          "value": 62.5
+        }
+      ],
+      "color": null,
+      "targetItems": null,
+      "brollUrl": "https://videos.pexels.com/video-files/7579941/7579941-hd_2048_1080_25fps.mp4"
     },
     {
       "id": 4,
-      "durationInSeconds": 6,
-      "type": "bullet_points",
-      "heading": "Hurdles of Martian Colonization",
-      "content_points": [
-        "Extreme radiation beyond Earth's magnetic field",
-        "Thin and unbreathable atmosphere",
-        "Brutal and freezing temperatures"
-      ],
-      "narration": "Of course, colonizing a new world doesn't come easy. The pioneers of Mars will face monumental hurdles: extreme radiation beyond Earth\u2019s magnetic field, a thin, unbreathable atmosphere, and brutal, freezing temperatures. Overcoming these challenges is the ultimate test of human ingenuity.",
+      "durationInSeconds": 8,
+      "type": "comparison",
+      "narration": "Fiscal responsibility remains our north star. When mapping our quarterly trajectory, the divergence between revenue acceleration and expense growth widens favorably. By Q4, our aggressive scaling will yield $460 million in quarterly revenue against a stabilized expense baseline of $330 million\u2014demonstrating immediate operational leverage driven by our technological integrations.",
       "captions": [],
-      "brollUrl": "https://videos.pexels.com/video-files/8474869/8474869-hd_1280_720_30fps.mp4"
+      "title": "Q1 to Q4 Revenue vs Expense Trajectory",
+      "items": [
+        {
+          "name": "Q1 Projection",
+          "actual": 310,
+          "target": 280
+        },
+        {
+          "name": "Q2 Projection",
+          "actual": 360,
+          "target": 295
+        },
+        {
+          "name": "Q3 Projection",
+          "actual": 410,
+          "target": 310
+        },
+        {
+          "name": "Q4 Projection",
+          "actual": 460,
+          "target": 330
+        }
+      ],
+      "brollUrl": "https://videos.pexels.com/video-files/7735870/7735870-hd_1920_1080_25fps.mp4"
     },
     {
       "id": 5,
-      "durationInSeconds": 6,
+      "durationInSeconds": 8,
       "type": "bullet_points",
-      "heading": "Building a Self-Sustaining Civilization",
-      "content_points": [
-        "Utilizing local Martian resources",
-        "Harvesting ice for water and life support",
-        "Producing rocket fuel on-site for return trips"
-      ],
-      "narration": "The ultimate goal isn't just visiting\u2014it's staying. By utilizing local resources, harvesting ice for water, and producing fuel on-site, early habitats will grow into thriving, self-sustaining cities. Mars is waiting, and humanity is ready to take its next giant leap.",
+      "narration": "In an era of macro-economic volatility, our balance sheet is our fortress. We have codified strict risk parameters for 2027. We maintain an ironclad liquidity reserve of $180 million, cap our debt-to-equity ratio at a conservative 0.45, and project a robust free cash flow generation of $420 million by the close of the fiscal year.",
       "captions": [],
-      "brollUrl": "https://videos.pexels.com/video-files/13849038/13849038-hd_1280_720_50fps.mp4"
+      "heading": "Risk Mitigation & Balance Sheet Resilience",
+      "content_points": [
+        "Liquidity Reserve: $180 Million",
+        "Debt-to-Equity Ratio: Capped at 0.45",
+        "Free Cash Flow Generation Target: $420 Million for FY27"
+      ],
+      "brollUrl": "https://videos.pexels.com/video-files/7038074/7038074-hd_1366_720_25fps.mp4"
     },
     {
       "id": 6,
-      "durationInSeconds": 4,
+      "durationInSeconds": 7,
       "type": "title",
-      "title": "The Next Giant Leap",
-      "subtitle": "Humanity is Ready",
-      "narration": "Mars is waiting, and humanity is ready to take its next giant leap.",
+      "narration": "Distinguished board members, the numbers before you represent clarity, ambition, and absolute fiscal discipline. We are not merely budgeting for the next twelve months; we are architecting the next decade of market leadership. I proudly submit the 2027 Comprehensive Annual Budget and Strategic AI Investment Plan to the board for formal authorization.",
       "captions": [],
-      "brollUrl": "https://videos.pexels.com/video-files/30233173/12961784_640_360_60fps.mp4"
+      "title": "2027 Comprehensive Annual Budget",
+      "subtitle": "Request for Formal Board Authorization",
+      "brollUrl": "https://videos.pexels.com/video-files/6929599/6929599-hd_1920_1080_30fps.mp4"
     }
   ]
 }

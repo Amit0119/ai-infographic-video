@@ -518,8 +518,8 @@ async def generate_explainer(payload: ExplainerRequestModel):
             "scenes": generated_scenes,
         }
 
-        StoryboardModel.model_validate(storyboard_data)
-        return storyboard_data
+        validated = StoryboardModel.model_validate(storyboard_data)
+        return validated.model_dump()
     except ValidationError as e:
         raise HTTPException(status_code=500, detail=f"Visual Director returned invalid storyboard schema: {e}")
     except HTTPException:
@@ -578,8 +578,8 @@ async def analyze_data(
             "scenes": generated_scenes,
         }
 
-        StoryboardModel.model_validate(storyboard_data)
-        return storyboard_data
+        validated = StoryboardModel.model_validate(storyboard_data)
+        return validated.model_dump()
     except ValidationError as e:
         raise HTTPException(status_code=500, detail=f"Visual Director returned invalid storyboard schema: {e}")
     except HTTPException:
@@ -769,8 +769,8 @@ Return ONLY the completely updated full JSON object, with no markdown formatting
         else:
             raise Exception("AI returned an invalid JSON structure (missing 'scenes' array).")
 
-        StoryboardModel.model_validate(updated)
-        return updated
+        validated = StoryboardModel.model_validate(updated)
+        return validated.model_dump()
     except ValidationError as e:
         raise HTTPException(status_code=500, detail=f"AI returned invalid storyboard schema: {e}")
     except HTTPException:

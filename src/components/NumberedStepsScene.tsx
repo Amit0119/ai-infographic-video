@@ -20,7 +20,7 @@ export const NumberedStepsScene: React.FC<NumberedStepsSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         padding: '120px 160px',
         display: 'flex',
         flexDirection: 'column',

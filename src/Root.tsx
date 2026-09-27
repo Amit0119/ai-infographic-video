@@ -18,7 +18,10 @@ import { useCurrentFrame, interpolate } from "remotion";
 // Load Inter Font dynamically
 import { loadFont } from "@remotion/google-fonts/Inter";
 try {
-  loadFont();
+  loadFont({
+    weights: ["400", "600", "700"],
+    subsets: ["latin"],
+  });
 } catch (e) {
   console.log("Font already loaded or failed to load");
 }
@@ -71,7 +74,7 @@ const InfographicVideo: React.FC = () => {
   const { style, scenes } = data;
 
   return (
-    <AbsoluteFill from={-228}>
+    <AbsoluteFill>
       <Background style={style} />
       
       {/* Background Music with ducked volume so it doesn't overpower TTS */}

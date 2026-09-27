@@ -76,7 +76,7 @@ export const ComparisonChart: React.FC<ComparisonSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
         display: 'flex',

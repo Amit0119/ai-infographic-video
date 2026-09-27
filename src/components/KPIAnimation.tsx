@@ -103,7 +103,7 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         opacity: bgOpacity,
         display: "flex",
         alignItems: "center",

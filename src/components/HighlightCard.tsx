@@ -120,7 +120,7 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         opacity: bgOpacity,
         display: "flex",
         flexDirection: "column",

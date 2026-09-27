@@ -141,7 +141,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: style.backgroundColor,
+        backgroundColor: "transparent",
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
         display: 'flex',
