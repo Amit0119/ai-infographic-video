@@ -349,7 +349,7 @@
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Your video has been successfully rendered and is ready to be shared or downloaded.</p>
                             
                             <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem;">
-                                <button style="background: var(--primary); color: white; padding: 12px 24px; font-weight: 600; display: flex; align-items: center; gap: 8px;">⬇️ Download .mp4</button>
+                                <button onclick="downloadProjectVideo('recent')" style="background: var(--primary); color: white; padding: 12px 24px; font-weight: 600; display: flex; align-items: center; gap: 8px;">⬇️ Download .mp4</button>
                                 <button onclick="navigate('dashboard')" class="btn-outline" style="padding: 12px 24px;">Back to Dashboard</button>
                             </div>
                             
@@ -377,11 +377,7 @@
             </div>
             
             <div style="width: 100%; height: 450px; background: #000; display: flex; align-items: center; justify-content: center; position: relative;">
-                <!-- Simulated Video Player -->
-                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="var(--primary)" opacity="0.8"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <span style="color: var(--text-muted); margin-top: 1rem;">Video Playback Simulated</span>
-                </div>
+                <iframe id="modalIframe" src="http://localhost:3000" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
             
             <div style="padding: 1.5rem 2rem; background: rgba(0,0,0,0.2); display: flex; gap: 1rem; justify-content: flex-end; align-items: center;">
@@ -389,7 +385,7 @@
                     <input type="text" id="modalShareLink" value="https://app.aigraphica.com/share/vid-847291" readonly style="padding: 10px; font-size: 0.85rem; flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-main);">
                     <button id="modalCopyBtn" class="btn-outline" style="padding: 10px 16px; white-space: nowrap;" onclick="copyLink('modalShareLink', 'modalCopyBtn')">🔗 Copy Link</button>
                 </div>
-                <button style="background: #34d399; color: #064e3b;">Download .mp4</button>
+                <button id="modalDownloadBtn" style="background: #34d399; color: #064e3b;">Download .mp4</button>
             </div>
         </div>
     </div>
@@ -429,8 +425,7 @@
         
         <div class="card" style="width: 100%; max-width: 900px; padding: 0; overflow: hidden; border-color: rgba(255,255,255,0.1);">
             <div style="width: 100%; aspect-ratio: 16/9; background: #000; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="var(--primary)" opacity="0.8" style="cursor: pointer;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                <span style="color: var(--text-muted); margin-top: 1rem;">Enterprise HTML5 Video Player (Simulated)</span>
+                <iframe id="shareIframe" src="http://localhost:3000" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
             
             <div style="padding: 2rem; display: flex; justify-content: space-between; align-items: flex-start; background: rgba(0,0,0,0.2);">
@@ -438,7 +433,7 @@
                     <h2 id="shareProjectTitle" style="margin: 0 0 0.5rem 0; font-size: 1.5rem;">Project Presentation</h2>
                     <p id="shareProjectDate" style="margin: 0; color: var(--text-muted);">Generated on</p>
                 </div>
-                <button style="background: #34d399; color: #064e3b; display: flex; align-items: center; gap: 0.5rem; padding: 12px 24px; font-weight: 600;"><span style="font-size: 1.2rem;">⬇️</span> Download Video</button>
+                <button id="shareViewDownloadBtn" style="background: #34d399; color: #064e3b; display: flex; align-items: center; gap: 0.5rem; padding: 12px 24px; font-weight: 600;"><span style="font-size: 1.2rem;">⬇️</span> Download Video</button>
             </div>
         </div>
     </div>
@@ -512,6 +507,19 @@
         function shareProject(url) {
             document.getElementById('modalShareLink').value = url;
             document.getElementById('videoModalTitle').innerText = "Share Project";
+            
+            const linkId = url.split('/').pop();
+            const btn = document.getElementById('modalDownloadBtn');
+            if (btn) btn.onclick = () => downloadProjectVideo(linkId);
+            
+            const projects = JSON.parse(localStorage.getItem('saved_projects') || '[]');
+            const proj = projects.find(p => p.id === linkId);
+            if (proj && proj.payload) {
+                const encodedProps = encodeURIComponent(JSON.stringify(proj.payload));
+                const iframe = document.getElementById('modalIframe');
+                if (iframe) iframe.src = `http://localhost:3000/?props=${encodedProps}`;
+            }
+            
             document.getElementById('videoModal').classList.remove('hidden');
         }
 
@@ -998,7 +1006,8 @@
                     title: titleStr,
                     date: new Date().toLocaleDateString(),
                     url: link,
-                    status: 'Completed'
+                    status: 'Completed',
+                    payload: currentStoryboard
                 });
                 localStorage.setItem('saved_projects', JSON.stringify(projects));
                 
@@ -1016,6 +1025,10 @@
 
         document.getElementById('fastPreviewBtn').addEventListener('click', () => renderVideo('fast'));
         document.getElementById('approveBtn').addEventListener('click', () => renderVideo('high'));
+
+        function downloadProjectVideo(projectId) {
+            alert(`Downloading MP4 for project ${projectId}...\n\n(This would normally trigger the backend Remotion renderer)`);
+        }
 
         async function copyLink(inputId, btnId) {
             const inputEl = document.getElementById(inputId);
@@ -1060,6 +1073,15 @@
                 if (proj) {
                     document.getElementById('shareProjectTitle').innerText = proj.title;
                     document.getElementById('shareProjectDate').innerText = `Generated on ${proj.date}`;
+                    
+                    const btn = document.getElementById('shareViewDownloadBtn');
+                    if (btn) btn.onclick = () => downloadProjectVideo(proj.id);
+                    
+                    if (proj.payload) {
+                        const encodedProps = encodeURIComponent(JSON.stringify(proj.payload));
+                        const iframe = document.getElementById('shareIframe');
+                        if (iframe) iframe.src = `http://localhost:3000/?props=${encodedProps}`;
+                    }
                 }
             }
         })();

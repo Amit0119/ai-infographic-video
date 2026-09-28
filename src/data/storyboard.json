@@ -6,138 +6,110 @@
     "height": 1080
   },
   "style": {
-    "backgroundColor": "#bdd3ff",
-    "primaryColor": "#38bdf8",
+    "backgroundColor": "#0f172a",
+    "primaryColor": "#bdd3ff",
     "secondaryColor": "#818cf8",
     "accentColor": "#34d399",
     "textColor": "#ffffff",
     "subtextColor": "#94a3b8",
     "fontFamily": "Inter",
     "currencySymbol": "",
-    "companyWatermark": ""
+    "companyWatermark": "",
+    "videoOverlayColor": ""
   },
   "scenes": [
     {
       "id": 1,
-      "durationInSeconds": 15,
+      "durationInSeconds": 10,
       "type": "title",
-      "narration": "Welcome to our 2026 corporate performance deep dive. Today, we are analyzing a comprehensive twelve-month dataset tracking revenue, targets, and customer acquisition across four distinct geographic regions and two flagship product lines: Industrial Motors and Pumps. Let\u2019s examine where our growth engines lie and where regional challenges demand strategic intervention.",
+      "narration": "Welcome to our comprehensive performance review for fiscal year 2026. Today, we examine twelve months of operational data across four core regions, tracking two flagship product lines: Industrial Motors and Pumps. By evaluating revenue, targets, and customer growth, we uncover key performance drivers shaping our market trajectory.",
       "captions": [],
-      "title": "2026 Corporate Performance Overview",
-      "subtitle": "Tracking Revenue, Targets, and Customer Counts Across 4 Regions and 2 Product Lines",
-      "brollUrl": "https://videos.pexels.com/video-files/6950314/6950314-hd_1280_720_30fps.mp4"
+      "title": "Corporate Performance Overview",
+      "subtitle": "Jan-Dec 2026: Regional & Product Analysis",
+      "brollUrl": "https://videos.pexels.com/video-files/7651533/7651533-hd_1920_1080_30fps.mp4"
     },
     {
       "id": 2,
-      "durationInSeconds": 14,
-      "type": "bar_chart",
-      "narration": "Right out of the gate, the West region emerges as our undisputed powerhouse. Throughout 2026, the West consistently crushed its targets. By December, Western Industrial Motors soared to 17.5 crore rupees in revenue\u2014beating its target by 1.7 crore and achieving a stellar 110.8% success rate with 157 active customers.",
-      "captions": [],
-      "title": "West Region Industrial Motors Performance (Dec-26)",
-      "chart_data": [
-        {
-          "label": "Target Revenue (Cr)",
-          "value": 15.8
-        },
-        {
-          "label": "Actual Revenue (Cr)",
-          "value": 17.5
-        },
-        {
-          "label": "Active Customers",
-          "value": 157
-        }
-      ],
-      "color": null,
-      "targetItems": null,
-      "brollUrl": "https://videos.pexels.com/video-files/39741609/16946109_640_360_60fps.mp4"
-    },
-    {
-      "id": 3,
-      "durationInSeconds": 14,
-      "type": "line_chart",
-      "narration": "It wasn't just motors driving the West. Pumps in the region mirrored that success, climbing steadily from 9.2 crore in January to 12.2 crore by December. With positive variances every single month and customer counts expanding to 114, the Western market proves to be a masterclass in consistent execution and robust demand.",
-      "captions": [],
-      "title": "West Pumps Growth Trajectory (2026)",
-      "chart_data": [
-        {
-          "label": "January",
-          "value": 9.2
-        },
-        {
-          "label": "April",
-          "value": 10.1
-        },
-        {
-          "label": "August",
-          "value": 11.2
-        },
-        {
-          "label": "December",
-          "value": 12.2
-        }
-      ],
-      "color": null,
-      "targetItems": null,
-      "brollUrl": "https://videos.pexels.com/video-files/37471297/15872574_640_360_24fps.mp4"
-    },
-    {
-      "id": 4,
-      "durationInSeconds": 15,
+      "durationInSeconds": 10,
       "type": "comparison",
-      "narration": "Moving to the South, we see a fascinating split narrative. Industrial Motors in the South gained tremendous momentum, finishing the year strong at 10.5 crore in December, outperforming targets by a full 1 crore. However, the Pumps category in the South experienced a slight drag, consistently running just below target with achievement percentages hovering between 95 and 99 percent.",
+      "narration": "Leading the charge is the West region, our undisputed powerhouse. Throughout 2026, the West consistently over-delivered on both Industrial Motors and Pumps. By December, Industrial Motors in the West surpassed targets by 1.7 Crores, while customer acquisition scaled rapidly to 157 accounts, setting the benchmark for the entire enterprise.",
       "captions": [],
-      "title": "South Region: Motors vs. Pumps (Dec-26)",
+      "title": "West Region Performance (Dec 2026)",
       "items": [
         {
           "name": "Industrial Motors",
-          "actual": 10.5,
-          "target": 9.5
+          "actual": 17.5,
+          "target": 15.8
         },
         {
           "name": "Pumps",
-          "actual": 8.8,
-          "target": 9.1
+          "actual": 12.2,
+          "target": 11.1
         }
       ],
-      "brollUrl": "https://videos.pexels.com/video-files/39102371/16637005_640_360_25fps.mp4"
+      "brollUrl": "https://videos.pexels.com/video-files/30245092/12966437_640_360_60fps.mp4"
     },
     {
-      "id": 5,
-      "durationInSeconds": 14,
+      "id": 3,
+      "durationInSeconds": 8,
       "type": "bar_chart",
-      "narration": "In the East, performance has been steady and reliable. While early months saw minor negative variances in Industrial Motors, the second half of the year turned a corner, breaking past 101% achievement by November and December. Pumps in the East held a stable baseline, closing out December at 5.9 crore with a near-perfect 98.3% target realization.",
+      "narration": "Moving to the South, we see a tale of two distinct product trajectories. Industrial Motors experienced phenomenal growth, steadily climbing to 10.5 Crores by year-end and outperforming targets. Meanwhile, Pumps maintained a stable, reliable trajectory, hovering just shy of targets with exceptional consistency.",
       "captions": [],
-      "title": "East Region Year-End Closing (Dec-26)",
+      "title": "South Region Growth (Dec 2026)",
       "chart_data": [
         {
-          "label": "Motors Target",
-          "value": 9
+          "label": "Industrial Motors Revenue",
+          "value": 10.5
         },
         {
-          "label": "Motors Actual",
-          "value": 9.1
+          "label": "Motors Achievement %",
+          "value": 110.5
         },
         {
-          "label": "Pumps Target",
-          "value": 6
-        },
-        {
-          "label": "Pumps Actual",
-          "value": 5.9
+          "label": "Pumps Achievement %",
+          "value": 97
         }
       ],
       "color": null,
       "targetItems": null,
-      "brollUrl": "https://videos.pexels.com/video-files/6396292/6396292-hd_1920_1080_25fps.mp4"
+      "brollUrl": "https://videos.pexels.com/video-files/11927170/11927170-hd_1280_720_60fps.mp4"
     },
     {
-      "id": 6,
-      "durationInSeconds": 15,
-      "type": "comparison",
-      "narration": "Every corporate review uncovers growth opportunities, and for 2026, the North region requires our strategic focus. Both Industrial Motors and Pumps in the North faced persistent negative variances. In December, Northern Industrial Motors fell short by 0.5 crore, while Pumps lagged by 0.6 crore, pointing to fierce regional competition or shifting market dynamics that we must address.",
+      "id": 4,
+      "durationInSeconds": 8,
+      "type": "line_chart",
+      "narration": "The East region demonstrated remarkable resilience and stabilization. While Industrial Motors started the year with minor negative variances, targeted strategic shifts paid off, pushing achievement past 101% by December. Pumps similarly closed the gap, maintaining steady alignment with regional forecasts.",
       "captions": [],
-      "title": "North Region Deficit Analysis (Dec-26)",
+      "title": "East Region Stabilization",
+      "chart_data": [
+        {
+          "label": "Early 2026 Variance",
+          "value": -2
+        },
+        {
+          "label": "Motors Dec Revenue",
+          "value": 7.2
+        },
+        {
+          "label": "Motors Dec Achievement",
+          "value": 101.4
+        },
+        {
+          "label": "Pumps Achievement",
+          "value": 98
+        }
+      ],
+      "color": null,
+      "targetItems": null,
+      "brollUrl": "https://videos.pexels.com/video-files/34490864/14614177_640_360_24fps.mp4"
+    },
+    {
+      "id": 5,
+      "durationInSeconds": 8,
+      "type": "comparison",
+      "narration": "In contrast, the North region faced notable headwinds throughout 2026. Despite steady customer growth\u2014reaching 101 accounts for Industrial Motors by December\u2014both product lines experienced persistent negative variances, with achievement percentages lagging between 92 and 96 percent against aggressive targets.",
+      "captions": [],
+      "title": "North Region Headwinds (Dec 2026)",
       "items": [
         {
           "name": "Industrial Motors",
@@ -146,26 +118,54 @@
         },
         {
           "name": "Pumps",
-          "actual": 7.4,
-          "target": 8
+          "actual": 8.2,
+          "target": 8.8
         }
       ],
-      "brollUrl": "https://videos.pexels.com/video-files/35344723/14975402_640_360_30fps.mp4"
+      "brollUrl": "https://videos.pexels.com/video-files/35701921/15131066_640_360_24fps.mp4"
+    },
+    {
+      "id": 6,
+      "durationInSeconds": 8,
+      "type": "bar_chart",
+      "narration": "Comparing our two core product lines, Industrial Motors proved to be the primary catalyst for revenue growth and positive variance, particularly in the West and South. Pumps, though operating on slightly tighter margins and minor negative variances in the North and East, provided a solid, predictable foundation of recurring customer demand.",
+      "captions": [],
+      "title": "Product Comparison: Motors vs Pumps",
+      "chart_data": [
+        {
+          "label": "Motors Revenue Impact",
+          "value": 0
+        },
+        {
+          "label": "Motors Positive Variance",
+          "value": 0
+        },
+        {
+          "label": "Pumps Volume Stability",
+          "value": 0
+        },
+        {
+          "label": "Pumps Margin Profile",
+          "value": 0
+        }
+      ],
+      "color": null,
+      "targetItems": null,
+      "brollUrl": "https://videos.pexels.com/video-files/39102371/16637005_640_360_25fps.mp4"
     },
     {
       "id": 7,
-      "durationInSeconds": 15,
-      "type": "bullet_points",
-      "narration": "Synthesizing our 2026 data, our enterprise demonstrates remarkable resilience and strong top-line growth, heavily propelled by the Western region and Southern motor sales. As we look ahead, our primary operational focus will be deploying targeted sales strategies in the North to close the variance gap, while scaling the winning playbooks we've perfected in the West.",
+      "durationInSeconds": 8,
+      "type": "kpi",
+      "narration": "As we close out 2026, the data provides a clear roadmap for the future. We must replicate the successful sales and scaling strategies of the West region across the board, while deploying targeted operational interventions in the North to close the target gap. Armed with these insights, we are primed for accelerated success in the year ahead.",
       "captions": [],
-      "heading": "2027 Strategic Priorities",
-      "content_points": [
-        "Scale Western playbook across remaining regions",
-        "Deploy targeted sales interventions in the North region",
-        "Maintain southern momentum in Industrial Motors",
-        "Optimize product mix for steady regional growth"
-      ],
-      "brollUrl": "https://videos.pexels.com/video-files/6773472/6773472-hd_1920_1080_30fps.mp4"
+      "metric": "FY 2026 Cumulative Performance",
+      "value": "Optimized",
+      "unit": "Readiness",
+      "prefix": "",
+      "growth": 2027,
+      "growthLabel": "Outlook Year",
+      "brollUrl": "https://videos.pexels.com/video-files/7947423/7947423-hd_1920_1080_30fps.mp4"
     }
   ]
 }
