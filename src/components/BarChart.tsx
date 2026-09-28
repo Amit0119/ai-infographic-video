@@ -236,7 +236,7 @@ export const BarChart: React.FC<BarChartSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={valueLabelOpacity}
               >
-                {isNumeric ? (safeNumeric * clampedBarSpring).toFixed(1) : item.value}
+                {isNumeric ? Number(safeNumeric * clampedBarSpring).toFixed(1) : item.value}
               </text>
 
               {/* X-axis label below bar */}

@@ -529,23 +529,58 @@ async def generate_explainer(payload: ExplainerRequestModel):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Explainer pipeline error: {e}")
 
-# ── Endpoint: /analyze ────────────────────────────────────────
+# ── Endpoint: /preview-data ──────────────────────────────
 
-@app.post("/analyze")
-async def analyze_data(
-    file: UploadFile = File(...),
-    initial_prompt: Optional[str] = Form(None)
-):
+@app.post("/preview-data")
+async def preview_data(file: UploadFile = File(...)):
+    import io
     try:
-        raw_filename = file.filename or "Sales Data"
-        video_title = os.path.splitext(raw_filename)[0].replace("_", " ").replace("-", " ").title()
-
         contents = await file.read()
         if len(contents) > MAX_FILE_SIZE:
             raise HTTPException(status_code=413, detail="File too large. Max 10MB allowed.")
             
-        df = pd.read_excel(io.BytesIO(contents))
-        csv_data = df.to_csv(index=False)
+        if file.filename.endswith(('.xls', '.xlsx')):
+            df = pd.read_excel(io.BytesIO(contents))
+        else:
+            df = pd.read_csv(io.BytesIO(contents))
+        
+        return {
+            "status": "success",
+            "columns": df.columns.tolist()[:10],
+            "total_columns": len(df.columns),
+            "total_rows": len(df)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse data file: {str(e)}")
+
+# ── Endpoint: /analyze ────────────────────────────────────────
+
+@app.post("/analyze")
+async def analyze_data(
+    file: Optional[UploadFile] = File(None),
+    initial_prompt: Optional[str] = Form(None),
+    topic_input: Optional[str] = Form(None)
+):
+    try:
+        if file:
+            raw_filename = file.filename or "Sales Data"
+            video_title = os.path.splitext(raw_filename)[0].replace("_", " ").replace("-", " ").title()
+            contents = await file.read()
+            if len(contents) > MAX_FILE_SIZE:
+                raise HTTPException(status_code=413, detail="File too large. Max 10MB allowed.")
+                
+            if file.filename.endswith(('.xls', '.xlsx')):
+                df = pd.read_excel(io.BytesIO(contents))
+            else:
+                df = pd.read_csv(io.BytesIO(contents))
+                
+            input_data = f"Corporate Data CSV:\n{df.to_csv(index=False)}"
+        else:
+            video_title = "Topic Explained"
+            if topic_input:
+                input_data = f"Topic to explain: {topic_input}"
+            else:
+                raise HTTPException(status_code=400, detail="Must provide either a file or a topic_input")
 
         # Agent 1: Researcher
         researcher_prompt = PromptTemplate(
@@ -553,7 +588,7 @@ async def analyze_data(
             template=RESEARCHER_PROMPT_TEMPLATE
         )
         script = await _invoke_with_retry(researcher_prompt, {
-            "input_data": f"Corporate Data CSV:\n{csv_data}",
+            "input_data": input_data,
             "initial_prompt": initial_prompt or "None"
         })
 
@@ -596,7 +631,7 @@ async def analyze_data(
 # ── Endpoint: /approve ────────────────────────────────────────
 
 @app.post("/approve")
-async def approve_storyboard(storyboard_data: dict):
+async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
     import logging
     logger = logging.getLogger("uvicorn.error")
     
@@ -638,7 +673,7 @@ async def approve_storyboard(storyboard_data: dict):
 
         # ── B-Roll Fetching ───────────────────────────────────────
         pexels_key = os.getenv("PEXELS_API_KEY") or os.getenv("PEXEL_API_KEY")
-        if pexels_key:
+        if pexels_key and quality != "fast":
             logger.info("Fetching cinematic B-roll from Pexels...")
             try:
                 async with httpx.AsyncClient(timeout=15.0) as client:
@@ -829,6 +864,12 @@ async def fetch_broll(query: str):
 # ── Static Files (Control Panel) ─────────────────────────────
 
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 os.makedirs(static_dir, exist_ok=True)
+
+@app.get("/share/{vid_id}")
+async def share_route(vid_id: str):
+    return FileResponse(os.path.join(static_dir, "index.html"))
+
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

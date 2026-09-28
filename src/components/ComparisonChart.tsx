@@ -180,7 +180,7 @@ export const ComparisonChart: React.FC<ComparisonSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={labelOpacity}
               >
-                {item.target.toFixed(1)}
+                {Number(item.target).toFixed(1)}
               </text>
 
               {/* Actual bar (bottom, colored) */}
@@ -217,10 +217,10 @@ export const ComparisonChart: React.FC<ComparisonSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={labelOpacity}
               >
-                {item.actual.toFixed(1)}
+                {Number(item.actual).toFixed(1)}
                 {"  "}
                 <tspan fill={isAboveTarget ? "#10B981" : "#EF4444"} fontSize={16}>
-                  ({achievementPct.toFixed(1)}%)
+                  ({Number(achievementPct).toFixed(1)}%)
                 </tspan>
               </text>
             </g>

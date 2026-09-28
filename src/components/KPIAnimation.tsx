@@ -72,7 +72,7 @@ export const KPIAnimation: React.FC<KPISceneProps> = ({
     const isInteger = Number.isInteger(numericValue);
     formattedNumber = isInteger
       ? Math.round(displayValue).toLocaleString("en-IN")
-      : displayValue.toFixed(1);
+      : Number(displayValue).toFixed(1);
   }
 
   // Number opacity

@@ -99,7 +99,7 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
   const isInteger = Number.isInteger(value);
   const formattedNumber = isInteger
     ? Math.round(displayValue).toLocaleString("en-IN")
-    : displayValue.toFixed(1);
+    : Number(displayValue).toFixed(1);
   const numberOpacity = interpolate(
     Math.max(0, numberSpring),
     [0, 0.3],
@@ -149,10 +149,11 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
           alignItems: "center",
           padding: "60px 100px",
           borderRadius: 32,
-          background: `linear-gradient(135deg, ${style.backgroundColor}CC, ${style.backgroundColor}99)`,
+          background: style.videoOverlayColor || "rgba(15, 23, 42, 0.75)",
           border: `1px solid ${glowColor}25`,
           boxShadow: `0 0 80px ${glowColor}10, 0 4px 32px rgba(0,0,0,0.3)`,
-          backdropFilter: "blur(20px)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
         }}
       >
         {/* Badge */}
@@ -267,7 +268,7 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {achievement.toFixed(1)}%
+              {Number(achievement).toFixed(1)}%
             </span>
             <span
               style={{
@@ -297,7 +298,7 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-            {varianceSign}{style.currencySymbol ?? ""}{Math.abs(variance).toFixed(1)} Cr
+            {varianceSign}{style.currencySymbol ?? ""}{Number(Math.abs(variance)).toFixed(1)} Cr
             </span>
             <span
               style={{

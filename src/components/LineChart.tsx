@@ -203,7 +203,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
                 fontFamily={style.fontFamily}
                 opacity={0.6}
               >
-                {val.toFixed(0)}
+                {Number(val).toFixed(0)}
               </text>
             </g>
           );
@@ -307,7 +307,7 @@ export const LineChart: React.FC<LineChartSceneProps> = ({
                   fontFamily={style.fontFamily}
                   opacity={labelProgress}
                 >
-                  {item.value.toFixed(1)}
+                  {Number(item.value).toFixed(1)}
                 </text>
               )}
 

@@ -1,12 +1,12 @@
 {
   "video": {
-    "title": "2027 Comprehensive Annual Budget & Strategic Ai Investment Plan",
+    "title": "Ai Corporate Infographic Poc Sales Data",
     "fps": 30,
     "width": 1920,
     "height": 1080
   },
   "style": {
-    "backgroundColor": "#0f172a",
+    "backgroundColor": "#bdd3ff",
     "primaryColor": "#38bdf8",
     "secondaryColor": "#818cf8",
     "accentColor": "#34d399",
@@ -19,130 +19,153 @@
   "scenes": [
     {
       "id": 1,
-      "durationInSeconds": 8,
-      "type": "kpi",
-      "narration": "Members of the Board, welcome. Today, we present the 2027 Comprehensive Annual Budget\u2014a defining roadmap for our enterprise. We are entering this fiscal year from a position of undeniable strength, anchored by a total capital framework of $1.25 billion. This represents a rigorous 14.5% year-over-year expansion, engineered to aggressively outpace market growth and secure our long-term industry dominance.",
+      "durationInSeconds": 15,
+      "type": "title",
+      "narration": "Welcome to our 2026 corporate performance deep dive. Today, we are analyzing a comprehensive twelve-month dataset tracking revenue, targets, and customer acquisition across four distinct geographic regions and two flagship product lines: Industrial Motors and Pumps. Let\u2019s examine where our growth engines lie and where regional challenges demand strategic intervention.",
       "captions": [],
-      "metric": "Total Addressable Budget",
-      "value": "1.25",
-      "unit": "Billion",
-      "prefix": "$",
-      "growth": "+14.5%",
-      "growthLabel": "YoY Growth",
-      "brollUrl": "https://videos.pexels.com/video-files/5849607/5849607-hd_1920_1080_30fps.mp4"
+      "title": "2026 Corporate Performance Overview",
+      "subtitle": "Tracking Revenue, Targets, and Customer Counts Across 4 Regions and 2 Product Lines",
+      "brollUrl": "https://videos.pexels.com/video-files/6950314/6950314-hd_1280_720_30fps.mp4"
     },
     {
       "id": 2,
-      "durationInSeconds": 8,
-      "type": "pie_chart",
-      "narration": "A disciplined enterprise demands precise capital allocation. As detailed in our primary distribution model, we have decoupled legacy overhead to fuel high-yield domains. Engineering and R&D command the largest share at $500 million, while Global Operations absorbs $350 million. Crucially, we have carved out an unprecedented $250 million dedicated entirely to our Strategic AI Investment Plan.",
+      "durationInSeconds": 14,
+      "type": "bar_chart",
+      "narration": "Right out of the gate, the West region emerges as our undisputed powerhouse. Throughout 2026, the West consistently crushed its targets. By December, Western Industrial Motors soared to 17.5 crore rupees in revenue\u2014beating its target by 1.7 crore and achieving a stellar 110.8% success rate with 157 active customers.",
       "captions": [],
-      "title": "Departmental Budget Allocation",
+      "title": "West Region Industrial Motors Performance (Dec-26)",
       "chart_data": [
         {
-          "label": "Engineering & R&D",
-          "value": 500
+          "label": "Target Revenue (Cr)",
+          "value": 15.8
         },
         {
-          "label": "Global Operations",
-          "value": 350
+          "label": "Actual Revenue (Cr)",
+          "value": 17.5
         },
         {
-          "label": "Strategic AI Initiatives",
-          "value": 250
-        },
-        {
-          "label": "Corporate Infrastructure",
-          "value": 150
+          "label": "Active Customers",
+          "value": 157
         }
       ],
       "color": null,
       "targetItems": null,
-      "brollUrl": "https://videos.pexels.com/video-files/29758663/12789468_640_360_25fps.mp4"
+      "brollUrl": "https://videos.pexels.com/video-files/39741609/16946109_640_360_60fps.mp4"
     },
     {
       "id": 3,
-      "durationInSeconds": 8,
-      "type": "bar_chart",
-      "narration": "Let us examine the crown jewel of this fiscal strategy: our $250 million Strategic AI Investment Plan. This is not an expense; it is a high-yield capital deployment. Phased evenly at $62.5 million per quarter, this initiative is modeled to drive a 300% cumulative ROI over three years, while instantaneously slashing transactional operational friction by 40% across all customer-facing workflows.",
+      "durationInSeconds": 14,
+      "type": "line_chart",
+      "narration": "It wasn't just motors driving the West. Pumps in the region mirrored that success, climbing steadily from 9.2 crore in January to 12.2 crore by December. With positive variances every single month and customer counts expanding to 114, the Western market proves to be a masterclass in consistent execution and robust demand.",
       "captions": [],
-      "title": "AI Investment Phased Deployment (Milestones)",
+      "title": "West Pumps Growth Trajectory (2026)",
       "chart_data": [
         {
-          "label": "Q1 Deployment",
-          "value": 62.5
+          "label": "January",
+          "value": 9.2
         },
         {
-          "label": "Q2 Deployment",
-          "value": 62.5
+          "label": "April",
+          "value": 10.1
         },
         {
-          "label": "Q3 Deployment",
-          "value": 62.5
+          "label": "August",
+          "value": 11.2
         },
         {
-          "label": "Q4 Deployment",
-          "value": 62.5
+          "label": "December",
+          "value": 12.2
         }
       ],
       "color": null,
       "targetItems": null,
-      "brollUrl": "https://videos.pexels.com/video-files/7579941/7579941-hd_2048_1080_25fps.mp4"
+      "brollUrl": "https://videos.pexels.com/video-files/37471297/15872574_640_360_24fps.mp4"
     },
     {
       "id": 4,
-      "durationInSeconds": 8,
+      "durationInSeconds": 15,
       "type": "comparison",
-      "narration": "Fiscal responsibility remains our north star. When mapping our quarterly trajectory, the divergence between revenue acceleration and expense growth widens favorably. By Q4, our aggressive scaling will yield $460 million in quarterly revenue against a stabilized expense baseline of $330 million\u2014demonstrating immediate operational leverage driven by our technological integrations.",
+      "narration": "Moving to the South, we see a fascinating split narrative. Industrial Motors in the South gained tremendous momentum, finishing the year strong at 10.5 crore in December, outperforming targets by a full 1 crore. However, the Pumps category in the South experienced a slight drag, consistently running just below target with achievement percentages hovering between 95 and 99 percent.",
       "captions": [],
-      "title": "Q1 to Q4 Revenue vs Expense Trajectory",
+      "title": "South Region: Motors vs. Pumps (Dec-26)",
       "items": [
         {
-          "name": "Q1 Projection",
-          "actual": 310,
-          "target": 280
+          "name": "Industrial Motors",
+          "actual": 10.5,
+          "target": 9.5
         },
         {
-          "name": "Q2 Projection",
-          "actual": 360,
-          "target": 295
-        },
-        {
-          "name": "Q3 Projection",
-          "actual": 410,
-          "target": 310
-        },
-        {
-          "name": "Q4 Projection",
-          "actual": 460,
-          "target": 330
+          "name": "Pumps",
+          "actual": 8.8,
+          "target": 9.1
         }
       ],
-      "brollUrl": "https://videos.pexels.com/video-files/7735870/7735870-hd_1920_1080_25fps.mp4"
+      "brollUrl": "https://videos.pexels.com/video-files/39102371/16637005_640_360_25fps.mp4"
     },
     {
       "id": 5,
-      "durationInSeconds": 8,
-      "type": "bullet_points",
-      "narration": "In an era of macro-economic volatility, our balance sheet is our fortress. We have codified strict risk parameters for 2027. We maintain an ironclad liquidity reserve of $180 million, cap our debt-to-equity ratio at a conservative 0.45, and project a robust free cash flow generation of $420 million by the close of the fiscal year.",
+      "durationInSeconds": 14,
+      "type": "bar_chart",
+      "narration": "In the East, performance has been steady and reliable. While early months saw minor negative variances in Industrial Motors, the second half of the year turned a corner, breaking past 101% achievement by November and December. Pumps in the East held a stable baseline, closing out December at 5.9 crore with a near-perfect 98.3% target realization.",
       "captions": [],
-      "heading": "Risk Mitigation & Balance Sheet Resilience",
-      "content_points": [
-        "Liquidity Reserve: $180 Million",
-        "Debt-to-Equity Ratio: Capped at 0.45",
-        "Free Cash Flow Generation Target: $420 Million for FY27"
+      "title": "East Region Year-End Closing (Dec-26)",
+      "chart_data": [
+        {
+          "label": "Motors Target",
+          "value": 9
+        },
+        {
+          "label": "Motors Actual",
+          "value": 9.1
+        },
+        {
+          "label": "Pumps Target",
+          "value": 6
+        },
+        {
+          "label": "Pumps Actual",
+          "value": 5.9
+        }
       ],
-      "brollUrl": "https://videos.pexels.com/video-files/7038074/7038074-hd_1366_720_25fps.mp4"
+      "color": null,
+      "targetItems": null,
+      "brollUrl": "https://videos.pexels.com/video-files/6396292/6396292-hd_1920_1080_25fps.mp4"
     },
     {
       "id": 6,
-      "durationInSeconds": 7,
-      "type": "title",
-      "narration": "Distinguished board members, the numbers before you represent clarity, ambition, and absolute fiscal discipline. We are not merely budgeting for the next twelve months; we are architecting the next decade of market leadership. I proudly submit the 2027 Comprehensive Annual Budget and Strategic AI Investment Plan to the board for formal authorization.",
+      "durationInSeconds": 15,
+      "type": "comparison",
+      "narration": "Every corporate review uncovers growth opportunities, and for 2026, the North region requires our strategic focus. Both Industrial Motors and Pumps in the North faced persistent negative variances. In December, Northern Industrial Motors fell short by 0.5 crore, while Pumps lagged by 0.6 crore, pointing to fierce regional competition or shifting market dynamics that we must address.",
       "captions": [],
-      "title": "2027 Comprehensive Annual Budget",
-      "subtitle": "Request for Formal Board Authorization",
-      "brollUrl": "https://videos.pexels.com/video-files/6929599/6929599-hd_1920_1080_30fps.mp4"
+      "title": "North Region Deficit Analysis (Dec-26)",
+      "items": [
+        {
+          "name": "Industrial Motors",
+          "actual": 10.8,
+          "target": 11.3
+        },
+        {
+          "name": "Pumps",
+          "actual": 7.4,
+          "target": 8
+        }
+      ],
+      "brollUrl": "https://videos.pexels.com/video-files/35344723/14975402_640_360_30fps.mp4"
+    },
+    {
+      "id": 7,
+      "durationInSeconds": 15,
+      "type": "bullet_points",
+      "narration": "Synthesizing our 2026 data, our enterprise demonstrates remarkable resilience and strong top-line growth, heavily propelled by the Western region and Southern motor sales. As we look ahead, our primary operational focus will be deploying targeted sales strategies in the North to close the variance gap, while scaling the winning playbooks we've perfected in the West.",
+      "captions": [],
+      "heading": "2027 Strategic Priorities",
+      "content_points": [
+        "Scale Western playbook across remaining regions",
+        "Deploy targeted sales interventions in the North region",
+        "Maintain southern momentum in Industrial Motors",
+        "Optimize product mix for steady regional growth"
+      ],
+      "brollUrl": "https://videos.pexels.com/video-files/6773472/6773472-hd_1920_1080_30fps.mp4"
     }
   ]
 }

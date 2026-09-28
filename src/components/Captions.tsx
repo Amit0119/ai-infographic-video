@@ -56,11 +56,11 @@ export const Captions: React.FC<CaptionsProps> = ({ captions, style }) => {
         padding: '24px 40px',
         gap: '16px',
         borderRadius: 24,
-        background: `linear-gradient(135deg, ${style?.backgroundColor}CC, ${style?.backgroundColor}99)`,
+        background: style?.videoOverlayColor || "rgba(15, 23, 42, 0.75)",
         border: `1px solid ${style?.primaryColor}40`,
         boxShadow: `0 8px 32px rgba(0,0,0,0.5)`,
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         zIndex: 2000,
         pointerEvents: 'none'
       }}

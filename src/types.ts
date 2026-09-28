@@ -18,6 +18,7 @@ export interface SceneStyle {
   fontFamily: string;      // e.g. "Inter"
   currencySymbol?: string; // e.g. "₹", "$", "€" — used by HighlightCard
   companyWatermark?: string; // e.g. "ACME Corp"
+  videoOverlayColor?: string; // custom color for GlassCards and text containers
 }
 
 // ── Scene Prop Interfaces ────────────────────────────────────
