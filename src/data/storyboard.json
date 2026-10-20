@@ -1,8 +1,8 @@
 {
   "video": {
-    "title": "Enterprise Annual Budget vs Actual Analysis (FY 2023)",
-    "duration": 38,
-    "audience": "Executive Board & CFO",
+    "title": "Enterprise Annual Budget Planning Framework",
+    "duration": 44,
+    "audience": "CEO, CFO & Department Heads",
     "fps": 30,
     "width": 1920,
     "height": 1080
@@ -22,261 +22,204 @@
     {
       "id": 1,
       "type": "dashboard_ui",
-      "durationInSeconds": 13,
-      "title": "Executive Budget Summary",
-      "section_header": "Executive Budget vs. Actual Summary",
-      "narration": "Welcome to the Annual Budget Performance Review. For fiscal year 2023, total actual expenditure stood at 1.72 million against a planned budget of 1.76 million, achieving an overall cost saving of 2.5 percent.",
+      "durationInSeconds": 15,
+      "title": "Steps 1–3: Strategy Alignment, Historical Analysis & Revenue Forecast",
+      "section_header": "PHASE 1: STRATEGIC ALIGNMENT & REVENUE FORECASTING",
+      "narration": "To create an effective annual budget, replace fixed percentage increments with strategy-aligned forecasting. By analyzing historical performance and sales pipelines, we project 24.5 million dollars in revenue against an 18.2 million dollar budget request.",
       "top_kpi_controls": [
         {
           "component": "KPI_Card_Counter",
-          "label": "Total Planned Budget",
-          "value": 1762200,
-          "display_value": "1.76M",
-          "prefix": "$"
+          "label": "Revenue Forecast",
+          "value": 24500000,
+          "display_value": "24.5M",
+          "prefix": "$",
+          "unit": "",
+          "variance_pct": 18.4,
+          "status_badge": "Pipeline Driven",
+          "traffic_light": "green"
         },
         {
           "component": "KPI_Card_Counter",
-          "label": "Total Actual Spend",
-          "value": 1718180,
-          "display_value": "1.72M",
-          "prefix": "$"
+          "label": "Budget Requested",
+          "value": 18200000,
+          "display_value": "18.2M",
+          "prefix": "$",
+          "unit": "",
+          "variance_pct": 12.0,
+          "status_badge": "OPEX + CAPEX",
+          "traffic_light": "green"
         },
         {
           "component": "Target_vs_Actual_Indicator",
-          "label": "Net Budget Savings",
-          "value": 44020,
+          "label": "Expected Profit",
+          "value": 6300000,
+          "display_value": "6.3M",
           "prefix": "$",
-          "variance_pct": -2.5,
-          "status_badge": "UNDER BUDGET",
+          "unit": "",
+          "variance_pct": 25.8,
+          "status_badge": "Target EBITDA",
           "traffic_light": "green"
         }
       ],
       "main_chart": {
-        "component": "Grouped_Bar_Chart",
-        "title": "Category-Wise Budget vs. Actual Spend",
-        "categories": [
+        "component": "Multi_Line_Trend_Chart",
+        "title": "Revenue Forecast vs. Planned Expenditure ($M)",
+        "x_axis": ["FY21", "FY22", "FY23", "FY24", "FY25 Est", "Q1 Plan", "Q2 Plan", "Q3 Plan", "Q4 Plan"],
+        "series": [
           {
-            "name": "Development",
-            "budget": 1340200,
-            "actual": 1314635,
-            "variance_pct": -1.91,
-            "status": "favorable"
+            "name": "Revenue Forecast ($M)",
+            "color": "#34d399",
+            "data": [14.2, 16.5, 18.9, 20.7, 24.5, 21.5, 22.8, 23.6, 24.5],
+            "values": [14.2, 16.5, 18.9, 20.7, 24.5, 21.5, 22.8, 23.6, 24.5]
           },
           {
-            "name": "Operational",
-            "budget": 165000,
-            "actual": 174082,
-            "variance_pct": 5.5,
-            "status": "overspent"
-          },
-          {
-            "name": "Training",
-            "budget": 86000,
-            "actual": 68000,
-            "variance_pct": -20.93,
-            "status": "favorable"
-          },
-          {
-            "name": "Marketing",
-            "budget": 75000,
-            "actual": 69676,
-            "variance_pct": -7.1,
-            "status": "favorable"
-          },
-          {
-            "name": "Maintenance",
-            "budget": 48000,
-            "actual": 50487,
-            "variance_pct": 5.18,
-            "status": "overspent"
-          },
-          {
-            "name": "Travelling",
-            "budget": 48000,
-            "actual": 41300,
-            "variance_pct": -13.96,
-            "status": "favorable"
+            "name": "Planned Expenditure ($M)",
+            "color": "#38bdf8",
+            "data": [11.8, 13.1, 14.8, 16.2, 18.2, 16.8, 17.2, 17.7, 18.2],
+            "values": [11.8, 13.1, 14.8, 16.2, 18.2, 16.8, 17.2, 17.7, 18.2]
           }
-        ]
+        ],
+        "peak_callout": {
+          "month": "FY25 Est",
+          "value": 24.5,
+          "label": "Marketing Drives Peak Growth"
+        }
       },
       "side_insight_panel": {
-        "headline": "Executive AI Findings",
+        "headline": "AI Strategy & Revenue Insights",
         "bullets": [
-          "4 out of 6 core departments remained well within the allocated FY23 budget.",
-          "Training (-20.9%) and Travelling (-14.0%) drove $24.7K in combined savings.",
-          "Operational and Maintenance expenses exceeded budget targets by ~5.5%."
+          "Eliminates arbitrary fixed-percentage increments by linking funding directly to corporate strategy.",
+          "Marketing spend is projected to deliver the highest revenue growth based on campaign performance.",
+          "Combines 4-year historical variance trends with renewal rates and deal size projections."
         ],
-        "recommendation_badge": "Reallocate surplus training budget to operational contingency reserves."
+        "recommendation_badge": "STEP 1–3: ALIGN BUDGET WITH CORPORATE GOALS"
       }
     },
     {
       "id": 2,
       "type": "dashboard_ui",
-      "durationInSeconds": 13,
-      "title": "Operational Cost Deep Dive",
-      "section_header": "Operational & Maintenance Variance Analysis",
-      "narration": "Operational costs increased by 5.5 percent, reaching 174.1 thousand against a budget of 165 thousand. Peak overspending occurred in Q4, particularly during October and November.",
+      "durationInSeconds": 15,
+      "title": "Steps 4–9: OPEX Allocation, Risk Assessment & Cost Optimization",
+      "section_header": "PHASE 2: OPEX ALLOCATION, WORKFORCE & RISK BUFFER",
+      "narration": "Next, forecast operating expenses and workforce needs while eliminating inefficiencies. Operating expenses rose 12 percent for cloud and hiring, but vendor consolidation saves 8 percent while maintaining a 5 percent contingency reserve.",
       "top_kpi_controls": [
         {
-          "component": "KPI_Card_Counter",
-          "label": "Operational Budget",
-          "value": 165000,
-          "prefix": "$"
-        },
-        {
-          "component": "KPI_Card_Counter",
-          "label": "Operational Actual",
-          "value": 174082,
-          "prefix": "$"
-        },
-        {
-          "component": "Status_Indicator",
-          "label": "Operational Overrun",
-          "value": 9082,
-          "prefix": "+$",
-          "variance_pct": 5.5,
-          "status_badge": "OVERRUN ALERT",
+          "component": "Percentage_Indicator",
+          "label": "OPEX Growth",
+          "value": 12.0,
+          "display_value": "12.0%",
+          "prefix": "",
+          "unit": "%",
+          "variance_pct": 12.0,
+          "status_badge": "Hiring & Cloud",
           "traffic_light": "red"
-        }
-      ],
-      "main_chart": {
-        "component": "Multi_Line_Trend_Chart",
-        "title": "Monthly Operational Spend: Planned vs. Actual (Jan \u2013 Dec)",
-        "x_axis": [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec"
-        ],
-        "series": [
-          {
-            "name": "Budget",
-            "data": [
-              12000,
-              12000,
-              12000,
-              12000,
-              12000,
-              15000,
-              15000,
-              15000,
-              15000,
-              15000,
-              15000,
-              15000
-            ]
-          },
-          {
-            "name": "Actual",
-            "data": [
-              15600,
-              11698,
-              13453,
-              15790,
-              11508,
-              15500,
-              14333,
-              16500,
-              10900,
-              17800,
-              16800,
-              14200
-            ]
-          }
-        ]
-      },
-      "side_insight_panel": {
-        "headline": "Root Cause & Variance",
-        "bullets": [
-          "October recorded the highest monthly spike at $17,800 (+18.6% above plan).",
-          "November continued the high run-rate at $16,800 before stabilizing in December.",
-          "Maintenance costs also experienced a +5.18% overrun ($50.5K vs $48.0K)."
-        ],
-        "recommendation_badge": "Establish a 5% Q4 seasonal buffer for infrastructure and maintenance."
-      }
-    },
-    {
-      "id": 3,
-      "type": "dashboard_ui",
-      "durationInSeconds": 12,
-      "title": "OPEX Allocation & Optimization",
-      "section_header": "OPEX Share & Cost Optimization Opportunities",
-      "narration": "Development accounts for 76.5 percent of total expenditure, followed by operational costs at 10.1 percent. Strategic optimization in travel and training saved over 24 thousand dollars.",
-      "top_kpi_controls": [
-        {
-          "component": "Percentage_Indicator",
-          "label": "Development Spend Share",
-          "value": 76.5,
-          "unit": "%"
         },
         {
           "component": "Percentage_Indicator",
-          "label": "Operational Spend Share",
-          "value": 10.1,
-          "unit": "%"
+          "label": "Procurement Savings",
+          "value": 8.0,
+          "display_value": "8.0%",
+          "prefix": "",
+          "unit": "%",
+          "variance_pct": -8.0,
+          "status_badge": "Vendor Consolidation",
+          "traffic_light": "green"
         },
         {
           "component": "Achievement_Badge",
-          "label": "Development Savings",
-          "value": 25565,
-          "prefix": "$",
-          "variance_pct": -1.91,
-          "status_badge": "OPTIMIZED",
+          "label": "Contingency Reserve",
+          "value": 5.0,
+          "display_value": "5.0%",
+          "prefix": "",
+          "unit": "%",
+          "variance_pct": 5.0,
+          "status_badge": "Inflation Buffer",
           "traffic_light": "green"
         }
       ],
       "main_chart": {
         "component": "Donut_Chart",
-        "title": "FY 2023 Actual Expenditure Distribution",
+        "title": "Enterprise Annual Budget Allocation Share",
+        "center_label": "100% Budget Share",
         "segments": [
-          {
-            "label": "Development",
-            "value": 1314635,
-            "percentage": 76.51
-          },
-          {
-            "label": "Operational",
-            "value": 174082,
-            "percentage": 10.13
-          },
-          {
-            "label": "Marketing",
-            "value": 69676,
-            "percentage": 4.06
-          },
-          {
-            "label": "Training",
-            "value": 68000,
-            "percentage": 3.96
-          },
-          {
-            "label": "Maintenance",
-            "value": 50487,
-            "percentage": 2.94
-          },
-          {
-            "label": "Travelling",
-            "value": 41300,
-            "percentage": 2.4
-          }
+          { "name": "Payroll & Workforce", "label": "Payroll & Workforce", "value": 7644000, "share_pct": 42.0, "percentage": 42.0, "color": "#38bdf8" },
+          { "name": "Cloud, IT & SaaS", "label": "Cloud, IT & SaaS", "value": 3640000, "share_pct": 20.0, "percentage": 20.0, "color": "#818cf8" },
+          { "name": "Strategic CAPEX", "label": "Strategic CAPEX", "value": 3276000, "share_pct": 18.0, "percentage": 18.0, "color": "#34d399" },
+          { "name": "Marketing & Operations", "label": "Marketing & Operations", "value": 2730000, "share_pct": 15.0, "percentage": 15.0, "color": "#f59e0b" },
+          { "name": "Contingency Reserve", "label": "Contingency Reserve", "value": 910000, "share_pct": 5.0, "percentage": 5.0, "color": "#f43f5e" }
         ]
       },
       "side_insight_panel": {
-        "headline": "FY24 Optimization Playbook",
+        "headline": "OPEX & Cost Optimization",
         "bullets": [
-          "Core R&D and Development achieved $25.5K savings without impacting delivery.",
-          "Digital training adoption reduced training expenditure by 20.93%.",
-          "Travel consolidation saved 13.96% compared to initial annual forecast."
+          "Operating expenses increased by 12%, primarily due to planned hiring and cloud infrastructure.",
+          "Vendor consolidation and contract renegotiations reduce overall procurement costs by 8%.",
+          "Maintains a mandatory 5% contingency reserve to mitigate inflation and supply chain risks."
         ],
-        "recommendation_badge": "Lock in vendor consolidation to target an additional 8% procurement saving."
+        "recommendation_badge": "STEP 4–9: CONSOLIDATE VENDORS & LOCK 5% BUFFER"
+      }
+    },
+    {
+      "id": 3,
+      "type": "dashboard_ui",
+      "durationInSeconds": 14,
+      "title": "Steps 10–12: CAPEX ROI, Scenario Modeling & Executive Approval",
+      "section_header": "PHASE 3: SCENARIO MODELING, CAPEX ROI & BOARD APPROVAL",
+      "narration": "Finally, prioritize capital investments by ROI and stress-test financial scenarios before executive approval. Three strategic AI and automation initiatives capture 65 percent of capital spend, achieving full payback within 18 months.",
+      "top_kpi_controls": [
+        {
+          "component": "Percentage_Indicator",
+          "label": "Strategic CAPEX Share",
+          "value": 65.0,
+          "display_value": "65.0%",
+          "prefix": "",
+          "unit": "%",
+          "variance_pct": 65.0,
+          "status_badge": "Top 3 Initiatives",
+          "traffic_light": "green"
+        },
+        {
+          "component": "KPI_Card_Counter",
+          "label": "CAPEX Payback Period",
+          "value": 18,
+          "display_value": "18 Mos",
+          "prefix": "",
+          "unit": " Mos",
+          "variance_pct": -15.0,
+          "status_badge": "High ROI Velocity",
+          "traffic_light": "green"
+        },
+        {
+          "component": "Achievement_Badge",
+          "label": "Cash Flow Projection",
+          "value": 100,
+          "display_value": "Positive",
+          "prefix": "",
+          "unit": "%",
+          "variance_pct": 18.4,
+          "status_badge": "Positive Net Flow",
+          "traffic_light": "green"
+        }
+      ],
+      "main_chart": {
+        "component": "Grouped_Bar_Chart",
+        "title": "Financial Scenarios & Strategic Initiative Returns ($M)",
+        "categories": [
+          { "name": "Best Case", "label": "Best Case", "budget": 18.2, "actual": 28.0, "variance": 9.8, "variance_pct": 53.85, "status": "favorable" },
+          { "name": "Expected Case", "label": "Expected Case", "budget": 18.2, "actual": 24.5, "variance": 6.3, "variance_pct": 34.62, "status": "favorable" },
+          { "name": "Worst Case", "label": "Worst Case", "budget": 18.8, "actual": 19.5, "variance": 0.7, "variance_pct": 3.72, "status": "favorable" },
+          { "name": "AI & Automation", "label": "AI & Automation", "budget": 2.1, "actual": 3.8, "variance": 1.7, "variance_pct": 80.95, "status": "favorable" },
+          { "name": "Market Expansion", "label": "Market Expansion", "budget": 1.2, "actual": 2.2, "variance": 1.0, "variance_pct": 83.33, "status": "favorable" }
+        ]
+      },
+      "side_insight_panel": {
+        "headline": "Executive Review & Governance",
+        "bullets": [
+          "Three strategic initiatives (AI, Automation, Expansion) account for 65% of capital investment.",
+          "Capital investments are fully justified with measurable KPIs and an 18-month payback period.",
+          "Current projections confirm positive cash flow under both Expected and Best-Case scenarios."
+        ],
+        "recommendation_badge": "STEP 10–12: BOARD APPROVED FOR EXECUTION"
       }
     }
   ]

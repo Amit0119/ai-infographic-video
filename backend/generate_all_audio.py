@@ -1,155 +1,41 @@
-import asyncio, json, os, edge_tts
+import os
+import json
+import asyncio
+import edge_tts
 from gtts import gTTS
 
-STORYBOARD_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "data", "storyboard.json"))
-PUBLIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "public"))
 VOICE = "en-US-ChristopherNeural"
 
-NEW_STORYBOARD = {
-  "video": {
-    "title": "Enterprise Annual Budget vs Actual Analysis (FY 2023)",
-    "duration": 38,
-    "audience": "Executive Board & CFO",
-    "fps": 30,
-    "width": 1920,
-    "height": 1080
-  },
-  "style": {
-    "backgroundColor": "#0b1120",
-    "primaryColor": "#38bdf8",
-    "secondaryColor": "#818cf8",
-    "accentColor": "#34d399",
-    "textColor": "#ffffff",
-    "subtextColor": "#94a3b8",
-    "fontFamily": "Inter",
-    "currencySymbol": "$",
-    "companyWatermark": "DeptCast Analytics"
-  },
-  "scenes": [
-    {
-      "id": 1,
-      "type": "dashboard_ui",
-      "durationInSeconds": 13,
-      "title": "Executive Budget Summary",
-      "section_header": "Executive Budget vs. Actual Summary",
-      "narration": "Welcome to the Annual Budget Performance Review. For fiscal year 2023, total actual expenditure stood at 1.72 million against a planned budget of 1.76 million, achieving an overall cost saving of 2.5 percent.",
-      "top_kpi_controls": [
-        { "component": "KPI_Card_Counter", "label": "Total Planned Budget", "value": 1762200, "display_value": "1.76M", "prefix": "$" },
-        { "component": "KPI_Card_Counter", "label": "Total Actual Spend", "value": 1718180, "display_value": "1.72M", "prefix": "$" },
-        { "component": "Target_vs_Actual_Indicator", "label": "Net Budget Savings", "value": 44020, "prefix": "$", "variance_pct": -2.5, "status_badge": "UNDER BUDGET", "traffic_light": "green" }
-      ],
-      "main_chart": {
-        "component": "Grouped_Bar_Chart",
-        "title": "Category-Wise Budget vs. Actual Spend",
-        "categories": [
-          { "name": "Development", "budget": 1340200, "actual": 1314635, "variance_pct": -1.91, "status": "favorable" },
-          { "name": "Operational", "budget": 165000, "actual": 174082, "variance_pct": 5.5, "status": "overspent" },
-          { "name": "Training", "budget": 86000, "actual": 68000, "variance_pct": -20.93, "status": "favorable" },
-          { "name": "Marketing", "budget": 75000, "actual": 69676, "variance_pct": -7.1, "status": "favorable" },
-          { "name": "Maintenance", "budget": 48000, "actual": 50487, "variance_pct": 5.18, "status": "overspent" },
-          { "name": "Travelling", "budget": 48000, "actual": 41300, "variance_pct": -13.96, "status": "favorable" }
-        ]
-      },
-      "side_insight_panel": {
-        "headline": "Executive AI Findings",
-        "bullets": [
-          "4 out of 6 core departments remained well within the allocated FY23 budget.",
-          "Training (-20.9%) and Travelling (-14.0%) drove $24.7K in combined savings.",
-          "Operational and Maintenance expenses exceeded budget targets by ~5.5%."
-        ],
-        "recommendation_badge": "Reallocate surplus training budget to operational contingency reserves."
-      }
-    },
-    {
-      "id": 2,
-      "type": "dashboard_ui",
-      "durationInSeconds": 13,
-      "title": "Operational Cost Deep Dive",
-      "section_header": "Operational & Maintenance Variance Analysis",
-      "narration": "Operational costs increased by 5.5 percent, reaching 174.1 thousand against a budget of 165 thousand. Peak overspending occurred in Q4, particularly during October and November.",
-      "top_kpi_controls": [
-        { "component": "KPI_Card_Counter", "label": "Operational Budget", "value": 165000, "prefix": "$" },
-        { "component": "KPI_Card_Counter", "label": "Operational Actual", "value": 174082, "prefix": "$" },
-        { "component": "Status_Indicator", "label": "Operational Overrun", "value": 9082, "prefix": "+$", "variance_pct": 5.5, "status_badge": "OVERRUN ALERT", "traffic_light": "red" }
-      ],
-      "main_chart": {
-        "component": "Multi_Line_Trend_Chart",
-        "title": "Monthly Operational Spend: Planned vs. Actual (Jan – Dec)",
-        "x_axis": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        "series": [
-          { "name": "Budget", "data": [12000, 12000, 12000, 12000, 12000, 15000, 15000, 15000, 15000, 15000, 15000, 15000] },
-          { "name": "Actual", "data": [15600, 11698, 13453, 15790, 11508, 15500, 14333, 16500, 10900, 17800, 16800, 14200] }
-        ]
-      },
-      "side_insight_panel": {
-        "headline": "Root Cause & Variance",
-        "bullets": [
-          "October recorded the highest monthly spike at $17,800 (+18.6% above plan).",
-          "November continued the high run-rate at $16,800 before stabilizing in December.",
-          "Maintenance costs also experienced a +5.18% overrun ($50.5K vs $48.0K)."
-        ],
-        "recommendation_badge": "Establish a 5% Q4 seasonal buffer for infrastructure and maintenance."
-      }
-    },
-    {
-      "id": 3,
-      "type": "dashboard_ui",
-      "durationInSeconds": 12,
-      "title": "OPEX Allocation & Optimization",
-      "section_header": "OPEX Share & Cost Optimization Opportunities",
-      "narration": "Development accounts for 76.5 percent of total expenditure, followed by operational costs at 10.1 percent. Strategic optimization in travel and training saved over 24 thousand dollars.",
-      "top_kpi_controls": [
-        { "component": "Percentage_Indicator", "label": "Development Spend Share", "value": 76.5, "unit": "%" },
-        { "component": "Percentage_Indicator", "label": "Operational Spend Share", "value": 10.1, "unit": "%" },
-        { "component": "Achievement_Badge", "label": "Development Savings", "value": 25565, "prefix": "$", "variance_pct": -1.91, "status_badge": "OPTIMIZED", "traffic_light": "green" }
-      ],
-      "main_chart": {
-        "component": "Donut_Chart",
-        "title": "FY 2023 Actual Expenditure Distribution",
-        "segments": [
-          { "label": "Development", "value": 1314635, "percentage": 76.51 },
-          { "label": "Operational", "value": 174082, "percentage": 10.13 },
-          { "label": "Marketing", "value": 69676, "percentage": 4.06 },
-          { "label": "Training", "value": 68000, "percentage": 3.96 },
-          { "label": "Maintenance", "value": 50487, "percentage": 2.94 },
-          { "label": "Travelling", "value": 41300, "percentage": 2.40 }
-        ]
-      },
-      "side_insight_panel": {
-        "headline": "FY24 Optimization Playbook",
-        "bullets": [
-          "Core R&D and Development achieved $25.5K savings without impacting delivery.",
-          "Digital training adoption reduced training expenditure by 20.93%.",
-          "Travel consolidation saved 13.96% compared to initial annual forecast."
-        ],
-        "recommendation_badge": "Lock in vendor consolidation to target an additional 8% procurement saving."
-      }
-    }
-  ]
-}
-
-async def generate_scene_audio(scene_id, text, out_path):
+async def generate_one(scene_id: int, text: str, out_path: str):
     try:
-        await edge_tts.Communicate(text=text, voice=VOICE).save(out_path)
-        if os.path.getsize(out_path) < 100:
-            raise ValueError("Empty file")
-        print(f"  [OK - EdgeTTS] scene_{scene_id}.mp3")
+        comm = edge_tts.Communicate(text=text, voice=VOICE)
+        await comm.save(out_path)
+        if not os.path.exists(out_path) or os.path.getsize(out_path) < 100:
+            raise ValueError("Empty file from edge-tts")
+        print(f"[OK - EdgeTTS] scene_{scene_id}.mp3")
     except Exception as e:
-        print(f"  [FALLBACK - gTTS] Using gTTS for scene_{scene_id}.mp3...")
+        print(f"[FALLBACK - gTTS] Edge-TTS failed ({e}), using gTTS for scene_{scene_id}.mp3...")
         if os.path.exists(out_path):
             os.remove(out_path)
-        gTTS(text=text, lang="en", slow=False).save(out_path)
-        print(f"  [OK - gTTS] scene_{scene_id}.mp3")
+        tts = gTTS(text=text, lang="en", slow=False)
+        tts.save(out_path)
+        print(f"[OK - gTTS] scene_{scene_id}.mp3")
 
 async def main():
-    os.makedirs(PUBLIC_DIR, exist_ok=True)
-    with open(STORYBOARD_PATH, "w", encoding="utf-8") as f:
-        json.dump(NEW_STORYBOARD, f, indent=2)
-    print("[OK] Updated src/data/storyboard.json with 3-Zone Dashboard scenes!")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    storyboard_path = os.path.abspath(os.path.join(base_dir, "..", "src", "data", "storyboard.json"))
+    public_dir = os.path.abspath(os.path.join(base_dir, "..", "public"))
+    os.makedirs(public_dir, exist_ok=True)
 
-    for s in NEW_STORYBOARD["scenes"]:
-        idx = s["id"]
-        await generate_scene_audio(idx, s["narration"], os.path.join(PUBLIC_DIR, f"scene_{idx}.mp3"))
+    with open(storyboard_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    for s in data.get("scenes", []):
+        sid = s.get("id")
+        narration = s.get("narration", "")
+        if sid and narration:
+            out_file = os.path.join(public_dir, f"scene_{sid}.mp3")
+            await generate_one(sid, narration, out_file)
 
 if __name__ == "__main__":
     asyncio.run(main())

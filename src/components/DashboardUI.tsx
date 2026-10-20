@@ -18,9 +18,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
   const headerSpring = spring({ frame, fps, config: { damping: 14, stiffness: 80 } });
   const headerY = interpolate(headerSpring, [0, 1], [-25, 0]);
 
-  // Continuous live pulse so the screen NEVER looks static
   const livePulse = 0.75 + 0.25 * Math.sin(frame / 8);
-  const scanlineX = interpolate(frame % 180, [0, 180], [0, 100]);
 
   const primary = style.primaryColor || "#38bdf8";
   const accent = style.accentColor || "#34d399";
@@ -28,7 +26,6 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
   const textCol = style.textColor || "#ffffff";
   const subtextCol = style.subtextColor || "#94a3b8";
 
-  // Helper to format animated numbers
   const formatCounter = (kpi: any, progress: number) => {
     if (typeof kpi.value === "number") {
       const current = kpi.value * progress;
@@ -43,7 +40,13 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
     return kpi.display_value || String(kpi.value);
   };
 
-  // Render Center Chart based on main_chart.component
+  const formatSmartValue = (val: number, maxContext: number) => {
+    if (val === 0) return "0";
+    if (Math.abs(val) >= 1000000) return (val / 1000000).toFixed(2) + "M";
+    if (Math.abs(val) >= 1000) return (val / 1000).toFixed(1) + "K";
+    return val.toFixed(1) + (maxContext < 100 ? "M" : "");
+  };
+
   const renderMainChart = (chart: MainChartConfig) => {
     const chartProgress = interpolate(frame, [18, 95], [0, 1], {
       extrapolateLeft: "clamp",
@@ -52,6 +55,8 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
 
     if (chart.component === "Grouped_Bar_Chart" && chart.categories) {
       const maxVal = Math.max(...chart.categories.flatMap((c) => [c.budget, c.actual]), 1);
+      const hasOverspent = chart.categories.some((c) => c.status === "overspent");
+
       return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -59,12 +64,18 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
             <div style={{ display: "flex", gap: 18, fontSize: 14, color: subtextCol }}>
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 12, height: 12, borderRadius: 3, background: secondary, display: "inline-block" }} />
-                Planned Budget
+                Baseline / Planned
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 12, height: 12, borderRadius: 3, background: primary, display: "inline-block" }} />
-                Actual Spend
+                <span style={{ width: 12, height: 12, borderRadius: 3, background: accent, display: "inline-block" }} />
+                Projected / Favorable
               </span>
+              {hasOverspent && (
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 12, height: 12, borderRadius: 3, background: "#f87171", display: "inline-block" }} />
+                  Overrun
+                </span>
+              )}
             </div>
           </div>
 
@@ -74,19 +85,26 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
               });
-              // Log/sqrt scale boost so smaller categories (48K vs 1.3M) are clearly visible on dashboard
               const budgetWidth = Math.max(12, Math.pow(cat.budget / maxVal, 0.42) * 82) * rowProgress;
               const actualWidth = Math.max(12, Math.pow(cat.actual / maxVal, 0.42) * 82) * rowProgress;
-              const isOver = cat.status === "overspent" || cat.variance_pct > 0;
+
+              // Smart status check: respects explicit "favorable" or "overspent" status first
+              const vPct = cat.variance_pct ?? 0;
+              const isOver =
+                cat.status === "overspent"
+                  ? true
+                  : cat.status === "favorable"
+                  ? false
+                  : vPct > 0;
               const barColor = isOver ? "#f87171" : accent;
 
               return (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "130px 1fr 110px", alignItems: "center", gap: 14 }}>
-                  <div style={{ color: textCol, fontSize: 16, fontWeight: 600 }}>{cat.name}</div>
+                <div key={idx} style={{ display: "grid", gridTemplateColumns: "145px 1fr 110px", alignItems: "center", gap: 14 }}>
+                  <div style={{ color: textCol, fontSize: 16, fontWeight: 600 }}>{cat.name || (cat as any).label}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 5, background: "rgba(255,255,255,0.04)", padding: "6px 10px", borderRadius: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: `${budgetWidth}%`, height: 10, background: secondary, borderRadius: 4, opacity: 0.75 }} />
-                      <span style={{ color: subtextCol, fontSize: 12 }}>{(cat.budget / 1000).toFixed(0)}K</span>
+                      <span style={{ color: subtextCol, fontSize: 12 }}>{formatSmartValue(cat.budget, maxVal)}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div
@@ -98,7 +116,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                           boxShadow: `0 0 ${12 * livePulse}px ${barColor}90`,
                         }}
                       />
-                      <span style={{ color: textCol, fontSize: 13, fontWeight: 700 }}>{(cat.actual / 1000).toFixed(1)}K</span>
+                      <span style={{ color: textCol, fontSize: 13, fontWeight: 700 }}>{formatSmartValue(cat.actual, maxVal)}</span>
                     </div>
                   </div>
                   <div
@@ -113,7 +131,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                       border: `1px solid ${isOver ? "#f87171" : "#34d399"}60`,
                     }}
                   >
-                    {cat.variance_pct > 0 ? `+${cat.variance_pct}%` : `${cat.variance_pct}%`}
+                    {vPct > 0 ? `+${vPct}%` : `${vPct}%`}
                   </div>
                 </div>
               );
@@ -125,15 +143,23 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
 
     if (chart.component === "Multi_Line_Trend_Chart" && chart.series && chart.x_axis) {
       const months = chart.x_axis;
-      const budgetSeries = chart.series[0]?.data || [];
-      const actualSeries = chart.series[1]?.data || [];
-      const maxVal = Math.max(...budgetSeries, ...actualSeries, 20000);
-      const minVal = 8000;
+      const series1 = chart.series[0]?.data || (chart.series[0] as any)?.values || [];
+      const series2 = chart.series[1]?.data || (chart.series[1] as any)?.values || [];
+
+      const s1Color = (chart.series[0] as any)?.color || accent;
+      const s2Color = (chart.series[1] as any)?.color || primary;
+
+      const maxDataVal = Math.max(...series1, ...series2, 1);
+      const minDataVal = Math.min(...series1, ...series2, maxDataVal);
+      const padding = (maxDataVal - minDataVal) * 0.22 || maxDataVal * 0.15;
+      const maxVal = maxDataVal + padding;
+      const minVal = Math.max(0, minDataVal - padding * 0.6);
+
       const svgW = 820;
       const svgH = 310;
-      const padL = 50;
+      const padL = 55;
       const padR = 30;
-      const padT = 30;
+      const padT = 36;
       const padB = 40;
       const plotW = svgW - padL - padR;
       const plotH = svgH - padT - padB;
@@ -145,69 +171,80 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
       };
 
       const visibleCount = Math.max(1, Math.floor(chartProgress * months.length));
-      const budgetPts = budgetSeries.slice(0, visibleCount).map((v, i) => `${getXY(i, v).x},${getXY(i, v).y}`).join(" ");
-      const actualPts = actualSeries.slice(0, visibleCount).map((v, i) => `${getXY(i, v).x},${getXY(i, v).y}`).join(" ");
+      const s1Pts = series1.slice(0, visibleCount).map((v: number, i: number) => `${getXY(i, v).x},${getXY(i, v).y}`).join(" ");
+      const s2Pts = series2.slice(0, visibleCount).map((v: number, i: number) => `${getXY(i, v).x},${getXY(i, v).y}`).join(" ");
+
+      const gridSteps = [minVal, minVal + (maxVal - minVal) / 3, minVal + (2 * (maxVal - minVal)) / 3, maxVal];
 
       return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ color: textCol, fontSize: 22, fontWeight: 700 }}>{chart.title}</span>
             <div style={{ display: "flex", gap: 18, fontSize: 14, color: subtextCol }}>
-              <span style={{ color: secondary }}>● Planned Budget</span>
-              <span style={{ color: "#f87171" }}>● Actual Operational Spend</span>
+              <span style={{ color: s1Color, fontWeight: 600 }}>● {chart.series[0]?.name || "Series 1"}</span>
+              {chart.series[1] && (
+                <span style={{ color: s2Color, fontWeight: 600 }}>● {chart.series[1]?.name || "Series 2"}</span>
+              )}
             </div>
           </div>
 
           <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
-            {[10000, 12500, 15000, 17500].map((gridVal, gIdx) => {
+            {gridSteps.map((gridVal, gIdx) => {
               const y = padT + plotH - ((gridVal - minVal) / (maxVal - minVal)) * plotH;
               return (
                 <g key={gIdx}>
                   <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
                   <text x={padL - 10} y={y + 4} fill={subtextCol} fontSize="12" textAnchor="end">
-                    {(gridVal / 1000).toFixed(1)}K
+                    {formatSmartValue(gridVal, maxVal)}
                   </text>
                 </g>
               );
             })}
 
-            {budgetPts && (
-              <polyline fill="none" stroke={secondary} strokeWidth="3.5" strokeDasharray="6 4" points={budgetPts} />
+            {s2Pts && (
+              <polyline fill="none" stroke={s2Color} strokeWidth="3.5" strokeDasharray="6 4" points={s2Pts} />
             )}
-            {actualPts && (
+            {s1Pts && (
               <polyline
                 fill="none"
-                stroke="#f87171"
+                stroke={s1Color}
                 strokeWidth="4.5"
-                points={actualPts}
-                style={{ filter: `drop-shadow(0 0 ${8 * livePulse}px #f87171)` }}
+                points={s1Pts}
+                style={{ filter: `drop-shadow(0 0 ${8 * livePulse}px ${s1Color})` }}
               />
             )}
 
             {months.map((m, i) => {
-              const bPt = getXY(i, budgetSeries[i] || minVal);
-              const aPt = getXY(i, actualSeries[i] || minVal);
+              const v1 = series1[i] ?? minVal;
+              const v2 = series2[i] ?? minVal;
+              const pt1 = getXY(i, v1);
+              const pt2 = getXY(i, v2);
               const isRevealed = i < visibleCount;
-              const isPeak = m === "Oct";
+
+              const isPeak = (chart as any).peak_callout ? (chart as any).peak_callout.month === m : m === "Oct";
+              const peakLabel = (chart as any).peak_callout ? (chart as any).peak_callout.label : "Peak";
+              // Place callout on whichever point is higher on the chart (smaller Y coordinate)
+              const highPt = pt1.y <= pt2.y ? pt1 : pt2;
+
               return (
                 <g key={m}>
-                  <text x={bPt.x} y={svgH - 10} fill={subtextCol} fontSize="13" textAnchor="middle">
+                  <text x={pt1.x} y={svgH - 10} fill={subtextCol} fontSize="13" textAnchor="middle">
                     {m}
                   </text>
                   {isRevealed && (
                     <>
-                      <circle cx={bPt.x} cy={bPt.y} r={4} fill={secondary} />
+                      {series2.length > 0 && <circle cx={pt2.x} cy={pt2.y} r={4} fill={s2Color} />}
                       <circle
-                        cx={aPt.x}
-                        cy={aPt.y}
-                        r={isPeak ? 8 * livePulse : 5}
-                        fill={isPeak ? "#ef4444" : "#f87171"}
+                        cx={pt1.x}
+                        cy={pt1.y}
+                        r={isPeak ? 7 * livePulse : 5}
+                        fill={s1Color}
                       />
                       {isPeak && (
                         <g>
-                          <rect x={aPt.x - 58} y={aPt.y - 38} width={116} height={26} rx={6} fill="#ef4444" />
-                          <text x={aPt.x} y={aPt.y - 21} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
-                            Peak: 17.8K
+                          <rect x={highPt.x - 95} y={highPt.y - 38} width={190} height={26} rx={6} fill="#0f172a" stroke={s1Color} strokeWidth={1.5} />
+                          <text x={highPt.x} y={highPt.y - 21} fill={textCol} fontSize="12" fontWeight="bold" textAnchor="middle">
+                            {peakLabel}
                           </text>
                         </g>
                       )}
@@ -222,7 +259,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
     }
 
     if (chart.component === "Donut_Chart" && chart.segments) {
-      const palette = [primary, "#f87171", secondary, accent, "#fbbf24", "#a78bfa"];
+      const palette = [primary, secondary, accent, "#f59e0b", "#f43f5e", "#a855f7"];
       const radius = 105;
       const circumference = 2 * Math.PI * radius;
       let accumulatedPercent = 0;
@@ -234,9 +271,10 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
             <div style={{ position: "relative", width: 260, height: 260, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width={260} height={260} viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
                 {chart.segments.map((seg, i) => {
-                  const segLength = (seg.percentage / 100) * circumference * chartProgress;
+                  const percent = seg.percentage || (seg as any).share_pct || 0;
+                  const segLength = (percent / 100) * circumference * chartProgress;
                   const offset = -((accumulatedPercent / 100) * circumference);
-                  accumulatedPercent += seg.percentage;
+                  accumulatedPercent += percent;
                   return (
                     <circle
                       key={i}
@@ -244,7 +282,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                       cy={130}
                       r={radius}
                       fill="transparent"
-                      stroke={palette[i % palette.length]}
+                      stroke={(seg as any).color || palette[i % palette.length]}
                       strokeWidth={30}
                       strokeDasharray={`${segLength} ${circumference}`}
                       strokeDashoffset={offset}
@@ -252,9 +290,10 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                   );
                 })}
               </svg>
-              <div style={{ position: "absolute", textAlign: "center" }}>
-                <div style={{ color: subtextCol, fontSize: 13, textTransform: "uppercase" }}>Total Actual</div>
-                <div style={{ color: textCol, fontSize: 30, fontWeight: 800 }}>$1.72M</div>
+              <div style={{ position: "absolute", textAlign: "center", width: "160px", padding: "0 10px" }}>
+                <div style={{ color: textCol, fontSize: 20, fontWeight: 800, lineHeight: 1.3 }}>
+                  {(chart as any).center_label || "100% Share"}
+                </div>
               </div>
             </div>
 
@@ -264,6 +303,8 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                   extrapolateLeft: "clamp",
                   extrapolateRight: "clamp",
                 });
+                const percent = seg.percentage || (seg as any).share_pct || 0;
+                const segColor = (seg as any).color || palette[i % palette.length];
                 return (
                   <div
                     key={i}
@@ -275,14 +316,20 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                       background: "rgba(255,255,255,0.04)",
                       padding: "8px 14px",
                       borderRadius: 8,
-                      borderLeft: `4px solid ${palette[i % palette.length]}`,
+                      borderLeft: `4px solid ${segColor}`,
                     }}
                   >
-                    <span style={{ color: textCol, fontSize: 15, fontWeight: 600 }}>{seg.label}</span>
+                    <span style={{ color: textCol, fontSize: 15, fontWeight: 600 }}>{seg.label || (seg as any).name}</span>
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <span style={{ color: subtextCol, fontSize: 14 }}>${(seg.value / 1000).toFixed(1)}K</span>
-                      <span style={{ color: palette[i % palette.length], fontSize: 15, fontWeight: 800 }}>
-                        {seg.percentage.toFixed(1)}%
+                      <span style={{ color: subtextCol, fontSize: 14 }}>
+                        {seg.value >= 1000000
+                          ? `$${(seg.value / 1000000).toFixed(2)}M`
+                          : seg.value >= 1000
+                          ? `$${(seg.value / 1000).toFixed(1)}K`
+                          : `$${seg.value}`}
+                      </span>
+                      <span style={{ color: segColor, fontSize: 15, fontWeight: 800 }}>
+                        {percent.toFixed(1)}%
                       </span>
                     </div>
                   </div>
@@ -297,7 +344,6 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
     return null;
   };
 
-  // Fallback for legacy simple chart_data scenes
   if (!top_kpi_controls && !main_chart) {
     const safeData = chart_data?.length
       ? chart_data
@@ -329,7 +375,6 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
         boxSizing: "border-box",
       }}
     >
-      {/* Top Executive Header Bar */}
       <div
         style={{
           display: "flex",
@@ -352,7 +397,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
           />
           <div>
             <div style={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-              ENTERPRISE ANNUAL BUDGET ANALYTICS • FY 2023
+              {(style.companyWatermark || "DEPTCAST ENTERPRISE") + " • EXECUTIVE PLAYBOOK"}
             </div>
             <h1 style={{ color: textCol, fontSize: 36, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>
               {section_header || title}
@@ -360,7 +405,6 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
           </div>
         </div>
 
-        {/* Live Active Status Pill */}
         <div
           style={{
             display: "flex",
@@ -385,15 +429,13 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
         </div>
       </div>
 
-      {/* ZONE 1: Top KPI Controls Row (3 Cards) */}
       {top_kpi_controls && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22, marginBottom: 22 }}>
           {top_kpi_controls.map((kpi, idx) => {
-            const cardSpring = spring({
-              frame: Math.max(0, frame - idx * 8),
-              fps,
-              config: { damping: 14, stiffness: 85 },
-            });
+            const cardSpring = Math.min(
+              1,
+              spring({ frame: Math.max(0, frame - idx * 8), fps, config: { damping: 14, stiffness: 85 } })
+            );
             const countProgress = interpolate(frame, [idx * 8, 55 + idx * 8], [0, 1], {
               extrapolateLeft: "clamp",
               extrapolateRight: "clamp",
@@ -405,7 +447,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
               <div
                 key={idx}
                 style={{
-                  opacity: Math.min(1, cardSpring),
+                  opacity: cardSpring,
                   transform: `translateY(${interpolate(cardSpring, [0, 1], [20, 0])}px)`,
                   background: "rgba(15, 23, 42, 0.78)",
                   backdropFilter: "blur(16px)",
@@ -460,7 +502,6 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
                   )}
                 </div>
 
-                {/* Animated Progress / Scanner Line */}
                 <div style={{ width: "100%", height: 4, background: "rgba(255,255,255,0.08)", marginTop: 12, borderRadius: 2, overflow: "hidden" }}>
                   <div
                     style={{
@@ -477,9 +518,7 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
         </div>
       )}
 
-      {/* LOWER SPLIT: ZONE 2 (Main Animated Chart 63%) + ZONE 3 (AI Insight Panel 37%) */}
       <div style={{ display: "grid", gridTemplateColumns: "1.65fr 1fr", gap: 22, flex: 1, minHeight: 0 }}>
-        {/* ZONE 2: Center Main Chart */}
         <div
           style={{
             background: "rgba(15, 23, 42, 0.78)",
@@ -498,7 +537,6 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
           {main_chart && renderMainChart(main_chart)}
         </div>
 
-        {/* ZONE 3: Side AI Insight Panel */}
         {side_insight_panel && (
           <div
             style={{
@@ -533,16 +571,15 @@ export const DashboardUI: React.FC<DashboardUISceneProps & { data_points?: strin
 
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {side_insight_panel.bullets.map((bullet, bIdx) => {
-                  const bulletSpring = spring({
-                    frame: Math.max(0, frame - (45 + bIdx * 22)),
-                    fps,
-                    config: { damping: 14, stiffness: 80 },
-                  });
+                  const bulletSpring = Math.min(
+                    1,
+                    spring({ frame: Math.max(0, frame - (45 + bIdx * 22)), fps, config: { damping: 14, stiffness: 80 } })
+                  );
                   return (
                     <div
                       key={bIdx}
                       style={{
-                        opacity: Math.min(1, bulletSpring),
+                        opacity: bulletSpring,
                         transform: `translateX(${interpolate(bulletSpring, [0, 1], [25, 0])}px)`,
                         display: "flex",
                         gap: 12,
