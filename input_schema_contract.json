@@ -1,0 +1,231 @@
+{
+  "video_metadata": {
+    "project_title": "Enterprise Annual Budget vs Actual Analysis (FY 2023)",
+    "use_case": "Enterprise Annual Budget Planning Framework",
+    "aspect_ratio": "16:9",
+    "resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "fps": 30,
+    "voice_config": {
+      "provider": "edge-tts",
+      "voice_id": "en-IN-PrabhatNeural",
+      "rate": "+0%"
+    },
+    "theme": "dark_executive_dashboard"
+  },
+  "global_summary_kpis": {
+    "total_budget": 1762200,
+    "total_actual": 1718180,
+    "net_variance": -44020,
+    "variance_percentage": -2.5,
+    "overall_status": "UNDER_BUDGET_FAVORABLE"
+  },
+  "scenes": [
+    {
+      "scene_id": "scene_01_executive_overview",
+      "section_header": "Executive Budget Summary",
+      "layout_type": "Grid_Dashboard_3_Zone",
+      "narration": {
+        "vo_text": "Welcome to the Annual Budget Performance Review. For fiscal year 2023, total actual expenditure stood at 1.72 million against a planned budget of 1.76 million, achieving an overall cost saving of 2.5 percent."
+      },
+      "top_kpi_controls": [
+        {
+          "component": "KPI_Card_Counter",
+          "label": "Total Planned Budget",
+          "value": 1762200,
+          "display_value": "1.76M",
+          "prefix": "$",
+          "animation": "count_up"
+        },
+        {
+          "component": "KPI_Card_Counter",
+          "label": "Total Actual Spend",
+          "value": 1718180,
+          "display_value": "1.72M",
+          "prefix": "$",
+          "animation": "count_up"
+        },
+        {
+          "component": "Target_vs_Actual_Indicator",
+          "label": "Net Variance",
+          "value": -44020,
+          "variance_pct": -2.5,
+          "status_badge": "SAVINGS",
+          "traffic_light": "green"
+        }
+      ],
+      "main_chart": {
+        "component": "Grouped_Bar_Chart",
+        "title": "Category-Wise Budget vs. Actual Expenditure",
+        "animation_style": "progressive_bar_grow",
+        "categories": [
+          {
+            "name": "Development",
+            "budget": 1340200,
+            "actual": 1314635,
+            "variance_pct": -1.91,
+            "status": "favorable"
+          },
+          {
+            "name": "Operational",
+            "budget": 165000,
+            "actual": 174082,
+            "variance_pct": 5.5,
+            "status": "overspent"
+          },
+          {
+            "name": "Training",
+            "budget": 86000,
+            "actual": 68000,
+            "variance_pct": -20.93,
+            "status": "favorable"
+          },
+          {
+            "name": "Marketing",
+            "budget": 75000,
+            "actual": 69676,
+            "variance_pct": -7.1,
+            "status": "favorable"
+          },
+          {
+            "name": "Maintenance",
+            "budget": 48000,
+            "actual": 50487,
+            "variance_pct": 5.18,
+            "status": "overspent"
+          },
+          {
+            "name": "Travelling",
+            "budget": 48000,
+            "actual": 41300,
+            "variance_pct": -13.96,
+            "status": "favorable"
+          }
+        ]
+      },
+      "side_insight_panel": {
+        "component": "Insight_Summary_Card",
+        "headline": "AI Executive Insight",
+        "bullets": [
+          "4 out of 6 categories remained well within the allocated budget.",
+          "Training (-20.9%) and Travelling (-14.0%) drove major cost savings.",
+          "Operational and Maintenance costs exceeded targets by ~5.5%."
+        ],
+        "recommendation_badge": "Reallocate surplus training funds to operational buffers."
+      }
+    },
+    {
+      "scene_id": "scene_02_operational_deep_dive",
+      "section_header": "Operational & Maintenance Cost Variance",
+      "layout_type": "Split_Screen_Chart_And_Trend",
+      "narration": {
+        "vo_text": "Operational costs increased by 5.5 percent, reaching 174 thousand against a budget of 165 thousand. Peak overspending occurred in Q4, particularly during October and November."
+      },
+      "top_kpi_controls": [
+        {
+          "component": "KPI_Card_Counter",
+          "label": "Operational Budget",
+          "value": 165000,
+          "display_value": "165.0K",
+          "animation": "count_up"
+        },
+        {
+          "component": "KPI_Card_Counter",
+          "label": "Operational Actual",
+          "value": 174082,
+          "display_value": "174.1K",
+          "animation": "count_up"
+        },
+        {
+          "component": "Status_Indicator",
+          "label": "Budget Overrun",
+          "value": "+9,082 (+5.5%)",
+          "traffic_light": "red"
+        }
+      ],
+      "main_chart": {
+        "component": "Multi_Line_Trend_Chart",
+        "title": "Monthly Operational Costs: Budget vs Actual (Jan - Dec 2023)",
+        "animation_style": "line_draw_left_to_right",
+        "x_axis": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        "series": [
+          {
+            "name": "Budget",
+            "data": [12000, 12000, 12000, 12000, 12000, 15000, 15000, 15000, 15000, 15000, 15000, 15000]
+          },
+          {
+            "name": "Actual",
+            "data": [15600, 11698, 13453, 15790, 11508, 15500, 14333, 16500, 10900, 17800, 16800, 14200]
+          }
+        ],
+        "annotations": [
+          {
+            "month": "Oct",
+            "value": 17800,
+            "label": "Peak Spend: 17.8K"
+          }
+        ]
+      },
+      "side_insight_panel": {
+        "component": "Insight_Summary_Card",
+        "headline": "Root Cause & Action",
+        "bullets": [
+          "October recorded the highest operational spike at 17,800 (+18.6% over monthly budget).",
+          "Maintenance costs also saw a 5.18% overrun (50,487 vs 48,000)."
+        ],
+        "recommendation_badge": "Include a 5% contingency reserve for Q4 seasonal spikes."
+      }
+    },
+    {
+      "scene_id": "scene_03_expense_distribution",
+      "section_header": "OPEX Allocation & Cost Optimization",
+      "layout_type": "Donut_And_Waterfall_Combo",
+      "narration": {
+        "vo_text": "Development accounts for 76.5 percent of total expenditure, followed by operational costs at 10.1 percent. Strategic optimization in travel and training saved over 24 thousand dollars."
+      },
+      "top_kpi_controls": [
+        {
+          "component": "Percentage_Indicator",
+          "label": "Development Share",
+          "value": 76.5,
+          "unit": "%"
+        },
+        {
+          "component": "Percentage_Indicator",
+          "label": "Operational Share",
+          "value": 10.1,
+          "unit": "%"
+        },
+        {
+          "component": "Achievement_Badge",
+          "label": "Top Cost Saver",
+          "value": "Training (-18.0K)"
+        }
+      ],
+      "main_chart": {
+        "component": "Donut_Chart",
+        "title": "Actual Expense Breakdown by Category",
+        "animation_style": "radial_sweep",
+        "segments": [
+          { "label": "Development", "value": 1314635, "percentage": 76.51 },
+          { "label": "Operational", "value": 174082, "percentage": 10.13 },
+          { "label": "Marketing", "value": 69676, "percentage": 4.06 },
+          { "label": "Training", "value": 68000, "percentage": 3.96 },
+          { "label": "Maintenance", "value": 50487, "percentage": 2.94 },
+          { "label": "Travelling", "value": 41300, "percentage": 2.40 }
+        ]
+      },
+      "side_insight_panel": {
+        "component": "Key_Takeaways_Panel",
+        "headline": "Optimization Opportunities",
+        "bullets": [
+          "Development spend was controlled tightly with 25.5K savings.",
+          "Travel reduction yielded a 13.96% saving compared to forecast."
+        ],
+        "recommendation_badge": "Align FY24 budget with historical utilization."
+      }
+    }
+  ]
+}

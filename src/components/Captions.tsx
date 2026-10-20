@@ -56,7 +56,7 @@ export const Captions: React.FC<CaptionsProps> = ({ captions, style }) => {
         padding: '24px 40px',
         gap: '16px',
         borderRadius: 24,
-        background: style?.videoOverlayColor || "rgba(15, 23, 42, 0.75)",
+        background: style?.videoOverlayColor || (style?.backgroundColor ? `${style.backgroundColor}bf` : "rgba(15, 23, 42, 0.75)"),
         border: `1px solid ${style?.primaryColor}40`,
         boxShadow: `0 8px 32px rgba(0,0,0,0.5)`,
         backdropFilter: "blur(8px)",

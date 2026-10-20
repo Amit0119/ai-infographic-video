@@ -9,13 +9,22 @@ import {
 import type { TimelineSceneProps } from "../types";
 import { GlassCard } from "./GlassCard";
 
+/**
+ * TimelineScene — Professional milestone timeline with numbered markers.
+ *
+ * Animations:
+ * - Gradient connecting line draws in from left
+ * - Numbered milestone circles pop in sequentially
+ * - Milestone cards alternate above/below the line
+ * - Connecting stems animate between cards and line
+ */
 export const TimelineScene: React.FC<TimelineSceneProps> = ({
   title,
   chart_data,
   style,
 }) => {
   const frame = useCurrentFrame();
-  const { fps, width: videoWidth, height: videoHeight } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const titleSpring = spring({
     frame,
@@ -28,17 +37,12 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
     extrapolateRight: "clamp",
   });
 
-  const timelineY = videoHeight / 2 - 40;
-  const paddingX = 120;
-  const usableWidth = videoWidth - paddingX * 2;
-  const gap = usableWidth / Math.max(chart_data.length - 1, 1);
-
-  const drawProgress = spring({
+  const lineProgress = spring({
     frame: frame - 10,
     fps,
     config: { damping: 40, stiffness: 20 },
   });
-  const currentDrawWidth = usableWidth * Math.max(0, Math.min(1, drawProgress));
+  const clampedLine = Math.max(0, Math.min(1, lineProgress));
 
   return (
     <AbsoluteFill
@@ -46,95 +50,173 @@ export const TimelineScene: React.FC<TimelineSceneProps> = ({
         backgroundColor: "transparent",
         opacity: bgOpacity,
         fontFamily: style.fontFamily,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      <GlassCard style={style} width="90%" height="80%" opacity={titleSpring} transform={`translateY(${titleTranslateY}px)`}>
-      <h2
-        style={{
-          textAlign: "center",
-          fontSize: 44,
-          fontWeight: 700,
-          color: style.textColor,
-          margin: 0,
-          marginBottom: 40,
-        }}
+      <GlassCard
+        style={style}
+        width="90%"
+        height="80%"
+        opacity={titleSpring}
+        transform={`translateY(${titleTranslateY}px)`}
       >
-        {title}
-      </h2>
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: 44,
+            fontWeight: 700,
+            color: style.textColor,
+            margin: 0,
+            marginBottom: 60,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {title}
+        </h2>
 
-      <div style={{ flex: 1, position: 'relative' }}>
-      <svg width="100%" height="100%" viewBox={`0 0 ${videoWidth} ${videoHeight}`} style={{ position: "absolute", top: -80, left: 0 }}>
-        {/* Main timeline line */}
-        <line
-          x1={paddingX}
-          y1={timelineY}
-          x2={paddingX + currentDrawWidth}
-          y2={timelineY}
-          stroke={style.subtextColor}
-          strokeWidth={4}
-          strokeLinecap="round"
-        />
+        {/* Timeline container */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            position: "relative",
+            padding: "0 40px",
+          }}
+        >
+          {/* Horizontal gradient line */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: 60,
+              right: 60,
+              height: 3,
+              background: `linear-gradient(90deg, ${style.primaryColor}50, ${style.secondaryColor || style.primaryColor}50)`,
+              borderRadius: 2,
+              transform: `scaleX(${clampedLine})`,
+              transformOrigin: "left center",
+            }}
+          />
 
-        {chart_data.map((item, index) => {
-          const x = paddingX + gap * index;
-          const isVisible = currentDrawWidth >= gap * index;
+          {/* Milestone markers */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              position: "relative",
+              padding: "0 40px",
+            }}
+          >
+            {chart_data.map((item, index) => {
+              const milestoneSpring = spring({
+                frame: frame - 15 - index * 12,
+                fps,
+                config: { damping: 14, stiffness: 80, mass: 0.7 },
+              });
+              const clamped = Math.max(0, milestoneSpring);
+              const isAbove = index % 2 === 0;
 
-          const dotSpring = spring({
-            frame: isVisible ? frame - 10 - index * 5 : 0,
-            fps,
-            config: { damping: 12, stiffness: 80 },
-          });
+              return (
+                <div
+                  key={item.label}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    opacity: clamped,
+                    transform: `scale(${clamped})`,
+                    flex: 1,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: isAbove
+                        ? "column"
+                        : "column-reverse",
+                      alignItems: "center",
+                      gap: 12,
+                    }}
+                  >
+                    {/* Label card */}
+                    <div
+                      style={{
+                        padding: "14px 24px",
+                        borderRadius: 16,
+                        background: `${style.primaryColor}10`,
+                        border: `1.5px solid ${style.primaryColor}30`,
+                        textAlign: "center",
+                        maxWidth: 200,
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 600,
+                          color: style.textColor,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
 
-          // Alternate above and below
-          const labelYOffset = index % 2 === 0 ? -60 : 80;
+                    {/* Connector stem */}
+                    <div
+                      style={{
+                        width: 2,
+                        height: 30,
+                        background: `linear-gradient(${isAbove ? "180deg" : "0deg"}, ${style.primaryColor}60, transparent)`,
+                      }}
+                    />
 
-          return (
-            <g key={item.label} style={{ opacity: dotSpring }}>
-              {/* Vertical tick */}
-              <line
-                x1={x}
-                y1={timelineY - 15}
-                x2={x}
-                y2={timelineY + 15}
-                stroke={style.primaryColor}
-                strokeWidth={3}
-              />
-              
-              {/* Dot */}
-              <circle
-                cx={x}
-                cy={timelineY}
-                r={8 * dotSpring}
-                fill={style.primaryColor}
-              />
-
-              <text
-                x={x}
-                y={timelineY + labelYOffset}
-                fill={style.textColor}
-                fontSize={24}
-                fontWeight="bold"
-                textAnchor="middle"
-              >
-                {item.label}
-              </text>
-              <text
-                x={x}
-                y={timelineY + labelYOffset + 25}
-                fill={style.subtextColor}
-                fontSize={20}
-                textAnchor="middle"
-              >
-                {item.value}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      </div>
+                    {/* Numbered circle on timeline */}
+                    <div style={{ position: "relative" }}>
+                      {/* Glow */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: -6,
+                          left: -6,
+                          width: 48,
+                          height: 48,
+                          borderRadius: "50%",
+                          background: style.primaryColor,
+                          opacity: 0.15,
+                          filter: "blur(6px)",
+                        }}
+                      />
+                      {/* Step number */}
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background: `linear-gradient(135deg, ${style.primaryColor}, ${style.secondaryColor || style.primaryColor})`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: style.backgroundColor,
+                          boxShadow: `0 2px 8px ${style.primaryColor}40`,
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </GlassCard>
     </AbsoluteFill>
   );

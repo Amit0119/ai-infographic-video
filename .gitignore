@@ -1,11 +1,21 @@
-node_modules
-dist
+node_modules/
+dist/
 .DS_Store
 .env
 backend/.env
 __pycache__/
-public/*.mp3
-public/*.mp4
+*.pyc
 
-# Ignore the output video from Git but not videos you import into src/.
-out
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Remotion outputs and media caches
+out/
+.remotion/
+public/*.mp3
+public/scene_*.wav
+public/scene_*.mp3
+public/broll/

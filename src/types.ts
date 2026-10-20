@@ -1,24 +1,66 @@
 // ============================================================
 // Storyboard & Scene Type Definitions
 // ============================================================
-// These types define the contract between the AI-generated
-// storyboard JSON and the Remotion visual component library.
-// ============================================================
-
-/** Shared style/theme configuration passed to every scene.
- *  Keys match the backend JSON output exactly — no mapping needed.
- */
 export interface SceneStyle {
-  backgroundColor: string; // e.g. "#0f172a"
-  primaryColor: string;    // e.g. "#38bdf8"
-  secondaryColor: string;  // e.g. "#818cf8"
-  accentColor: string;     // e.g. "#34d399"
-  textColor: string;       // e.g. "#ffffff"
-  subtextColor: string;    // e.g. "#94a3b8"
-  fontFamily: string;      // e.g. "Inter"
-  currencySymbol?: string; // e.g. "₹", "$", "€" — used by HighlightCard
-  companyWatermark?: string; // e.g. "ACME Corp"
-  videoOverlayColor?: string; // custom color for GlassCards and text containers
+  backgroundColor: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  textColor: string;
+  subtextColor: string;
+  fontFamily: string;
+  currencySymbol?: string;
+  companyWatermark?: string;
+  videoOverlayColor?: string;
+}
+
+// ── 3-Zone Executive Dashboard Sub-Types ─────────────────────
+
+export interface TopKPIControl {
+  component: string;
+  label: string;
+  value: number | string;
+  display_value?: string;
+  prefix?: string;
+  unit?: string;
+  variance_pct?: number;
+  status_badge?: string;
+  traffic_light?: "green" | "red" | "amber";
+}
+
+export interface MainChartConfig {
+  component: "Grouped_Bar_Chart" | "Multi_Line_Trend_Chart" | "Donut_Chart" | string;
+  title: string;
+  animation_style?: string;
+  categories?: {
+    name: string;
+    budget: number;
+    actual: number;
+    variance_pct: number;
+    status: "favorable" | "overspent";
+  }[];
+  x_axis?: string[];
+  series?: {
+    name: string;
+    data: number[];
+  }[];
+  annotations?: {
+    month: string;
+    value: number;
+    label: string;
+  }[];
+  segments?: {
+    label: string;
+    value: number;
+    percentage: number;
+  }[];
+}
+
+export interface SideInsightPanel {
+  component?: string;
+  headline: string;
+  bullets: string[];
+  recommendation_badge?: string;
 }
 
 // ── Scene Prop Interfaces ────────────────────────────────────
@@ -107,6 +149,35 @@ export interface NumberedStepsSceneProps {
   style: SceneStyle;
 }
 
+export interface HeatMapSceneProps {
+  heading: string;
+  chart_data: { label: string; value: number }[];
+  style: SceneStyle;
+}
+
+export interface HierarchyPyramidSceneProps {
+  heading: string;
+  content_points: string[];
+  style: SceneStyle;
+}
+
+export interface SplitScreenSceneProps {
+  title: string;
+  left_content: string;
+  right_content: string;
+  style: SceneStyle;
+}
+
+export interface DashboardUISceneProps {
+  title: string;
+  section_header?: string;
+  chart_data?: { label: string; value: number }[];
+  top_kpi_controls?: TopKPIControl[];
+  main_chart?: MainChartConfig;
+  side_insight_panel?: SideInsightPanel;
+  style: SceneStyle;
+}
+
 // ── Storyboard Scene Definitions ─────────────────────────────
 
 export interface TitleSceneData {
@@ -127,6 +198,7 @@ export interface KPISceneData {
   prefix?: string;
   growth: number;
   growthLabel?: string;
+  data_points?: string[];
 }
 
 export interface BarChartSceneData {
@@ -184,6 +256,7 @@ export interface ComparisonSceneData {
   durationInSeconds: number;
   title: string;
   items: ComparisonItem[];
+  data_points?: string[];
 }
 
 export interface BulletPointsSceneData {
@@ -202,7 +275,47 @@ export interface NumberedStepsSceneData {
   content_points: string[];
 }
 
-/** Union of all possible scene types in a storyboard. */
+export interface DashboardUISceneData {
+  id: number;
+  type: "dashboard_ui";
+  durationInSeconds: number;
+  title: string;
+  section_header?: string;
+  chart_data?: { label: string; value: number }[];
+  top_kpi_controls?: TopKPIControl[];
+  main_chart?: MainChartConfig;
+  side_insight_panel?: SideInsightPanel;
+  data_points?: string[];
+}
+
+export interface HeatMapSceneData {
+  id: number;
+  type: "heat_map";
+  durationInSeconds: number;
+  heading: string;
+  chart_data: { label: string; value: number }[];
+  data_points?: string[];
+}
+
+export interface HierarchyPyramidSceneData {
+  id: number;
+  type: "hierarchy_pyramid";
+  durationInSeconds: number;
+  heading: string;
+  content_points: string[];
+  data_points?: string[];
+}
+
+export interface SplitScreenSceneData {
+  id: number;
+  type: "split_screen";
+  durationInSeconds: number;
+  title: string;
+  left_content: string;
+  right_content: string;
+  data_points?: string[];
+}
+
 export type StoryboardScene = (
   | TitleSceneData
   | KPISceneData
@@ -214,9 +327,18 @@ export type StoryboardScene = (
   | ComparisonSceneData
   | BulletPointsSceneData
   | NumberedStepsSceneData
-) & { narration?: string; captions?: { word: string; start: number; end: number }[]; chart_data?: {label: string, value: number | string}[]; brollUrl?: string; };
-
-// ── Root Storyboard Type ─────────────────────────────────────
+  | DashboardUISceneData
+  | HeatMapSceneData
+  | HierarchyPyramidSceneData
+  | SplitScreenSceneData
+) & {
+  narration?: string;
+  captions?: { word: string; start: number; end: number }[];
+  chart_data?: { label: string; value: number | string }[];
+  brollUrl?: string;
+  left_content?: string;
+  right_content?: string;
+};
 
 export interface Storyboard {
   video: {

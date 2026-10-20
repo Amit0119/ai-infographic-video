@@ -149,7 +149,7 @@ export const HighlightCard: React.FC<HighlightSceneProps> = ({
           alignItems: "center",
           padding: "60px 100px",
           borderRadius: 32,
-          background: style.videoOverlayColor || "rgba(15, 23, 42, 0.75)",
+          background: style.videoOverlayColor || `${style.backgroundColor}bf`,
           border: `1px solid ${glowColor}25`,
           boxShadow: `0 0 80px ${glowColor}10, 0 4px 32px rgba(0,0,0,0.3)`,
           backdropFilter: "blur(8px)",

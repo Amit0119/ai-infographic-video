@@ -65,8 +65,20 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
         width="100%"
         height="100%"
         viewBox={`0 0 ${videoWidth} ${videoHeight}`}
-        style={{ position: "absolute", top: -80, left: 0 }}
+        style={{ position: "absolute", top: -80, left: 0, filter: "drop-shadow(0px 16px 32px rgba(0,0,0,0.3))" }}
       >
+        <defs>
+          {chart_data.map((item, index) => {
+            const colors = [style.primaryColor, style.secondaryColor, style.accentColor, "#F59E0B", "#10B981", "#8B5CF6"];
+            const fillColor = colors[index % colors.length];
+            return (
+              <radialGradient id={`pieGrad-${index}`} key={`grad-${index}`}>
+                <stop offset="0%" stopColor={fillColor} stopOpacity={0.8} />
+                <stop offset="100%" stopColor={fillColor} stopOpacity={1} />
+              </radialGradient>
+            );
+          })}
+        </defs>
         {chart_data.map((item, index) => {
           const slicePercentage = item.value / totalValue;
           const sliceAngle = slicePercentage * 360;
@@ -74,7 +86,7 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
           cumulativeAngle += sliceAngle;
 
           const popSpring = spring({
-            frame: frame - index * 5,
+            frame: frame - index * 4.5, // Exactly 0.15s at 30fps
             fps,
             config: { damping: 15, stiffness: 100 },
           });
@@ -93,13 +105,9 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
           const labelX = cx + labelRadius * Math.cos((labelAngle - 90) * (Math.PI / 180));
           const labelY = cy + labelRadius * Math.sin((labelAngle - 90) * (Math.PI / 180));
 
-          // Generate somewhat distinct colors based on primaryColor
-          const colors = [style.primaryColor, style.secondaryColor, style.accentColor, "#F59E0B", "#10B981", "#8B5CF6"];
-          const fillColor = colors[index % colors.length];
-
           return (
             <g key={item.label} style={{ transform: `scale(${popSpring})`, transformOrigin: `${cx}px ${cy}px` }}>
-              <path d={pathData} fill={fillColor} stroke={style.backgroundColor} strokeWidth={4} />
+              <path d={pathData} fill={`url(#pieGrad-${index})`} stroke={style.backgroundColor} strokeWidth={4} />
               {popSpring > 0.8 && (
                 <text
                   x={labelX}
@@ -109,6 +117,7 @@ export const PieChartScene: React.FC<PieChartSceneProps> = ({
                   fontWeight="bold"
                   textAnchor="middle"
                   alignmentBaseline="middle"
+                  style={{ filter: "drop-shadow(0px 4px 8px rgba(0,0,0,0.6))" }}
                 >
                   {item.label} ({Math.round(slicePercentage * 100)}%)
                 </text>

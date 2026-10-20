@@ -159,7 +159,7 @@
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="brandLogoSvg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                <span id="dynamicBrandName" style="color: white;">AI<span class="highlight">Graphica</span></span>
+                <span id="dynamicBrandName" style="color: white; font-weight: bold;">Info<span class="highlight">graphic</span></span>
             </div>
             <div class="nav-item active" onclick="navigate('dashboard')">Dashboard</div>
             <div class="nav-item" onclick="navigate('create')">Create New</div>
@@ -277,8 +277,8 @@
                                 <div id="dataUploadSection">
                                     <div class="drop-zone" id="dropZone">
                                         <svg viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                        <p class="drop-text">Drag & Drop your Excel/CSV here or <span style="color: var(--primary); text-decoration: underline;">browse files</span></p>
-                                        <input type="file" id="excelFile" accept=".xls,.xlsx,.csv" hidden>
+                                        <p class="drop-text">Drag & Drop your Document (.docx, .pdf, .txt, .json, .csv) here or <span style="color: var(--primary); text-decoration: underline;">browse files</span></p>
+                                        <input type="file" id="excelFile" accept=".docx,.pdf,.txt,.json,.csv" hidden>
                                     </div>
                                     <div id="fileNameDisplay" class="file-name-display"></div>
                                     
@@ -420,7 +420,7 @@
     <div id="view-share" class="hidden" style="position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; align-items: center; padding: 2rem; overflow-y: auto;">
         <div style="margin-bottom: 2rem; display: flex; align-items: center;">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            <span id="shareBrandName" style="color: white; font-size: 1.5rem; font-weight: bold; margin-left: 0.5rem;">AI<span class="highlight">Graphica</span></span>
+            <span id="shareBrandName" style="color: white; font-size: 1.5rem; font-weight: bold; margin-left: 0.5rem;">Info<span class="highlight">graphic</span></span>
         </div>
         
         <div class="card" style="width: 100%; max-width: 900px; padding: 0; overflow: hidden; border-color: rgba(255,255,255,0.1);">
@@ -446,7 +446,8 @@
         const sceneIcons = {
             'title': '🎬', 'bar_chart': '📊', 'line_chart': '📈', 'pie_chart': '🥧',
             'bullet_points': '📝', 'kpi': '🎯', 'highlight': '⭐', 'comparison': '⚖️',
-            'timeline': '⏳', 'numbered_steps': '🔢'
+            'timeline': '⏳', 'numbered_steps': '🔢',
+            'heat_map': '🌡️', 'hierarchy_pyramid': '🔺', 'split_screen': '🪟', 'dashboard_ui': '🎛️'
         };
         const sceneTypes = Object.keys(sceneIcons);
 
@@ -461,7 +462,6 @@
             }
         });
 
-        // --- Navigation ---
         function navigate(view) {
             document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${view}`).classList.remove('hidden');
@@ -568,15 +568,15 @@
 
         // --- Settings & Branding (Global State) ---
         function applyGlobalBranding() {
-            const brandName = localStorage.getItem('cfg_brandName') || 'AIGraphica';
+            const brandName = localStorage.getItem('cfg_brandName') || 'Infographic';
             const primaryColor = localStorage.getItem('cfg_color') || '#38bdf8';
             const profileName = localStorage.getItem('cfg_profileName') || 'Rajesh CFO';
             const profileAvatar = localStorage.getItem('cfg_profileAvatar') || '';
             
             // Apply brand name
             const brandEl = document.getElementById('dynamicBrandName');
-            if (brandName.toLowerCase() === 'aigraphica') {
-                brandEl.innerHTML = `AI<span class="highlight" style="color: ${primaryColor}">Graphica</span>`;
+            if (brandName.toLowerCase() === 'infographic') {
+                brandEl.innerHTML = `Info<span class="highlight" style="color: ${primaryColor}">graphic</span>`;
             } else {
                 brandEl.innerText = brandName;
                 brandEl.style.color = 'white';
@@ -603,7 +603,7 @@
         }
 
         function loadSettings() {
-            document.getElementById('settingBrandName').value = localStorage.getItem('cfg_brandName') || '';
+            document.getElementById('settingBrandName').value = localStorage.getItem('cfg_brandName') || 'Infographic';
             document.getElementById('settingColor').value = localStorage.getItem('cfg_color') || '#38bdf8';
             document.getElementById('settingCurrency').value = localStorage.getItem('cfg_currency') || '';
             document.getElementById('settingLogo').value = localStorage.getItem('cfg_logo') || '';
@@ -613,7 +613,7 @@
         }
         
         function saveSettings() {
-            localStorage.setItem('cfg_brandName', document.getElementById('settingBrandName').value || 'AIGraphica');
+            localStorage.setItem('cfg_brandName', document.getElementById('settingBrandName').value || 'Infographic');
             localStorage.setItem('cfg_color', document.getElementById('settingColor').value || '#38bdf8');
             localStorage.setItem('cfg_currency', document.getElementById('settingCurrency').value);
             localStorage.setItem('cfg_logo', document.getElementById('settingLogo').value);
@@ -746,8 +746,12 @@
                 const data = await res.json();
                 
                 fileNameDisplay.textContent = `Attached: ${file.name}`;
-                document.getElementById('dataPreviewText').innerText = 
-                    `Detected Columns: ${data.columns.join(', ')}${data.total_columns > 10 ? '...' : ''} | Total Rows: ${data.total_rows}`;
+                if (data.type === 'spreadsheet') {
+                    document.getElementById('dataPreviewText').innerText = 
+                        `Detected Columns: ${data.columns.join(', ')}${data.total_columns > 10 ? '...' : ''} | Total Rows: ${data.total_rows}`;
+                } else {
+                    document.getElementById('dataPreviewText').innerText = 'File uploaded successfully';
+                }
                 document.getElementById('dataPreviewArea').classList.remove('hidden');
                 document.getElementById('analyzeBtn').disabled = false;
             } catch (err) {
@@ -896,6 +900,24 @@
                         </div>
                     `;
                 }
+
+                if (scene.content_points && Array.isArray(scene.content_points)) {
+                    html += `<label>Content Points</label><div class="data-grid" style="display:flex; flex-direction:column; gap:0.5rem;">`;
+                    scene.content_points.forEach((point, i) => {
+                        html += `<input type="text" id="scene_${index}_cp_${i}" value="${String(point).replace(/"/g, '&quot;')}" style="padding: 8px; width:100%;">`;
+                    });
+                    html += `</div>`;
+                }
+
+                if (scene.left_content !== undefined && scene.right_content !== undefined) {
+                    html += `
+                        <label>Split Screen Content</label>
+                        <div class="data-grid" style="display:flex; gap:0.5rem;">
+                            <input type="text" id="scene_${index}_left" value="${String(scene.left_content).replace(/"/g, '&quot;')}" placeholder="Left Content" style="flex:1; padding: 8px;">
+                            <input type="text" id="scene_${index}_right" value="${String(scene.right_content).replace(/"/g, '&quot;')}" placeholder="Right Content" style="flex:1; padding: 8px;">
+                        </div>
+                    `;
+                }
                 
                 html += `
                     <div class="form-group" style="margin-top: 1rem;">
@@ -939,6 +961,20 @@
                     if(act) scene.comparison_data.actual_value = Number(act.value);
                     if(tgt) scene.comparison_data.target_value = Number(tgt.value);
                 }
+                if (scene.content_points) {
+                    scene.content_points.forEach((point, i) => {
+                        const cp = document.getElementById(`scene_${index}_cp_${i}`);
+                        if(cp) scene.content_points[i] = cp.value;
+                    });
+                }
+                if (scene.left_content !== undefined) {
+                    const lc = document.getElementById(`scene_${index}_left`);
+                    if(lc) scene.left_content = lc.value;
+                }
+                if (scene.right_content !== undefined) {
+                    const rc = document.getElementById(`scene_${index}_right`);
+                    if(rc) scene.right_content = rc.value;
+                }
             });
         }
 
@@ -966,11 +1002,11 @@
             syncData(); 
             
             if (!currentStoryboard.style) currentStoryboard.style = {};
-            if (!currentStoryboard.style.backgroundColor) currentStoryboard.style.backgroundColor = '#0f172a';
-            currentStoryboard.style.primaryColor = localStorage.getItem('cfg_color') || '#38bdf8';
-            currentStoryboard.style.videoOverlayColor = localStorage.getItem('cfg_videoOverlay') || '';
-            currentStoryboard.style.currencySymbol = localStorage.getItem('cfg_currency') || '';
-            currentStoryboard.style.companyWatermark = localStorage.getItem('cfg_logo') || '';
+            currentStoryboard.style.backgroundColor = currentStoryboard.style.backgroundColor || '#0f172a';
+            currentStoryboard.style.primaryColor = currentStoryboard.style.primaryColor || localStorage.getItem('cfg_color') || '#38bdf8';
+            currentStoryboard.style.videoOverlayColor = currentStoryboard.style.videoOverlayColor || localStorage.getItem('cfg_videoOverlay') || '';
+            currentStoryboard.style.currencySymbol = currentStoryboard.style.currencySymbol || localStorage.getItem('cfg_currency') || '';
+            currentStoryboard.style.companyWatermark = currentStoryboard.style.companyWatermark || localStorage.getItem('cfg_logo') || '';
 
             const fastBtn = document.getElementById('fastPreviewBtn');
             const highBtn = document.getElementById('approveBtn');
@@ -1027,7 +1063,12 @@
         document.getElementById('approveBtn').addEventListener('click', () => renderVideo('high'));
 
         function downloadProjectVideo(projectId) {
-            alert(`Downloading MP4 for project ${projectId}...\n\n(This would normally trigger the backend Remotion renderer)`);
+            const a = document.createElement('a');
+            a.href = '/download/latest';
+            a.download = `Infographic_${projectId}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         async function copyLink(inputId, btnId) {

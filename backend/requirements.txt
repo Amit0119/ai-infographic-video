@@ -9,6 +9,8 @@ python-dotenv
 langchain
 langchain-google-genai
 PyPDF2
+python-docx
 faiss-cpu
 numpy
 httpx
+requests

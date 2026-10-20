@@ -10,3 +10,5 @@ import { Config } from "@remotion/cli/config";
 Config.setRspack(true);
 Config.setVideoImageFormat("jpeg");
 Config.setOverwriteOutput(true);
+Config.setTimeoutInMilliseconds(120000); // 2 minutes timeout for slow Pexels downloads
+Config.setConcurrency(2); // Prevent network choking on heavy video downloads

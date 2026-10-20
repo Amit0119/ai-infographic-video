@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, OffthreadVideo, useCurrentFrame, interpolate } from "remotion";
+import { AbsoluteFill, OffthreadVideo, useCurrentFrame, interpolate, staticFile } from "remotion";
 
 /**
  * BRollBackground — Renders a full-screen cinematic B-roll video
@@ -18,6 +18,10 @@ export const BRollBackground: React.FC<{
   style: { backgroundColor: string; primaryColor: string };
 }> = ({ src, style }) => {
   const frame = useCurrentFrame();
+
+  // If the src is a local path (starts with /broll/), resolve it via staticFile()
+  // Otherwise (remote http URL), use it directly
+  const resolvedSrc = src.startsWith("/broll/") ? staticFile(src.slice(1)) : src;
 
   // Fade in the video over the first 20 frames
   const opacity = interpolate(frame, [0, 20], [0, 1], {
@@ -39,7 +43,7 @@ export const BRollBackground: React.FC<{
         }}
       >
         <OffthreadVideo
-          src={src}
+          src={resolvedSrc}
           style={{
             width: "100%",
             height: "100%",
