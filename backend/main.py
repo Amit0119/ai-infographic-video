@@ -107,8 +107,8 @@ class SceneStyleModel(BaseModel):
 
 class VideoMetaModel(BaseModel):
     title: str = "Enterprise Video"
-    duration: Optional[float] = 36
-    audience: Optional[str] = "Executive Board"
+    duration: Optional[float] = 44
+    audience: Optional[str] = "Executive Board & Department Heads"
     fps: int = 30
     width: int = 1920
     height: int = 1080
@@ -125,7 +125,7 @@ class ComparisonItemModel(BaseModel):
 class BaseSceneModel(BaseModel):
     model_config = ConfigDict(extra="allow")
     id: Union[int, str] = 1
-    durationInSeconds: float = 12.0
+    durationInSeconds: float = 14.0
     type: str
     narration: str = Field(...)
     captions: Optional[list[dict[str, Any]]] = None
@@ -231,6 +231,119 @@ DEFAULT_STYLE = {
     "companyWatermark": "DeptCast Analytics",
 }
 
+# ── Helper: Bulletproof 3-Zone Chart Normalizer ──────────────
+
+def _normalize_3zone_chart(scene: dict) -> None:
+    """Guarantees all 3-Zone keys (top_kpi_controls, main_chart, side_insight_panel) have safe numbers and dual-keys so DashboardUI.tsx never crashes."""
+    palette = ["#38bdf8", "#818cf8", "#34d399", "#f59e0b", "#f43f5e", "#a855f7"]
+
+    # 1. Normalize top_kpi_controls
+    kpis = scene.get("top_kpi_controls")
+    if isinstance(kpis, list):
+        for kpi in kpis:
+            if not isinstance(kpi, dict):
+                continue
+            kpi.setdefault("label", "Key Metric")
+            kpi.setdefault("prefix", "")
+            kpi.setdefault("unit", "")
+            try:
+                kpi["value"] = float(str(kpi.get("value", 0)).replace(",", "").replace("$", "").replace("%", ""))
+            except (ValueError, TypeError):
+                kpi["value"] = 0.0
+            if "variance_pct" in kpi and kpi["variance_pct"] is not None:
+                try:
+                    kpi["variance_pct"] = round(float(str(kpi["variance_pct"]).replace("%", "").replace("+", "")), 2)
+                except (ValueError, TypeError):
+                    kpi["variance_pct"] = 0.0
+            kpi.setdefault("traffic_light", "green")
+            kpi.setdefault("status_badge", "ACTIVE")
+
+    # 2. Normalize main_chart
+    mc = scene.get("main_chart")
+    if isinstance(mc, dict):
+        comp = mc.get("component", "Grouped_Bar_Chart")
+        mc.setdefault("title", scene.get("title", "Analytics Breakdown"))
+
+        if comp == "Grouped_Bar_Chart":
+            cats = mc.get("categories", [])
+            if isinstance(cats, list):
+                for c in cats:
+                    if not isinstance(c, dict):
+                        continue
+                    name = str(c.get("name") or c.get("label") or "Category")
+                    c["name"] = name
+                    c["label"] = name
+                    try:
+                        b_val = float(c.get("budget", 10))
+                    except (ValueError, TypeError):
+                        b_val = 10.0
+                    try:
+                        a_val = float(c.get("actual", 12))
+                    except (ValueError, TypeError):
+                        a_val = 12.0
+                    c["budget"] = b_val
+                    c["actual"] = a_val
+                    if "variance_pct" not in c or c["variance_pct"] is None:
+                        c["variance_pct"] = round(((a_val - b_val) / b_val) * 100, 2) if b_val else 0.0
+                    else:
+                        try:
+                            c["variance_pct"] = round(float(c["variance_pct"]), 2)
+                        except (ValueError, TypeError):
+                            c["variance_pct"] = 0.0
+                    c.setdefault("status", "favorable")
+
+        elif comp == "Multi_Line_Trend_Chart":
+            x_axis = mc.get("x_axis")
+            if not isinstance(x_axis, list) or not x_axis:
+                mc["x_axis"] = ["Q1", "Q2", "Q3", "Q4"]
+            series = mc.get("series", [])
+            if isinstance(series, list):
+                for idx, s in enumerate(series):
+                    if not isinstance(s, dict):
+                        continue
+                    s.setdefault("name", f"Series {idx + 1}")
+                    s.setdefault("color", "#34d399" if idx == 0 else "#38bdf8")
+                    vals = s.get("data") or s.get("values") or [10, 15, 20, 25]
+                    clean_vals = []
+                    for v in vals:
+                        try:
+                            clean_vals.append(float(v))
+                        except (ValueError, TypeError):
+                            clean_vals.append(0.0)
+                    s["data"] = clean_vals
+                    s["values"] = clean_vals
+
+        elif comp == "Donut_Chart":
+            mc.setdefault("center_label", "100% Share")
+            segs = mc.get("segments", [])
+            if isinstance(segs, list):
+                for idx, seg in enumerate(segs):
+                    if not isinstance(seg, dict):
+                        continue
+                    nm = str(seg.get("name") or seg.get("label") or f"Segment {idx + 1}")
+                    seg["name"] = nm
+                    seg["label"] = nm
+                    try:
+                        seg["value"] = float(seg.get("value", 25))
+                    except (ValueError, TypeError):
+                        seg["value"] = 25.0
+                    pct = seg.get("percentage") if seg.get("percentage") is not None else seg.get("share_pct", 25.0)
+                    try:
+                        pct_f = round(float(pct), 2)
+                    except (ValueError, TypeError):
+                        pct_f = 25.0
+                    seg["percentage"] = pct_f
+                    seg["share_pct"] = pct_f
+                    seg.setdefault("color", palette[idx % len(palette)])
+
+    # 3. Normalize side_insight_panel
+    sip = scene.get("side_insight_panel")
+    if isinstance(sip, dict):
+        sip.setdefault("headline", "Executive AI Insights")
+        if not isinstance(sip.get("bullets"), list) or not sip.get("bullets"):
+            sip["bullets"] = ["Standardized workflow improves cross-departmental alignment and execution."]
+        sip.setdefault("recommendation_badge", "STRATEGIC ACTION RECOMMENDED")
+
 # ── Helper: Convert Snehal's Contract Format -> Storyboard Format ──
 
 def _convert_contract_to_storyboard(payload: dict) -> dict:
@@ -239,8 +352,8 @@ def _convert_contract_to_storyboard(payload: dict) -> dict:
         meta = payload.get("video_metadata", {})
         res = meta.get("resolution", {"width": 1920, "height": 1080})
         payload["video"] = {
-            "title": meta.get("project_title", "Enterprise Budget Analytics"),
-            "duration": 38,
+            "title": meta.get("project_title", "Enterprise Executive Playbook"),
+            "duration": 44,
             "audience": "Executive Board",
             "fps": meta.get("fps", 30),
             "width": res.get("width", 1920),
@@ -286,15 +399,14 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
             continue
         
         cleaned = dict(scene)
-        # Keep numeric ID (1, 2, 3...) so Root.tsx matches scene_1.mp3
         cleaned["id"] = idx + 1
         
         try:
             cleaned["durationInSeconds"] = float(
-                cleaned.get("durationInSeconds") or cleaned.get("duration_seconds") or 12.0
+                cleaned.get("durationInSeconds") or cleaned.get("duration_seconds") or 14.0
             )
         except (ValueError, TypeError):
-            cleaned["durationInSeconds"] = 12.0
+            cleaned["durationInSeconds"] = 14.0
             
         nar = cleaned.get("narration")
         if isinstance(nar, dict):
@@ -304,12 +416,11 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
                 cleaned.get("script") or cleaned.get("narration_text") or cleaned.get("voiceover") or ""
             ).strip()
             if not narration_text or len(narration_text) < 5:
-                narration_text = f"Now, let's analyze the data for {cleaned.get('title') or cleaned.get('section_header') or cleaned.get('heading') or 'this section'}."
+                narration_text = f"Now, let's examine the key guidelines and metrics for {cleaned.get('title') or cleaned.get('section_header') or 'this phase'}."
             cleaned["narration"] = narration_text
         else:
             cleaned["narration"] = str(nar).strip()
 
-        # If 3-Zone fields exist, default type to dashboard_ui
         if any(k in cleaned for k in ("top_kpi_controls", "main_chart", "side_insight_panel")):
             cleaned["type"] = "dashboard_ui"
 
@@ -327,6 +438,7 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
             cleaned["title"] = str(cleaned.get("title") or cleaned.get("section_header") or "Executive Overview")
             if not isinstance(cleaned.get("chart_data"), list):
                 cleaned["chart_data"] = []
+            _normalize_3zone_chart(cleaned)
         elif stype == "title":
             cleaned["title"] = str(cleaned.get("title") or "Summary")
             cleaned["subtitle"] = str(cleaned.get("subtitle") or "")
@@ -520,107 +632,60 @@ def _detect_brand(text: str) -> Optional[dict]:
             return brand_config
     return None
 
-# ── B-Roll Keyword Sanitization ──────────────────────────────────
-
-BROLL_BLOCKLIST = frozenset({
-    "graveyard", "cemetery", "death", "dead", "funeral", "coffin",
-    "weapon", "gun", "violent", "blood", "war", "kill", "bomb",
-    "crash", "disaster", "apocalypse", "horror", "scary", "evil",
-    "murder", "suicide", "corpse", "grave", "morgue",
-})
-
-BROLL_CORPORATE_FALLBACKS = [
-    "corporate office modern aerial",
-    "business meeting professional team",
-    "city skyline sunset aerial",
-    "modern glass architecture building",
-    "professional team collaboration office",
-    "technology data visualization screen",
-    "financial dashboard analytics",
-    "modern corporate lobby interior",
-]
-
-BROLL_KEYWORD_MAP = {
-    "cross-departmental": "corporate teamwork collaboration office",
-    "cross departmental": "corporate teamwork collaboration office",
-    "alignment": "business strategy meeting boardroom",
-    "budget": "financial planning corporate office",
-    "opex": "corporate office modern operations",
-    "capex": "industrial infrastructure construction modern",
-    "roi": "financial growth chart success",
-    "revenue": "business growth charts success",
-    "compliance": "corporate governance professional meeting",
-    "kpi": "business analytics dashboard screen",
-    "forecast": "data analytics visualization futuristic",
-    "quarterly": "corporate quarterly review meeting",
-    "annual": "annual corporate conference professional",
-    "strategy": "corporate strategy boardroom executive",
-    "leadership": "executive leadership meeting professional",
-    "innovation": "technology innovation futuristic lab",
-    "sustainability": "green building sustainable modern",
-    "digital transformation": "digital technology futuristic office",
-    "supply chain": "logistics warehouse modern automated",
-    "manufacturing": "modern factory automation robotics",
-    "elevator": "modern elevator glass building lobby",
-    "escalator": "modern escalator architecture interior",
-    "submission": "professional team deadline office",
-    "deadline": "professional office productivity",
-    "blueprint": "modern architecture design planning",
-    "historical": "corporate office data analysis charts",
-    "performance": "business performance metrics dashboard",
-    "operating expenses": "corporate office operations meeting",
-    "capital expenditure": "industrial investment infrastructure",
-}
-
-def _sanitize_broll_query(raw_query: str) -> str:
-    import random as _rnd
-    query_lower = raw_query.lower().strip()
-    for key, safe_query in BROLL_KEYWORD_MAP.items():
-        if key in query_lower:
-            return safe_query
-    words = query_lower.split()
-    safe_words = [w for w in words if w not in BROLL_BLOCKLIST]
-    if not safe_words:
-        return _rnd.choice(BROLL_CORPORATE_FALLBACKS)
-    sanitized = " ".join(safe_words)
-    if len(sanitized.split()) < 3:
-        sanitized += " corporate professional modern"
-    return sanitized[:80]
-
-# ── Multi-Agent Prompts ──────────────────────────────────────────
+# ── Universal Multi-Agent Prompts (Supports All 12 DeptCast Topics + Finance) ──
 
 RESEARCHER_PROMPT_TEMPLATE = """
-Persona: Act as a charismatic Fortune 500 CFO & Analytics Lead presenting an executive financial review.
-Analyze the provided data and structure a 3-scene executive story:
-Scene 1: Overall Budget vs Actual Summary across all categories.
-Scene 2: Operational & Maintenance Variance Deep-Dive (Monthly trends & peak overrun months).
-Scene 3: OPEX Share Distribution & Strategic Cost Optimization Playbook.
+Persona: Act as an Enterprise Strategy & Operations Lead creating a high-impact 3-Scene Executive Playbook for DeptCast.
+Adapt strictly to the domain of the Input Topic/Data (whether HR Policies like Leave, LTA, Working Hours, Work from Home, Town Hall, Mediclaim, Travel, Gift Policy, POSH, OR Finance/Operations like Annual Budget, Cost Optimization, Sales).
+
+Structure a 3-scene executive breakdown:
+- Scene 1: Core Policy/Framework Overview, Key Quotas/Targets & Multi-Period Trend Analysis.
+- Scene 2: Category/Entitlement Breakdown, Allocation Share & Process Rules.
+- Scene 3: Compliance Scenarios, Eligibility/ROI Benchmarks & Executive Governance.
 
 Input Topic/Data: {input_data}
 Additional Instructions: {initial_prompt}
 
-Return a detailed 3-scene executive breakdown with exact numbers, KPIs, and strategic recommendations.
+Return a detailed 3-scene breakdown with concrete numbers, percentages, KPIs, and actionable insights tailored strictly to this topic.
 """
 
 VISUAL_DIRECTOR_PROMPT_TEMPLATE = """
-You are the Visual Director Agent for an Enterprise 3-Zone Remotion Dashboard Engine.
-Convert the Researcher's script into a JSON array of 3 `dashboard_ui` scenes.
+You are the Visual Director Agent for the DeptCast 3-Zone Remotion Dashboard Engine.
+Convert the Researcher's breakdown into a valid JSON array of EXACTLY 3 `dashboard_ui` scenes.
 
-Researcher Script:
+Researcher Breakdown:
 {script}
 
-EVERY SCENE MUST USE `"type": "dashboard_ui"` AND INCLUDE:
-- "id": integer (1, 2, 3)
-- "type": "dashboard_ui"
-- "durationInSeconds": 13
-- "title": string
-- "section_header": string
-- "narration": string (2 sentences explaining the numbers clearly)
-- "top_kpi_controls": array of 3 KPI objects (`label`, `value`, `prefix`, `unit`, `variance_pct`, `status_badge`, `traffic_light`: "green" | "red")
-- "main_chart": object with `"component"` set to `"Grouped_Bar_Chart"` (Scene 1 with `categories`), `"Multi_Line_Trend_Chart"` (Scene 2 with `x_axis` and `series`), or `"Donut_Chart"` (Scene 3 with `segments`).
-- "side_insight_panel": object with `headline`, `bullets` (array of 3 strings), and `recommendation_badge`.
+STRICT SCHEMA RULES FOR EVERY SCENE IN THE JSON ARRAY:
+1. Scene 1 (`id`: 1, `durationInSeconds`: 15) MUST use `"component": "Multi_Line_Trend_Chart"` inside `main_chart`:
+   - `x_axis`: array of 6 to 9 time/phase labels (e.g., ["Q1", "Q2", "Q3", "Q4", "Target", "Projected"])
+   - `series`: array of 2 objects:
+     `{{"name": "Primary Metric", "color": "#34d399", "data": [numbers], "values": [numbers]}}`
+     `{{"name": "Baseline Metric", "color": "#38bdf8", "data": [numbers], "values": [numbers]}}`
+   - `peak_callout`: `{{"month": "<one label from x_axis>", "value": <number>, "label": "<Short Callout>"}}`
 
-Return ONLY the valid JSON array. No markdown fences.
+2. Scene 2 (`id`: 2, `durationInSeconds`: 15) MUST use `"component": "Donut_Chart"` inside `main_chart`:
+   - `title`: string
+   - `center_label`: string (e.g., "100% Share" or "Policy Breakdown")
+   - `segments`: array of 4 to 5 objects, whose `percentage`/`share_pct` sum to 100:
+     `{{"name": "Category", "label": "Category", "value": <number>, "percentage": <number>, "share_pct": <number>, "color": "#38bdf8"}}`
+
+3. Scene 3 (`id`: 3, `durationInSeconds`: 14) MUST use `"component": "Grouped_Bar_Chart"` inside `main_chart`:
+   - `title`: string
+   - `categories`: array of 4 to 5 objects:
+     `{{"name": "Item", "label": "Item", "budget": <baseline_number>, "actual": <target_or_actual_number>, "variance_pct": <number>, "status": "favorable" | "overspent"}}`
+     (Use `"status": "favorable"` whenever higher numbers mean positive outcomes/compliance/ROI, and `"overspent"` only for cost overruns or violations).
+
+4. Every scene MUST also include:
+   - `"type": "dashboard_ui"`
+   - `"title"` and `"section_header"` (strings)
+   - `"narration"`: 2 clear, engaging spoken sentences (35-45 words) explaining the metrics.
+   - `"top_kpi_controls"`: array of 3 objects:
+     `{{"label": "KPI Name", "value": <number>, "prefix": "$" or "", "unit": "%" or " Days" or "", "variance_pct": <number>, "status_badge": "SHORT TAG", "traffic_light": "green" | "red"}}`
+   - `"side_insight_panel"`:
+     `{{"headline": "Section Insight", "bullets": ["Insight 1", "Insight 2", "Insight 3"], "recommendation_badge": "ACTIONABLE TAKEAWAY"}}`
+
+Return ONLY the raw JSON array of 3 scenes. No markdown fences.
 """
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -677,31 +742,37 @@ async def generate_explainer(payload: ExplainerRequestModel):
             retrieved_chunks = [document_chunks[i] for i in I[0] if i < len(document_chunks)]
             context = "Extracted Document Context:\n" + "\n\n".join(retrieved_chunks)
 
+        # Smart Domain Filter: Only inject Excel financial dataset if topic is finance/budget related
+        financial_keywords = ("budget", "finance", "financial", "opex", "capex", "expense", "cost", "spend", "revenue", "variance")
+        is_finance_topic = any(k in payload.topic.lower() for k in financial_keywords)
+
         financial_summary = ""
-        try:
-            excel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "data", "Financial analysis_Data Set.xlsx"))
-            df = pd.read_excel(excel_path)
-            budget_col = next((c for c in df.columns if 'budget' in c.lower()), df.columns[1] if len(df.columns) > 1 else None)
-            actual_col = next((c for c in df.columns if 'actual' in c.lower()), df.columns[2] if len(df.columns) > 2 else None)
-            cat_col = next((c for c in df.columns if 'category' in c.lower() or 'department' in c.lower() or df[c].dtype == 'O'), df.columns[0])
-            if budget_col and actual_col:
-                total_budget = df[budget_col].sum()
-                total_actual = df[actual_col].sum()
-                df['Variance'] = df[actual_col] - df[budget_col]
-                top_over = df.loc[df['Variance'].idxmax()]
-                top_under = df.loc[df['Variance'].idxmin()]
-                financial_summary = (
-                    f"2023 Financial Overview: Total Budget was ${total_budget:,.2f}, Total Actual was${total_actual:,.2f}. "
-                    f"Highest Over-Budget Category: {top_over[cat_col]} (over by ${top_over['Variance']:,.2f}). "
-                    f"Most Efficient Category: {top_under[cat_col]} (under budget by ${-top_under['Variance']:,.2f})."
-                )
-        except Exception as e:
-            financial_summary = f"Financial Data could not be loaded: {e}"
+        if is_finance_topic:
+            try:
+                excel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "data", "Financial analysis_Data Set.xlsx"))
+                if os.path.exists(excel_path):
+                    df = pd.read_excel(excel_path)
+                    budget_col = next((c for c in df.columns if 'budget' in c.lower()), df.columns[1] if len(df.columns) > 1 else None)
+                    actual_col = next((c for c in df.columns if 'actual' in c.lower()), df.columns[2] if len(df.columns) > 2 else None)
+                    cat_col = next((c for c in df.columns if 'category' in c.lower() or 'department' in c.lower() or df[c].dtype == 'O'), df.columns[0])
+                    if budget_col and actual_col:
+                        total_budget = df[budget_col].sum()
+                        total_actual = df[actual_col].sum()
+                        df['Variance'] = df[actual_col] - df[budget_col]
+                        top_over = df.loc[df['Variance'].idxmax()]
+                        top_under = df.loc[df['Variance'].idxmin()]
+                        financial_summary = (
+                            f"Reference Financial Dataset: Total Budget ${total_budget:,.2f}, Total Actual${total_actual:,.2f}. "
+                            f"Highest Over-Budget: {top_over[cat_col]} (over by ${top_over['Variance']:,.2f}). "
+                            f"Most Efficient: {top_under[cat_col]} (saved ${-top_under['Variance']:,.2f})."
+                        )
+            except Exception as e:
+                print(f"[INFO] Optional financial dataset skipped: {e}")
 
         brand_prefix = f"[Company: {brand['name']} | Industry: {brand['industry']}] " if brand else ""
         input_data_with_context = brand_prefix + payload.topic
         if context or financial_summary:
-            input_data_with_context = f"Topic: {payload.topic}\n\nFinancial Summary:\n{financial_summary}\n\n{context}"
+            input_data_with_context = f"Topic: {payload.topic}\n\n{financial_summary}\n\n{context}".strip()
 
         researcher_prompt = PromptTemplate(
             input_variables=["input_data", "initial_prompt"],
@@ -722,8 +793,9 @@ async def generate_explainer(payload: ExplainerRequestModel):
 
         if isinstance(parsed, list):
             scenes = _normalize_scenes(parsed)
+            total_dur = sum(s.get("durationInSeconds", 14) for s in scenes)
             storyboard_data = {
-                "video": {"title": payload.topic, "fps": 30, "width": 1920, "height": 1080},
+                "video": {"title": payload.topic, "duration": total_dur, "fps": 30, "width": 1920, "height": 1080},
                 "style": DEFAULT_STYLE.copy(),
                 "scenes": scenes
             }
@@ -788,7 +860,6 @@ async def analyze_data(
                 input_data = f"Corporate Data:\n{df.to_csv(index=False)}"
             elif file_ext == '.json':
                 data = json.loads(contents.decode('utf-8'))
-                # If Snehal's contract JSON is uploaded directly, convert & return it immediately!
                 if "video_metadata" in data or ("scenes" in data and any("top_kpi_controls" in s for s in data.get("scenes", []))):
                     converted = _convert_contract_to_storyboard(data)
                     converted["scenes"] = _normalize_scenes(converted.get("scenes", []))
@@ -808,7 +879,7 @@ async def analyze_data(
             else:
                 raise HTTPException(status_code=400, detail="Unsupported file format.")
         else:
-            video_title = "Topic Explained"
+            video_title = topic_input or "Enterprise Playbook"
             if topic_input:
                 input_data = f"Topic to explain: {topic_input}"
             else:
@@ -838,8 +909,9 @@ async def analyze_data(
 
         if isinstance(parsed, list):
             scenes = _normalize_scenes(parsed)
+            total_dur = sum(s.get("durationInSeconds", 14) for s in scenes)
             storyboard_data = {
-                "video": {"title": video_title, "fps": 30, "width": 1920, "height": 1080},
+                "video": {"title": video_title, "duration": total_dur, "fps": 30, "width": 1920, "height": 1080},
                 "style": DEFAULT_STYLE.copy(),
                 "scenes": scenes
             }
@@ -868,12 +940,10 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
     logger = logging.getLogger("uvicorn.error")
     
     try:
-        # Auto-convert Snehal's contract format if sent directly to /approve
         storyboard_data = _convert_contract_to_storyboard(storyboard_data)
         if "scenes" in storyboard_data:
             storyboard_data["scenes"] = _normalize_scenes(storyboard_data["scenes"])
 
-        # Validate schema before proceeding
         try:
             StoryboardModel.model_validate(storyboard_data)
         except ValidationError as e:
@@ -886,7 +956,6 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
         os.makedirs(absolute_public_dir, exist_ok=True)
         _cleanup_old_audio(absolute_public_dir)
 
-        # Generate TTS audio files (scene_1.mp3, scene_2.mp3...) with gTTS fallback
         scenes = storyboard_data.get("scenes", [])
         generated_count = 0
         for scene in scenes:
@@ -897,7 +966,6 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
                 await generate_edge_audio(scene, narration, audio_path)
                 generated_count += 1
 
-        # Save to src/data/storyboard.json
         absolute_storyboard_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "src", "data", "storyboard.json")
         )
