@@ -14,3 +14,7 @@ faiss-cpu
 numpy
 httpx
 requests
+
+gtts
+edge-tts
+mutagen
