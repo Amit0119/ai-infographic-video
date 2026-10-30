@@ -1,7 +1,9 @@
 import os
 import re
+import sys
 import json
 import glob
+import math
 import asyncio
 from contextlib import asynccontextmanager
 from typing import Any, Optional, Union, Literal, Annotated, Type
@@ -92,7 +94,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
-# ── Pydantic Schema Validation (With 3-Zone Support) ──────────
+# ── Pydantic Schema Validation (With 3-Zone & Blueprint Support) ──
 
 class SceneStyleModel(BaseModel):
     backgroundColor: str = "#0b1120"
@@ -103,11 +105,11 @@ class SceneStyleModel(BaseModel):
     subtextColor: str = "#94a3b8"
     fontFamily: str = "Inter"
     currencySymbol: Optional[str] = "$"
-    companyWatermark: Optional[str] = "DeptCast Analytics"
+    companyWatermark: Optional[str] = "DeptCast Enterprise Blueprint"
 
 class VideoMetaModel(BaseModel):
     title: str = "Enterprise Video"
-    duration: Optional[float] = 44
+    duration: Optional[float] = 60
     audience: Optional[str] = "Executive Board & Department Heads"
     fps: int = 30
     width: int = 1920
@@ -125,7 +127,7 @@ class ComparisonItemModel(BaseModel):
 class BaseSceneModel(BaseModel):
     model_config = ConfigDict(extra="allow")
     id: Union[int, str] = 1
-    durationInSeconds: float = 14.0
+    durationInSeconds: float = 15.0
     type: str
     narration: str = Field(...)
     captions: Optional[list[dict[str, Any]]] = None
@@ -187,6 +189,8 @@ class PremiumChartSceneModel(BaseSceneModel):
     top_kpi_controls: Optional[list[dict[str, Any]]] = None
     main_chart: Optional[dict[str, Any]] = None
     side_insight_panel: Optional[dict[str, Any]] = None
+    blueprint_meta: Optional[dict[str, Any]] = None
+    blueprint_steps: Optional[list[dict[str, Any]]] = None
 
 class HierarchySceneModel(BaseSceneModel):
     type: Literal["hierarchy_pyramid"]
@@ -217,7 +221,7 @@ class StoryboardModel(BaseModel):
     style: SceneStyleModel
     scenes: list[Annotated[SceneModel, Field(discriminator="type")]]
 
-# ── Default Style ──────────
+# ── Default Style ─────────────────────────────────────────────
 
 DEFAULT_STYLE = {
     "backgroundColor": "#0b1120",
@@ -228,8 +232,532 @@ DEFAULT_STYLE = {
     "subtextColor": "#94a3b8",
     "fontFamily": "Inter",
     "currencySymbol": "$",
-    "companyWatermark": "DeptCast Analytics",
+    "companyWatermark": "DeptCast Enterprise Blueprint",
 }
+
+# ── DeptCast Template -> Predetermined Blueprint Registry ─────
+# Hardcoded deterministic blueprints aligned with DeptCast Replit App structure
+
+PREDETERMINED_BLUEPRINTS: dict[str, dict[str, Any]] = {
+    "annual_budget": {
+        "template_category": "Finance & Accounts",
+        "blueprint_id": "FIN_ANNUAL_BUDGET_PLAYBOOK_V1",
+        "match_keywords": [
+            "annual budget",
+            "how to create an annual budget",
+            "budget planning framework",
+            "budget playbook",
+            "enterprise annual budget",
+        ],
+        "video": {
+            "title": "How to Create an Annual Budget: Enterprise Blueprint",
+            "duration": 60,
+            "audience": "Department Heads, FP&A Teams & Executive Leadership",
+            "fps": 30,
+            "width": 1920,
+            "height": 1080,
+        },
+        "style": DEFAULT_STYLE.copy(),
+        "scenes": [
+            {
+                "id": 1,
+                "type": "dashboard_ui",
+                "durationInSeconds": 15.0,
+                "title": "Blueprint Phase 1: Historical Baseline & Strategic Alignment",
+                "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 01 / 04",
+                "narration": (
+                    "Creating an enterprise annual budget begins with Phase One: establishing your historical baseline and strategic alignment. "
+                    "Review the past twelve months of actual spend, lock in realistic revenue growth targets, and align every department head on macro inflation assumptions before issuing budget templates."
+                ),
+                "blueprint_meta": {
+                    "template_name": "Finance & Accounts Playbook",
+                    "blueprint_code": "BP-FIN-01",
+                    "phase_badge": "PHASE 1: BASELINE & TARGETING",
+                    "owner_role": "CFO & FP&A Lead",
+                    "sla_timeline": "Weeks 1 - 2 (Q4 Kickoff)",
+                    "required_inputs": [
+                        "Trailing 12-Month Actuals Ledger",
+                        "Executive Revenue & EBITDA Target Mandate",
+                        "Macro Inflation & FX Rate Assumptions",
+                    ],
+                },
+                "blueprint_steps": [
+                    {
+                        "step_no": "01",
+                        "title": "Audit Trailing 12M Actuals",
+                        "detail": "Cleanse one-time anomalies and identify baseline recurring run-rate across all cost centers.",
+                        "tag": "MANDATORY INPUT",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "02",
+                        "title": "Lock Revenue & Margin Guardrails",
+                        "detail": "Define top-down growth targets (+15% YoY) and minimum operating margin thresholds.",
+                        "tag": "EXECUTIVE GATE",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "03",
+                        "title": "Publish Standardized Assumptions",
+                        "detail": "Circulate fixed inflation (4.5%), merit increment caps, and headcount bands to department heads.",
+                        "tag": "TEMPLATE LOCKED",
+                        "status": "favorable",
+                    },
+                ],
+                "top_kpi_controls": [
+                    {
+                        "label": "Baseline Audit Window",
+                        "value": 12,
+                        "prefix": "",
+                        "unit": " Months",
+                        "variance_pct": 100.0,
+                        "status_badge": "HISTORICAL BASELINE",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Target Revenue Growth",
+                        "value": 15.0,
+                        "prefix": "+",
+                        "unit": "%",
+                        "variance_pct": 15.0,
+                        "status_badge": "TOP-DOWN MANDATE",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Inflation Assumption Cap",
+                        "value": 4.5,
+                        "prefix": "",
+                        "unit": "%",
+                        "variance_pct": -1.2,
+                        "status_badge": "MACRO GUARDRAIL",
+                        "traffic_light": "green",
+                    },
+                ],
+                "main_chart": {
+                    "component": "Multi_Line_Trend_Chart",
+                    "title": "Phase 1 Trajectory: Prior Actuals vs Target Budget Baseline ($K)",
+                    "x_axis": ["Q1 Prior", "Q2 Prior", "Q3 Prior", "Q4 Est", "Q1 Plan", "Q2 Plan", "Q3 Plan", "Q4 Plan"],
+                    "series": [
+                        {
+                            "name": "Planned Revenue Trajectory ($K)",
+                            "color": "#34d399",
+                            "data": [420, 445, 470, 500, 535, 575, 615, 660],
+                            "values": [420, 445, 470, 500, 535, 575, 615, 660],
+                        },
+                        {
+                            "name": "Controlled Expense Envelope ($K)",
+                            "color": "#38bdf8",
+                            "data": [360, 375, 390, 405, 420, 440, 455, 475],
+                            "values": [360, 375, 390, 405, 420, 440, 455, 475],
+                        },
+                    ],
+                    "peak_callout": {
+                        "month": "Q4 Plan",
+                        "value": 660,
+                        "label": "Target Margin Expansion",
+                    },
+                },
+                "side_insight_panel": {
+                    "headline": "Phase 1 Blueprint Checklist",
+                    "bullets": [
+                        "Strip out non-recurring expenses from last year's baseline before forecasting.",
+                        "Align sales capacity with marketing pipeline assumptions prior to departmental submissions.",
+                        "Enforce a single standardized input sheet across all cost-center owners.",
+                    ],
+                    "recommendation_badge": "GATE 1: BASELINE SIGN-OFF",
+                },
+            },
+            {
+                "id": 2,
+                "type": "dashboard_ui",
+                "durationInSeconds": 15.0,
+                "title": "Blueprint Phase 2: Cost Categorization & Zero-Based Allocation",
+                "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 02 / 04",
+                "narration": (
+                    "In Phase Two, structure the budget using strict cost categorization and zero-based allocation rules. "
+                    "Separate fixed commitments from variable growth drivers, dedicating fifty percent to core operations, thirty percent to strategic growth and R and D, and twenty percent to contingency reserves and administration."
+                ),
+                "blueprint_meta": {
+                    "template_name": "Finance & Accounts Playbook",
+                    "blueprint_code": "BP-FIN-02",
+                    "phase_badge": "PHASE 2: COST ARCHITECTURE",
+                    "owner_role": "Department Heads & Cost Owners",
+                    "sla_timeline": "Weeks 3 - 4 (Bottom-Up Build)",
+                    "required_inputs": [
+                        "Fixed vs Variable Cost Schedule",
+                        "Approved Headcount & Hiring Roadmap",
+                        "Zero-Based Vendor & SaaS Justification",
+                    ],
+                },
+                "blueprint_steps": [
+                    {
+                        "step_no": "01",
+                        "title": "Separate Fixed vs Variable OPEX",
+                        "detail": "Lock contractual rent, payroll, and core licenses separately from volume-driven marketing and cloud spend.",
+                        "tag": "50% CORE OPS",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "02",
+                        "title": "Fund High-ROI Growth & CAPEX",
+                        "detail": "Require business-case ROI payback models for all R&D, automation, and new market expansion requests.",
+                        "tag": "30% GROWTH POOL",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "03",
+                        "title": "Ring-Fence Risk & Buffer Reserve",
+                        "detail": "Hold a dedicated 10% unallocated contingency reserve under CFO control to absorb mid-year shocks.",
+                        "tag": "20% ADMIN & BUFFER",
+                        "status": "favorable",
+                    },
+                ],
+                "top_kpi_controls": [
+                    {
+                        "label": "Core Fixed Operations",
+                        "value": 50.0,
+                        "prefix": "",
+                        "unit": "%",
+                        "variance_pct": 0.0,
+                        "status_badge": "BASELINE OPEX",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Strategic Growth & R&D",
+                        "value": 30.0,
+                        "prefix": "",
+                        "unit": "%",
+                        "variance_pct": 5.0,
+                        "status_badge": "ROI GATED",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Contingency & G&A Buffer",
+                        "value": 20.0,
+                        "prefix": "",
+                        "unit": "%",
+                        "variance_pct": -2.5,
+                        "status_badge": "RISK RESERVE",
+                        "traffic_light": "green",
+                    },
+                ],
+                "main_chart": {
+                    "component": "Donut_Chart",
+                    "title": "Predetermined Enterprise Allocation Blueprint (50 / 30 / 20 Rule)",
+                    "center_label": "100% Allocation",
+                    "segments": [
+                        {
+                            "name": "Core Operations & Payroll",
+                            "label": "Core Operations & Payroll",
+                            "value": 50,
+                            "percentage": 50.0,
+                            "share_pct": 50.0,
+                            "color": "#38bdf8",
+                        },
+                        {
+                            "name": "Strategic Growth & R&D",
+                            "label": "Strategic Growth & R&D",
+                            "value": 20,
+                            "percentage": 20.0,
+                            "share_pct": 20.0,
+                            "color": "#34d399",
+                        },
+                        {
+                            "name": "Digital & CAPEX Upgrades",
+                            "label": "Digital & CAPEX Upgrades",
+                            "value": 10,
+                            "percentage": 10.0,
+                            "share_pct": 10.0,
+                            "color": "#818cf8",
+                        },
+                        {
+                            "name": "G&A Support & Compliance",
+                            "label": "G&A Support & Compliance",
+                            "value": 10,
+                            "percentage": 10.0,
+                            "share_pct": 10.0,
+                            "color": "#f59e0b",
+                        },
+                        {
+                            "name": "Unallocated CFO Contingency",
+                            "label": "Unallocated CFO Contingency",
+                            "value": 10,
+                            "percentage": 10.0,
+                            "share_pct": 10.0,
+                            "color": "#a855f7",
+                        },
+                    ],
+                },
+                "side_insight_panel": {
+                    "headline": "Phase 2 Allocation Guardrails",
+                    "bullets": [
+                        "Apply zero-based justification to all discretionary software and consulting renewals.",
+                        "Tie variable sales and marketing releases to quarterly revenue milestone achievement.",
+                        "Prevent departments from embedding hidden buffers inside line-item estimates.",
+                    ],
+                    "recommendation_badge": "GATE 2: ZERO-BASED AUDIT",
+                },
+            },
+            {
+                "id": 3,
+                "type": "dashboard_ui",
+                "durationInSeconds": 15.0,
+                "title": "Blueprint Phase 3: Cross-Functional Consolidation & Stress Testing",
+                "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 03 / 04",
+                "narration": (
+                    "Phase Three focuses on cross-functional consolidation, scenario stress-testing, and executive trade-offs. "
+                    "FP and A reconciles bottom-up departmental submissions against top-down ceilings, trims over-budget requests in administrative functions, and models downside sensitivity before board approval."
+                ),
+                "blueprint_meta": {
+                    "template_name": "Finance & Accounts Playbook",
+                    "blueprint_code": "BP-FIN-03",
+                    "phase_badge": "PHASE 3: CHALLENGE & APPROVAL",
+                    "owner_role": "Executive Committee & FP&A",
+                    "sla_timeline": "Weeks 5 - 6 (Review & Lock)",
+                    "required_inputs": [
+                        "Consolidated Master P&L + Cashflow Model",
+                        "Base / Best / Downside Scenario Matrix",
+                        "Departmental Trade-Off & Revision Log",
+                    ],
+                },
+                "blueprint_steps": [
+                    {
+                        "step_no": "01",
+                        "title": "Reconcile Top-Down vs Bottom-Up Gap",
+                        "detail": "Identify departments exceeding allocation ceilings and conduct structured challenge sessions.",
+                        "tag": "GAP RESOLUTION",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "02",
+                        "title": "Run 3-Scenario Stress Tests",
+                        "detail": "Simulate Base (100%), Upside (+15%), and Downside (-15% revenue) cash runway impacts.",
+                        "tag": "SENSITIVITY MODEL",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "03",
+                        "title": "Secure Final Board Sign-Off",
+                        "detail": "Freeze approved annual cost envelopes and issue quarterly release schedules to ERP.",
+                        "tag": "BOARD APPROVAL",
+                        "status": "favorable",
+                    },
+                ],
+                "top_kpi_controls": [
+                    {
+                        "label": "Scenario Models Tested",
+                        "value": 3,
+                        "prefix": "",
+                        "unit": " Cases",
+                        "variance_pct": 100.0,
+                        "status_badge": "BASE / BEST / DOWNSIDE",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Submission Trim Ratio",
+                        "value": 8.5,
+                        "prefix": "-",
+                        "unit": "%",
+                        "variance_pct": -8.5,
+                        "status_badge": "OVERAGE RATIONALIZED",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Minimum Cash Runway",
+                        "value": 18,
+                        "prefix": "",
+                        "unit": " Months",
+                        "variance_pct": 20.0,
+                        "status_badge": "STRESS TEST PASSED",
+                        "traffic_light": "green",
+                    },
+                ],
+                "main_chart": {
+                    "component": "Grouped_Bar_Chart",
+                    "title": "Departmental Draft Request vs Approved Blueprint Ceiling ($K)",
+                    "categories": [
+                        {
+                            "name": "Engineering & R&D",
+                            "label": "Engineering & R&D",
+                            "budget": 240,
+                            "actual": 250,
+                            "variance_pct": 4.17,
+                            "status": "favorable",
+                        },
+                        {
+                            "name": "Sales & Marketing",
+                            "label": "Sales & Marketing",
+                            "budget": 210,
+                            "actual": 195,
+                            "variance_pct": -7.14,
+                            "status": "favorable",
+                        },
+                        {
+                            "name": "Cloud & Operations",
+                            "label": "Cloud & Operations",
+                            "budget": 180,
+                            "actual": 170,
+                            "variance_pct": -5.56,
+                            "status": "favorable",
+                        },
+                        {
+                            "name": "G&A & Facilities",
+                            "label": "G&A & Facilities",
+                            "budget": 130,
+                            "actual": 110,
+                            "variance_pct": -15.38,
+                            "status": "favorable",
+                        },
+                    ],
+                },
+                "side_insight_panel": {
+                    "headline": "Phase 3 Governance Controls",
+                    "bullets": [
+                        "Trim non-customer-facing G&A requests first to close the bottom-up submission gap.",
+                        "Pre-define hiring freeze triggers if Q1 or Q2 revenue falls below the 90% threshold.",
+                        "Lock final approved numbers into the ERP cost-center master before fiscal day one.",
+                    ],
+                    "recommendation_badge": "GATE 3: BOARD RATIFICATION",
+                },
+            },
+            {
+                "id": 4,
+                "type": "dashboard_ui",
+                "durationInSeconds": 15.0,
+                "title": "Blueprint Phase 4: Variance Governance & Rolling Forecasts",
+                "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 04 / 04",
+                "narration": (
+                    "Finally, Phase Four operationalizes the budget through monthly Budget-versus-Actual governance and rolling quarterly forecasts. "
+                    "Enforce automated alerts whenever any cost center deviates by more than five percent, and reallocate idle funds toward high-performing initiatives throughout the year."
+                ),
+                "blueprint_meta": {
+                    "template_name": "Finance & Accounts Playbook",
+                    "blueprint_code": "BP-FIN-04",
+                    "phase_badge": "PHASE 4: ROLLING GOVERNANCE",
+                    "owner_role": "FP&A & Department Controllers",
+                    "sla_timeline": "Monthly Close (Day +5 SLA)",
+                    "required_inputs": [
+                        "Monthly ERP Actuals vs Budget Report",
+                        "Root-Cause Variance Explanations (>5%)",
+                        "Rolling 4-Quarter Forecast Update",
+                    ],
+                },
+                "blueprint_steps": [
+                    {
+                        "step_no": "01",
+                        "title": "Publish Monthly BvA Flash Report",
+                        "detail": "Deliver automated Budget vs Actual scorecards within 5 business days of month-end close.",
+                        "tag": "DAY +5 SLA",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "02",
+                        "title": "Enforce ±5% Variance Thresholds",
+                        "detail": "Require corrective action plans for any line item breaching the 5% tolerance band.",
+                        "tag": "VARIANCE TRIGGER",
+                        "status": "favorable",
+                    },
+                    {
+                        "step_no": "03",
+                        "title": "Execute Quarterly Rolling Re-Forecast",
+                        "detail": "Update projections every quarter and shift unused budget to high-ROI growth channels.",
+                        "tag": "AGILE REALLOCATION",
+                        "status": "favorable",
+                    },
+                ],
+                "top_kpi_controls": [
+                    {
+                        "label": "Variance Alert Threshold",
+                        "value": 5.0,
+                        "prefix": "±",
+                        "unit": "%",
+                        "variance_pct": 0.0,
+                        "status_badge": "AUTO TRIGGER",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Monthly Close SLA",
+                        "value": 5,
+                        "prefix": "Day ",
+                        "unit": "",
+                        "variance_pct": 100.0,
+                        "status_badge": "BvA REPORTING",
+                        "traffic_light": "green",
+                    },
+                    {
+                        "label": "Forecast Accuracy Target",
+                        "value": 96.5,
+                        "prefix": "",
+                        "unit": "%",
+                        "variance_pct": 3.5,
+                        "status_badge": "ROLLING 4Q",
+                        "traffic_light": "green",
+                    },
+                ],
+                "main_chart": {
+                    "component": "Grouped_Bar_Chart",
+                    "title": "Quarterly Governance: Static Budget vs Rolling Forecast Accuracy (%)",
+                    "categories": [
+                        {
+                            "name": "Q1 Variance Control",
+                            "label": "Q1 Variance Control",
+                            "budget": 92,
+                            "actual": 97,
+                            "variance_pct": 5.43,
+                            "status": "favorable",
+                        },
+                        {
+                            "name": "Q2 Agility Score",
+                            "label": "Q2 Agility Score",
+                            "budget": 89,
+                            "actual": 96,
+                            "variance_pct": 7.87,
+                            "status": "favorable",
+                        },
+                        {
+                            "name": "Q3 Cost Adherence",
+                            "label": "Q3 Cost Adherence",
+                            "budget": 86,
+                            "actual": 96,
+                            "variance_pct": 11.63,
+                            "status": "favorable",
+                        },
+                        {
+                            "name": "Q4 Year-End Landing",
+                            "label": "Q4 Year-End Landing",
+                            "budget": 84,
+                            "actual": 98,
+                            "variance_pct": 16.67,
+                            "status": "favorable",
+                        },
+                    ],
+                },
+                "side_insight_panel": {
+                    "headline": "Phase 4 Continuous Execution",
+                    "bullets": [
+                        "Treat the annual budget as a dynamic governance guardrail rather than a static document.",
+                        "Require formal CFO sign-off for any cross-departmental budget transfers above $10K.",
+                        "Link department head quarterly KPIs directly to forecast accuracy and cost discipline.",
+                    ],
+                    "recommendation_badge": "GATE 4: CONTINUOUS CONTROL",
+                },
+            },
+        ],
+    }
+}
+
+def _match_predetermined_blueprint(query_text: Optional[str]) -> Optional[dict[str, Any]]:
+    """Checks if the requested topic matches a hardcoded DeptCast Predetermined Blueprint."""
+    if not query_text:
+        return None
+    cleaned = query_text.lower().strip().replace("_", " ").replace("-", " ")
+    for key, bp in PREDETERMINED_BLUEPRINTS.items():
+        if key.replace("_", " ") in cleaned:
+            return json.loads(json.dumps(bp))
+        for kw in bp.get("match_keywords", []):
+            if kw in cleaned:
+                return json.loads(json.dumps(bp))
+    return None
 
 # ── Helper: Bulletproof 3-Zone Chart Normalizer ──────────────
 
@@ -353,7 +881,7 @@ def _convert_contract_to_storyboard(payload: dict) -> dict:
         res = meta.get("resolution", {"width": 1920, "height": 1080})
         payload["video"] = {
             "title": meta.get("project_title", "Enterprise Executive Playbook"),
-            "duration": 44,
+            "duration": 60,
             "audience": "Executive Board",
             "fps": meta.get("fps", 30),
             "width": res.get("width", 1920),
@@ -376,7 +904,7 @@ def _convert_contract_to_storyboard(payload: dict) -> dict:
                 s["narration"] = nar.get("vo_text", "").strip()
     return payload
 
-# ── Helper: Parse & Normalize JSON Output ──────────────
+# ── Helper: Parse & Normalize JSON Output ────────────────────
 
 def _strip_markdown_fences(text: str) -> str:
     text = text.strip()
@@ -403,10 +931,10 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
         
         try:
             cleaned["durationInSeconds"] = float(
-                cleaned.get("durationInSeconds") or cleaned.get("duration_seconds") or 14.0
+                cleaned.get("durationInSeconds") or cleaned.get("duration_seconds") or 15.0
             )
         except (ValueError, TypeError):
-            cleaned["durationInSeconds"] = 14.0
+            cleaned["durationInSeconds"] = 15.0
             
         nar = cleaned.get("narration")
         if isinstance(nar, dict):
@@ -421,7 +949,7 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
         else:
             cleaned["narration"] = str(nar).strip()
 
-        if any(k in cleaned for k in ("top_kpi_controls", "main_chart", "side_insight_panel")):
+        if any(k in cleaned for k in ("top_kpi_controls", "main_chart", "side_insight_panel", "blueprint_steps")):
             cleaned["type"] = "dashboard_ui"
 
         stype = str(cleaned.get("type", "dashboard_ui")).lower().strip()
@@ -544,10 +1072,10 @@ async def _invoke_with_retry(prompt_or_chain, inputs: dict, max_attempts: int = 
 
     raise HTTPException(status_code=500, detail=f"LLM failed after attempts across models: {last_error}")
 
-# ── Stale Audio Cleanup ────────────────────────────────
+# ── Stale Audio Cleanup & Audio Duration Sync ────────────────
 
 def _cleanup_old_audio(public_dir: str):
-    for pattern in ["scene_*.wav"]:
+    for pattern in ["scene_*.wav", "scene_*.mp3"]:
         old_files = glob.glob(os.path.join(public_dir, pattern))
         for f in old_files:
             try:
@@ -555,12 +1083,32 @@ def _cleanup_old_audio(public_dir: str):
             except OSError as e:
                 print(f"[WARNING] Could not delete {f}: {e}")
 
+def _estimate_audio_duration(audio_path: str, text: str, default_dur: float = 15.0) -> float:
+    """Calculates accurate scene duration from MP3 file or word count so voiceover never cuts off."""
+    try:
+        from mutagen.mp3 import MP3
+        audio = MP3(audio_path)
+        if audio.info and audio.info.length > 3:
+            return round(float(audio.info.length) + 1.2, 1)
+    except Exception:
+        pass
+
+    words = len((text or "").split())
+    word_based_sec = max(13.0, round((words / 2.45) + 1.5, 1))
+    if os.path.exists(audio_path):
+        size_bytes = os.path.getsize(audio_path)
+        # Edge-TTS uses ~6KB/sec (48kbps) and gTTS uses ~4KB/sec (32kbps)
+        bitrate_est = size_bytes / 5500.0
+        if 8.0 <= bitrate_est <= 35.0:
+            return round(max(word_based_sec, bitrate_est + 1.0), 1)
+    return max(default_dur, word_based_sec)
+
 # ── Edge-TTS Audio Helper (With gTTS Fallback) ───────────────
 
 EDGE_TTS_VOICE = "en-US-ChristopherNeural"
 
 async def generate_edge_audio(scene: dict, text: str, output_path: str):
-    """Generate TTS audio using edge-tts with automatic gTTS fallback if 403 occurs."""
+    """Generate TTS audio using edge-tts with automatic gTTS fallback if 403 occurs, and sync scene duration."""
     import edge_tts
     from gtts import gTTS
     try:
@@ -568,6 +1116,7 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
         await communicate.save(output_path)
         if not os.path.exists(output_path) or os.path.getsize(output_path) < 100:
             raise ValueError("Empty Edge-TTS audio file")
+        print(f"[TTS - Edge] Generated {os.path.basename(output_path)}")
     except Exception as e:
         print(f"[FALLBACK - gTTS] Edge-TTS failed ({e}), using gTTS for {os.path.basename(output_path)}...")
         if os.path.exists(output_path):
@@ -576,9 +1125,13 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
             except OSError:
                 pass
         gTTS(text=text, lang="en", slow=False).save(output_path)
+
+    scene["durationInSeconds"] = _estimate_audio_duration(
+        output_path, text, float(scene.get("durationInSeconds", 15.0))
+    )
     scene["captions"] = []
 
-# ── Known Brand Database ─────────────────────────────────────────
+# ── Known Brand Database ─────────────────────────────────────
 
 KNOWN_BRANDS: dict[str, dict] = {
     "schindler": {
@@ -632,7 +1185,7 @@ def _detect_brand(text: str) -> Optional[dict]:
             return brand_config
     return None
 
-# ── Universal Multi-Agent Prompts (Supports All 12 DeptCast Topics + Finance) ──
+# ── Universal Multi-Agent Prompts ────────────────────────────
 
 RESEARCHER_PROMPT_TEMPLATE = """
 Persona: Act as an Enterprise Strategy & Operations Lead creating a high-impact 3-Scene Executive Playbook for DeptCast.
@@ -731,9 +1284,33 @@ class ExplainerRequestModel(BaseModel):
     topic: str
     initial_prompt: Optional[str] = None
 
+@app.get("/blueprints")
+async def list_predetermined_blueprints():
+    """Returns available predetermined DeptCast blueprints."""
+    return {
+        "status": "success",
+        "blueprints": [
+            {
+                "key": k,
+                "blueprint_id": v.get("blueprint_id"),
+                "template_category": v.get("template_category"),
+                "title": v.get("video", {}).get("title"),
+                "scene_count": len(v.get("scenes", [])),
+            }
+            for k, v in PREDETERMINED_BLUEPRINTS.items()
+        ],
+    }
+
 @app.post("/generate-explainer")
 async def generate_explainer(payload: ExplainerRequestModel):
     try:
+        # 1. Check if topic matches a Predetermined DeptCast Blueprint first
+        matched_bp = _match_predetermined_blueprint(payload.topic)
+        if matched_bp:
+            matched_bp["scenes"] = _normalize_scenes(matched_bp.get("scenes", []))
+            validated = StoryboardModel.model_validate(matched_bp)
+            return validated.model_dump()
+
         brand = _detect_brand(payload.topic)
         context = ""
         if faiss_index.ntotal > 0:
@@ -742,7 +1319,6 @@ async def generate_explainer(payload: ExplainerRequestModel):
             retrieved_chunks = [document_chunks[i] for i in I[0] if i < len(document_chunks)]
             context = "Extracted Document Context:\n" + "\n\n".join(retrieved_chunks)
 
-        # Smart Domain Filter: Only inject Excel financial dataset if topic is finance/budget related
         financial_keywords = ("budget", "finance", "financial", "opex", "capex", "expense", "cost", "spend", "revenue", "variance")
         is_finance_topic = any(k in payload.topic.lower() for k in financial_keywords)
 
@@ -762,7 +1338,7 @@ async def generate_explainer(payload: ExplainerRequestModel):
                         top_over = df.loc[df['Variance'].idxmax()]
                         top_under = df.loc[df['Variance'].idxmin()]
                         financial_summary = (
-                            f"Reference Financial Dataset: Total Budget ${total_budget:,.2f}, Total Actual${total_actual:,.2f}. "
+                            f"Reference Financial Dataset: Total Budget ${total_budget:,.2f}, Total Actual ${total_actual:,.2f}. "
                             f"Highest Over-Budget: {top_over[cat_col]} (over by ${top_over['Variance']:,.2f}). "
                             f"Most Efficient: {top_under[cat_col]} (saved ${-top_under['Variance']:,.2f})."
                         )
@@ -845,6 +1421,14 @@ async def analyze_data(
     topic_input: Optional[str] = Form(None)
 ):
     try:
+        # Check if topic_input or initial_prompt matches a Predetermined Blueprint (when no Excel sheet is forced)
+        if not file and topic_input:
+            matched_bp = _match_predetermined_blueprint(topic_input)
+            if matched_bp:
+                matched_bp["scenes"] = _normalize_scenes(matched_bp.get("scenes", []))
+                validated = StoryboardModel.model_validate(matched_bp)
+                return validated.model_dump()
+
         if file:
             raw_filename = file.filename or "Uploaded Document"
             video_title = os.path.splitext(raw_filename)[0].replace("_", " ").replace("-", " ").title()
@@ -852,6 +1436,14 @@ async def analyze_data(
             if len(contents) > MAX_FILE_SIZE:
                 raise HTTPException(status_code=413, detail="File too large. Max 10MB allowed.")
             file_ext = os.path.splitext(file.filename)[1].lower()
+
+            # If user uploads the Annual Budget Playbook .docx, route to Predetermined Blueprint
+            if file_ext == '.docx' and _match_predetermined_blueprint(raw_filename):
+                matched_bp = _match_predetermined_blueprint(raw_filename)
+                matched_bp["scenes"] = _normalize_scenes(matched_bp.get("scenes", []))
+                validated = StoryboardModel.model_validate(matched_bp)
+                return validated.model_dump()
+
             if file_ext in ['.xls', '.xlsx']:
                 df = pd.read_excel(io.BytesIO(contents))
                 input_data = f"Corporate Data:\n{df.to_csv(index=False)}"
@@ -936,7 +1528,6 @@ async def analyze_data(
 @app.post("/approve")
 async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
     import logging
-    import math
     logger = logging.getLogger("uvicorn.error")
     
     try:
@@ -966,6 +1557,12 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
                 await generate_edge_audio(scene, narration, audio_path)
                 generated_count += 1
 
+        # Recalculate total video duration after audio sync
+        if "video" in storyboard_data and isinstance(storyboard_data["video"], dict):
+            storyboard_data["video"]["duration"] = round(
+                sum(float(s.get("durationInSeconds", 15.0)) for s in scenes), 1
+            )
+
         absolute_storyboard_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "src", "data", "storyboard.json")
         )
@@ -987,6 +1584,7 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
         return {
             "status": "success",
             "message": f"Storyboard approved! {generated_count} audio track(s) generated.",
+            "total_duration_seconds": storyboard_data.get("video", {}).get("duration"),
         }
     except HTTPException:
         raise
@@ -1012,7 +1610,7 @@ You are an expert video producer. Update the Remotion storyboard JSON based on t
 Current Storyboard JSON:
 {storyboard}
 
-Maintain the exact same JSON structure (including `top_kpi_controls`, `main_chart`, and `side_insight_panel` if present).
+Maintain the exact same JSON structure (including `top_kpi_controls`, `main_chart`, `side_insight_panel`, and `blueprint_steps` if present).
 Return ONLY the updated full JSON object, with no markdown fences.
 """
         )
@@ -1077,3 +1675,15 @@ async def share_route(vid_id: str):
     return FileResponse(os.path.join(static_dir, "index.html"))
 
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+
+# ── Direct CLI Runner for Blueprint + TTS Generation ─────────
+
+if __name__ == "__main__":
+    blueprint_key = "annual_budget"
+    if len(sys.argv) > 2 and sys.argv[1] == "--blueprint":
+        blueprint_key = sys.argv[2]
+
+    bp_payload = _match_predetermined_blueprint(blueprint_key) or PREDETERMINED_BLUEPRINTS["annual_budget"]
+    print(f"[BLUEPRINT ENGINE] Generating TTS & Storyboard for: {bp_payload['video']['title']}")
+    res = asyncio.run(approve_storyboard(bp_payload))
+    print(f"[SUCCESS] {res}")
