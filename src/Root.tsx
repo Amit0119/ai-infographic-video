@@ -33,7 +33,6 @@ try {
 
 const Background = ({ style }: { style: SceneStyle }) => {
   const frame = useCurrentFrame();
-  // Slow pan for the grid to make it feel alive without being distracting
   const shift = interpolate(frame, [0, 900], [0, -100], { extrapolateRight: "extend" });
   return (
     <AbsoluteFill
@@ -57,52 +56,42 @@ const Background = ({ style }: { style: SceneStyle }) => {
   );
 };
 
-// ── Cast the imported JSON to our typed Storyboard ───────────
 const data = storyboard as unknown as Storyboard;
 
-/**
- * Calculates the total video duration in frames from all scenes.
- */
 const getTotalDurationInFrames = (scenes: StoryboardScene[], fps: number) => {
-  const transitionFrames = Math.round(fps * 1.5); // 1.5s transition overlap
+  const transitionFrames = Math.round(fps * 1.5);
   const total = scenes.reduce(
     (total, scene) => total + ((scene as any).dynamicDuration || scene.durationInSeconds * fps),
     0
   );
-  // Subtract the overlapping frames so the total duration is correct
   const overlaps = Math.max(0, scenes.length - 1) * transitionFrames;
   return total - overlaps;
 };
 
-/**
- * InfographicVideo — Sequentially composes all storyboard scenes
- * using Remotion's <TransitionSeries> component.
- */
 const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) => {
   const { fps } = compData.video;
   const { style, scenes } = compData;
   const frame = useCurrentFrame();
   const totalFrames = getTotalDurationInFrames(scenes, fps);
 
-  // Pillar 3: Continuous Cinematic Panning over the entire video duration
-  const globalScale = interpolate(frame, [0, totalFrames], [1.0, 1.05], { extrapolateRight: "clamp" });
-  const globalX = interpolate(frame, [0, totalFrames], [0, -30], { extrapolateRight: "clamp" });
+  const hasDashboardUI = scenes.some((s) => s.type === "dashboard_ui");
+  const globalScale = hasDashboardUI
+    ? 1.0
+    : interpolate(frame, [0, totalFrames], [1.0, 1.03], { extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill
       style={{
-        transform: `scale(${globalScale}) translateX(${globalX}px)`,
+        transform: `scale(${globalScale})`,
         transformOrigin: "center center",
       }}
     >
       <Background style={style} />
 
-      {/* Background Music with ducked volume so it doesn't overpower TTS */}
       <Audio src={staticFile("bgm.mp3")} volume={0.12} loop />
 
       <TransitionSeries>
         {scenes.flatMap((scene, index) => {
-          // dynamicDuration added via calculateMetadata, fallback to static
           const durationInFrames = (scene as any).dynamicDuration || scene.durationInSeconds * fps;
 
           switch (scene.type) {
@@ -405,6 +394,8 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
                     top_kpi_controls={(scene as any).top_kpi_controls}
                     main_chart={(scene as any).main_chart}
                     side_insight_panel={(scene as any).side_insight_panel}
+                    blueprint_meta={(scene as any).blueprint_meta}
+                    blueprint_steps={(scene as any).blueprint_steps}
                     data_points={(scene as any).data_points}
                     style={style}
                   />
@@ -418,45 +409,43 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
         })}
       </TransitionSeries>
 
-      {style.companyWatermark ? (
-        <div
-          style={{
-            position: "absolute",
-            top: 40,
-            right: 60,
-            color: style.textColor,
-            fontSize: 28,
-            fontWeight: "bold",
-            opacity: 0.5,
-            fontFamily: style.fontFamily,
-            zIndex: 1000,
-            textShadow: "0px 4px 12px rgba(0,0,0,0.3)",
-          }}
-        >
-          {style.companyWatermark}
-        </div>
-      ) : (
-        <img
-          src={staticFile("logo.png")}
-          style={{
-            position: "absolute",
-            bottom: 24,
-            right: 40,
-            height: 60,
-            opacity: 0.8,
-            zIndex: 1000,
-            filter: "drop-shadow(0px 8px 16px rgba(0,0,0,0.5))",
-          }}
-        />
+      {!hasDashboardUI && (
+        style.companyWatermark ? (
+          <div
+            style={{
+              position: "absolute",
+              top: 40,
+              right: 60,
+              color: style.textColor,
+              fontSize: 28,
+              fontWeight: "bold",
+              opacity: 0.5,
+              fontFamily: style.fontFamily,
+              zIndex: 1000,
+              textShadow: "0px 4px 12px rgba(0,0,0,0.3)",
+            }}
+          >
+            {style.companyWatermark}
+          </div>
+        ) : (
+          <img
+            src={staticFile("logo.png")}
+            style={{
+              position: "absolute",
+              bottom: 24,
+              right: 40,
+              height: 60,
+              opacity: 0.8,
+              zIndex: 1000,
+              filter: "drop-shadow(0px 8px 16px rgba(0,0,0,0.5))",
+            }}
+          />
+        )
       )}
     </AbsoluteFill>
   );
 };
 
-/**
- * RemotionRoot — Registers the main composition.
- * Duration is automatically calculated from the storyboard.
- */
 export const RemotionRoot: React.FC = () => {
   const { fps, width, height } = data.video;
   const defaultTotalFrames = getTotalDurationInFrames(data.scenes, fps);
