@@ -22,17 +22,33 @@ export const DashboardUI: React.FC<
 }) => {
   const { fps, durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
+  const currentTime = frame / fps;
 
   const headerSpring = spring({ frame, fps, config: { damping: 14, stiffness: 80 } });
   const headerY = interpolate(headerSpring, [0, 1], [-25, 0]);
 
-  const livePulse = 0.75 + 0.25 * Math.sin(frame / 8);
+  const livePulse = 0.75 + 0.25 * Math.sin(frame / 6);
 
   const primary = style.primaryColor || "#38bdf8";
   const accent = style.accentColor || "#34d399";
   const secondary = style.secondaryColor || "#818cf8";
   const textCol = style.textColor || "#ffffff";
   const subtextCol = style.subtextColor || "#94a3b8";
+  const spotlightCol = "#facc15";
+
+  // Active Audio-Sync Highlight Lookup
+  const highlights: Array<{
+    start: number;
+    end: number;
+    kpis?: number[];
+    chart_rows?: number[];
+    steps?: number[];
+  }> = blueprint_meta?.highlights || [];
+
+  const activeHighlight = highlights.find(
+    (h) => currentTime >= h.start && currentTime <= h.end
+  );
+  const hasHighlightMode = highlights.length > 0 && Boolean(activeHighlight);
 
   const formatCounter = (kpi: any, progress: number) => {
     if (typeof kpi.value === "number") {
@@ -64,8 +80,8 @@ export const DashboardUI: React.FC<
   };
 
   const renderMainChart = (chart: MainChartConfig) => {
-    const chartEndFrame = Math.max(150, Math.floor(durationInFrames * 0.55));
-    const chartProgress = interpolate(frame, [20, chartEndFrame], [0, 1], {
+    const chartEndFrame = Math.max(90, Math.floor(durationInFrames * 0.35));
+    const chartProgress = interpolate(frame, [15, chartEndFrame], [0, 1], {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
     });
@@ -81,11 +97,11 @@ export const DashboardUI: React.FC<
             <div style={{ display: "flex", gap: 18, fontSize: 15, color: subtextCol }}>
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 13, height: 13, borderRadius: 3, background: secondary, display: "inline-block" }} />
-                Draft / Static Baseline
+                Allocated Budget
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 13, height: 13, borderRadius: 3, background: accent, display: "inline-block" }} />
-                Approved / Rolling Target
+                Favorable Actual
               </span>
               {hasOverspent && (
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -96,9 +112,9 @@ export const DashboardUI: React.FC<
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1, justifyContent: "center" }}>
             {chart.categories.map((cat, idx) => {
-              const rowProgress = interpolate(frame, [25 + idx * 28, 165 + idx * 28], [0, 1], {
+              const rowProgress = interpolate(frame, [15 + idx * 15, 95 + idx * 15], [0, 1], {
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
               });
@@ -109,12 +125,39 @@ export const DashboardUI: React.FC<
               const isOver = cat.status === "overspent" ? true : cat.status === "favorable" ? false : vPct > 0;
               const barColor = isOver ? "#f87171" : accent;
 
+              const isRowFocused = activeHighlight?.chart_rows?.includes(idx) ?? false;
+              const isRowDimmed = hasHighlightMode && !isRowFocused;
+
               return (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "185px 1fr 115px", alignItems: "center", gap: 16 }}>
-                  <div style={{ color: textCol, fontSize: 17, fontWeight: 600 }}>{cat.name || (cat as any).label}</div>
+                <div
+                  key={idx}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "190px 1fr 115px",
+                    alignItems: "center",
+                    gap: 16,
+                    padding: "8px 12px",
+                    borderRadius: 12,
+                    opacity: isRowDimmed ? 0.42 : 1,
+                    transform: isRowFocused ? "scale(1.015)" : "scale(1)",
+                    background: isRowFocused ? "rgba(250, 204, 21, 0.10)" : "transparent",
+                    border: isRowFocused ? `2px solid ${spotlightCol}` : "2px solid transparent",
+                    boxShadow: isRowFocused ? `0 0 ${22 * livePulse}px rgba(250, 204, 21, 0.35)` : "none",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <span style={{ color: isRowFocused ? spotlightCol : textCol, fontSize: 17, fontWeight: 700 }}>
+                      {cat.name || (cat as any).label}
+                    </span>
+                    {isRowFocused && (
+                      <span style={{ color: spotlightCol, fontSize: 11, fontWeight: 800, letterSpacing: "0.06em" }}>
+                        ● LIVE AUDIO FOCUS
+                      </span>
+                    )}
+                  </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7, background: "rgba(255,255,255,0.04)", padding: "9px 14px", borderRadius: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: `${budgetWidth}%`, height: 12, background: secondary, borderRadius: 4, opacity: 0.8 }} />
+                      <div style={{ width: `${budgetWidth}%`, height: 12, background: secondary, borderRadius: 4, opacity: 0.85 }} />
                       <span style={{ color: subtextCol, fontSize: 14, fontWeight: 600 }}>
                         {formatSmartValue(cat.budget, maxVal, chart.title)}
                       </span>
@@ -231,10 +274,7 @@ export const DashboardUI: React.FC<
               })}
 
               {areaPts && <polygon points={areaPts} fill="url(#lineAreaGrad)" />}
-
-              {s2Pts && (
-                <polyline fill="none" stroke={s2Color} strokeWidth="4" strokeDasharray="7 5" points={s2Pts} />
-              )}
+              {s2Pts && <polyline fill="none" stroke={s2Color} strokeWidth="4" strokeDasharray="7 5" points={s2Pts} />}
               {s1Pts && (
                 <polyline
                   fill="none"
@@ -251,7 +291,6 @@ export const DashboardUI: React.FC<
                 const pt1 = getXY(i, v1);
                 const pt2 = getXY(i, v2);
                 const isRevealed = i < visibleCount;
-
                 const isPeak = (chart as any).peak_callout ? (chart as any).peak_callout.month === m : m === "Oct";
                 const peakLabel = (chart as any).peak_callout ? (chart as any).peak_callout.label : "Peak";
                 const highPt = pt1.y <= pt2.y ? pt1 : pt2;
@@ -302,70 +341,84 @@ export const DashboardUI: React.FC<
 
     if (chart.component === "Donut_Chart" && chart.segments) {
       const palette = [primary, secondary, accent, "#f59e0b", "#f43f5e", "#a855f7"];
-      const radius = 108;
+      const radius = 118;
       const circumference = 2 * Math.PI * radius;
       let accumulatedPercent = 0;
 
       return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
           <span style={{ color: textCol, fontSize: 22, fontWeight: 700 }}>{chart.title}</span>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", flex: 1 }}>
-            <div style={{ position: "relative", width: 280, height: 280, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width={280} height={280} viewBox="0 0 280 280" style={{ transform: "rotate(-90deg)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, padding: "0 12px" }}>
+            <div style={{ position: "relative", width: 310, height: 310, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width={310} height={310} viewBox="0 0 310 310" style={{ transform: "rotate(-90deg)" }}>
                 {chart.segments.map((seg, i) => {
                   const percent = seg.percentage || (seg as any).share_pct || 0;
                   const segLength = (percent / 100) * circumference * chartProgress;
                   const offset = -((accumulatedPercent / 100) * circumference);
                   accumulatedPercent += percent;
+                  const isSegFocused = activeHighlight?.chart_rows?.includes(i) ?? false;
                   return (
                     <circle
                       key={i}
-                      cx={140}
-                      cy={140}
+                      cx={155}
+                      cy={155}
                       r={radius}
                       fill="transparent"
                       stroke={(seg as any).color || palette[i % palette.length]}
-                      strokeWidth={34}
+                      strokeWidth={isSegFocused ? 44 : 36}
                       strokeDasharray={`${segLength} ${circumference}`}
                       strokeDashoffset={offset}
                     />
                   );
                 })}
               </svg>
-              <div style={{ position: "absolute", textAlign: "center", width: "180px", padding: "0 10px" }}>
-                <div style={{ color: textCol, fontSize: 23, fontWeight: 800, lineHeight: 1.25 }}>
+              <div style={{ position: "absolute", textAlign: "center", width: "190px", padding: "0 10px" }}>
+                <div style={{ color: textCol, fontSize: 25, fontWeight: 800, lineHeight: 1.25 }}>
                   {(chart as any).center_label || "100% Share"}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 13, width: "54%" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "56%" }}>
               {chart.segments.map((seg, i) => {
-                const itemReveal = interpolate(frame, [30 + i * 24, 95 + i * 24], [0, 1], {
+                const itemReveal = interpolate(frame, [15 + i * 14, 65 + i * 14], [0, 1], {
                   extrapolateLeft: "clamp",
                   extrapolateRight: "clamp",
                 });
                 const percent = seg.percentage || (seg as any).share_pct || 0;
                 const segColor = (seg as any).color || palette[i % palette.length];
                 const showDollarVal = seg.value >= 1000;
+                const isSegFocused = activeHighlight?.chart_rows?.includes(i) ?? false;
+                const isSegDimmed = hasHighlightMode && !isSegFocused;
+
                 return (
                   <div
                     key={i}
                     style={{
-                      opacity: itemReveal,
+                      opacity: itemReveal * (isSegDimmed ? 0.42 : 1),
+                      transform: isSegFocused ? "scale(1.02)" : "scale(1)",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      background: "rgba(255,255,255,0.04)",
+                      background: isSegFocused ? "rgba(250, 204, 21, 0.12)" : "rgba(255,255,255,0.04)",
                       padding: "11px 16px",
                       borderRadius: 9,
-                      borderLeft: `5px solid ${segColor}`,
+                      border: isSegFocused ? `2px solid ${spotlightCol}` : "1px solid transparent",
+                      borderLeft: `6px solid ${ isSegFocused ? spotlightCol : segColor }`,
+                      boxShadow: isSegFocused ? `0 0 ${20 * livePulse}px rgba(250, 204, 21, 0.35)` : "none",
                     }}
                   >
-                    <span style={{ color: textCol, fontSize: 16.5, fontWeight: 600 }}>{seg.label || (seg as any).name}</span>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ color: isSegFocused ? spotlightCol : textCol, fontSize: 16.5, fontWeight: 700 }}>
+                        {seg.label || (seg as any).name}
+                      </span>
+                      {isSegFocused && (
+                        <span style={{ color: spotlightCol, fontSize: 10.5, fontWeight: 800 }}>● LIVE AUDIO FOCUS</span>
+                      )}
+                    </div>
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                       {showDollarVal ? (
-                        <span style={{ color: subtextCol, fontSize: 15 }}>
+                        <span style={{ color: subtextCol, fontSize: 15, fontWeight: 600 }}>
                           {seg.value >= 1000000
                             ? `$${(seg.value / 1000000).toFixed(2)}M`
                             : `$${(seg.value / 1000).toFixed(1)}K`}
@@ -481,61 +534,64 @@ export const DashboardUI: React.FC<
           {top_kpi_controls.map((kpi, idx) => {
             const cardSpring = Math.min(
               1,
-              spring({ frame: Math.max(0, frame - idx * 12), fps, config: { damping: 14, stiffness: 85 } })
+              spring({ frame: Math.max(0, frame - idx * 8), fps, config: { damping: 14, stiffness: 85 } })
             );
-            const countProgress = interpolate(frame, [10 + idx * 18, 135 + idx * 18], [0, 1], {
+            const countProgress = interpolate(frame, [8 + idx * 12, 90 + idx * 12], [0, 1], {
               extrapolateLeft: "clamp",
               extrapolateRight: "clamp",
             });
             const isRed = kpi.traffic_light === "red";
             const badgeColor = isRed ? "#f87171" : accent;
 
+            const isKpiFocused = activeHighlight?.kpis?.includes(idx) ?? false;
+            const isKpiDimmed = hasHighlightMode && !isKpiFocused;
+
             return (
               <div
                 key={idx}
                 style={{
-                  opacity: cardSpring,
-                  transform: `translateY(${interpolate(cardSpring, [0, 1], [20, 0])}px)`,
-                  background: "rgba(15, 23, 42, 0.82)",
+                  opacity: cardSpring * (isKpiDimmed ? 0.42 : 1),
+                  transform: `translateY(${interpolate(cardSpring, [0, 1], [20, 0])}px) scale(${isKpiFocused ? 1.025 : 1})`,
+                  background: isKpiFocused ? "rgba(30, 41, 59, 0.95)" : "rgba(15, 23, 42, 0.82)",
                   backdropFilter: "blur(16px)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  borderTop: `4px solid ${isRed ? "#f87171" : primary}`,
+                  border: isKpiFocused ? `2px solid ${spotlightCol}` : "1px solid rgba(255,255,255,0.12)",
+                  borderTop: `5px solid ${isKpiFocused ? spotlightCol : isRed ? "#f87171" : primary}`,
                   borderRadius: 16,
                   padding: "18px 24px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  boxShadow: "0 12px 32px rgba(0,0,0,0.35)",
+                  boxShadow: isKpiFocused
+                    ? `0 0 ${28 * livePulse}px rgba(250, 204, 21, 0.45)`
+                    : "0 12px 32px rgba(0,0,0,0.35)",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ color: subtextCol, fontSize: 14.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  <span style={{ color: isKpiFocused ? spotlightCol : subtextCol, fontSize: 14.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     {kpi.label}
                   </span>
-                  {(kpi.status_badge || kpi.traffic_light) && (
-                    <span
-                      style={{
-                        padding: "4px 11px",
-                        borderRadius: 12,
-                        fontSize: 11.5,
-                        fontWeight: 800,
-                        background: `${badgeColor}22`,
-                        color: badgeColor,
-                        border: `1px solid ${badgeColor}60`,
-                      }}
-                    >
-                      {kpi.status_badge || (isRed ? "OVERRUN" : "FAVORABLE")}
-                    </span>
-                  )}
+                  <span
+                    style={{
+                      padding: "4px 11px",
+                      borderRadius: 12,
+                      fontSize: 11.5,
+                      fontWeight: 800,
+                      background: isKpiFocused ? "rgba(250, 204, 21, 0.22)" : `${badgeColor}22`,
+                      color: isKpiFocused ? spotlightCol : badgeColor,
+                      border: `1px solid ${isKpiFocused ? spotlightCol : badgeColor}60`,
+                    }}
+                  >
+                    {isKpiFocused ? "● SPEAKING" : kpi.status_badge || (isRed ? "OVERRUN" : "FAVORABLE")}
+                  </span>
                 </div>
 
                 <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 8 }}>
                   <span
                     style={{
-                      color: isRed ? "#fca5a5" : textCol,
+                      color: isKpiFocused ? "#ffffff" : isRed ? "#fca5a5" : textCol,
                       fontSize: 40,
                       fontWeight: 800,
-                      textShadow: `0 0 18px ${isRed ? "#f8717150" : primary + "50"}`,
+                      textShadow: `0 0 18px ${isKpiFocused ? spotlightCol : isRed ? "#f8717150" : primary + "50"}`,
                     }}
                   >
                     {formatCounter(kpi, countProgress)}
@@ -552,8 +608,8 @@ export const DashboardUI: React.FC<
                     style={{
                       width: `${Math.min(100, countProgress * 100)}%`,
                       height: "100%",
-                      background: isRed ? "#f87171" : primary,
-                      boxShadow: `0 0 10px ${isRed ? "#f87171" : primary}`,
+                      background: isKpiFocused ? spotlightCol : isRed ? "#f87171" : primary,
+                      boxShadow: `0 0 10px ${isKpiFocused ? spotlightCol : isRed ? "#f87171" : primary}`,
                     }}
                   />
                 </div>
@@ -613,30 +669,35 @@ export const DashboardUI: React.FC<
                   {blueprint_meta?.phase_badge || "PREDETERMINED BLUEPRINT"}
                 </span>
                 <span style={{ color: subtextCol, fontSize: 13, fontWeight: 700 }}>
-                  MANDATORY STEPS
+                  {blueprint_meta?.steps_header || "KEY AI INSIGHTS"}
                 </span>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {blueprint_steps.map((step, sIdx) => {
-                  const stepRevealFrame = Math.floor(durationInFrames * 0.14) + sIdx * Math.floor(durationInFrames * 0.22);
+                  const stepRevealFrame = 18 + sIdx * 18;
                   const stepSpring = Math.min(
                     1,
                     spring({ frame: Math.max(0, frame - stepRevealFrame), fps, config: { damping: 14, stiffness: 75 } })
                   );
+                  const isStepFocused = activeHighlight?.steps?.includes(sIdx) ?? false;
+                  const isStepDimmed = hasHighlightMode && !isStepFocused;
+
                   return (
                     <div
                       key={sIdx}
                       style={{
-                        opacity: stepSpring,
-                        transform: `translateX(${interpolate(stepSpring, [0, 1], [28, 0])}px)`,
+                        opacity: stepSpring * (isStepDimmed ? 0.42 : 1),
+                        transform: `translateX(${interpolate(stepSpring, [0, 1], [24, 0])}px) scale(${isStepFocused ? 1.02 : 1})`,
                         display: "flex",
                         gap: 14,
                         alignItems: "flex-start",
-                        background: "rgba(255,255,255,0.045)",
+                        background: isStepFocused ? "rgba(250, 204, 21, 0.12)" : "rgba(255,255,255,0.045)",
                         padding: "13px 16px",
                         borderRadius: 12,
-                        borderLeft: `4px solid ${sIdx === 0 ? accent : primary}`,
+                        border: isStepFocused ? `2px solid ${spotlightCol}` : "1px solid transparent",
+                        borderLeft: `5px solid ${isStepFocused ? spotlightCol : sIdx === 0 ? accent : primary}`,
+                        boxShadow: isStepFocused ? `0 0 ${24 * livePulse}px rgba(250, 204, 21, 0.4)` : "none",
                       }}
                     >
                       <div
@@ -644,8 +705,8 @@ export const DashboardUI: React.FC<
                           minWidth: 32,
                           height: 32,
                           borderRadius: 8,
-                          background: sIdx === 0 ? `${accent}25` : `${primary}25`,
-                          color: sIdx === 0 ? accent : primary,
+                          background: isStepFocused ? `${spotlightCol}30` : sIdx === 0 ? `${accent}25` : `${primary}25`,
+                          color: isStepFocused ? spotlightCol : sIdx === 0 ? accent : primary,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -658,7 +719,9 @@ export const DashboardUI: React.FC<
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                          <span style={{ color: textCol, fontSize: 16.5, fontWeight: 700 }}>{step.title}</span>
+                          <span style={{ color: isStepFocused ? spotlightCol : textCol, fontSize: 16.5, fontWeight: 700 }}>
+                            {step.title}
+                          </span>
                           {step.tag && (
                             <span
                               style={{
@@ -666,16 +729,18 @@ export const DashboardUI: React.FC<
                                 fontWeight: 800,
                                 padding: "2px 8px",
                                 borderRadius: 6,
-                                background: "rgba(255,255,255,0.08)",
-                                color: primary,
+                                background: isStepFocused ? "rgba(250, 204, 21, 0.25)" : "rgba(255,255,255,0.08)",
+                                color: isStepFocused ? spotlightCol : primary,
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              {step.tag}
+                              {isStepFocused ? "● FOCUS" : step.tag}
                             </span>
                           )}
                         </div>
-                        <span style={{ color: subtextCol, fontSize: 14, lineHeight: 1.38 }}>{step.detail}</span>
+                        <span style={{ color: isStepFocused ? "#f8fafc" : subtextCol, fontSize: 14, lineHeight: 1.38 }}>
+                          {step.detail}
+                        </span>
                       </div>
                     </div>
                   );
@@ -699,13 +764,13 @@ export const DashboardUI: React.FC<
               >
                 <div>
                   <div style={{ color: primary, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
-                    BLUEPRINT SLA TIMELINE
+                    {blueprint_meta?.sla_label || "VALIDATION STATUS"}
                   </div>
                   <div style={{ color: textCol, fontSize: 15.5, fontWeight: 700 }}>{blueprint_meta.sla_timeline}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ color: subtextCol, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
-                    GOVERNANCE OWNER
+                    ENGINE SOURCE
                   </div>
                   <div style={{ color: accent, fontSize: 15, fontWeight: 700 }}>{blueprint_meta.owner_role}</div>
                 </div>
