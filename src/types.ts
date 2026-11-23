@@ -14,10 +14,12 @@ export interface SceneStyle {
   videoOverlayColor?: string;
 }
 
-// ── 3-Zone Executive Dashboard Sub-Types ─────────────────────
+// ── 3-Zone Executive Dashboard & Dynamic Playbook Sub-Types ──
+
+export type DashboardLayoutMode = "chart_dashboard" | "playbook_cards" | "hybrid";
 
 export interface TopKPIControl {
-  component: string;
+  component?: string;
   label: string;
   value: number | string;
   display_value?: string;
@@ -32,8 +34,12 @@ export interface MainChartConfig {
   component: "Grouped_Bar_Chart" | "Multi_Line_Trend_Chart" | "Donut_Chart" | string;
   title: string;
   animation_style?: string;
+  baseline_label?: string;
+  actual_label?: string;
+  center_label?: string;
   categories?: {
     name: string;
+    label?: string;
     budget: number;
     actual: number;
     variance_pct: number;
@@ -42,17 +48,27 @@ export interface MainChartConfig {
   x_axis?: string[];
   series?: {
     name: string;
+    color?: string;
     data: number[];
+    values?: number[];
   }[];
+  peak_callout?: {
+    month: string;
+    value: number;
+    label: string;
+  };
   annotations?: {
     month: string;
     value: number;
     label: string;
   }[];
   segments?: {
+    name?: string;
     label: string;
     value: number;
     percentage: number;
+    share_pct?: number;
+    color?: string;
   }[];
 }
 
@@ -61,6 +77,35 @@ export interface SideInsightPanel {
   headline: string;
   bullets: string[];
   recommendation_badge?: string;
+}
+
+export interface BlueprintHighlight {
+  start: number;
+  end: number;
+  kpis?: number[];
+  chart_rows?: number[];
+  steps?: number[];
+}
+
+export interface BlueprintMeta {
+  template_name?: string;
+  blueprint_code?: string;
+  phase_badge?: string;
+  steps_header?: string;
+  sla_label?: string;
+  sla_timeline?: string;
+  owner_role?: string;
+  header_badge?: string;
+  required_inputs?: string[];
+  highlights?: BlueprintHighlight[];
+}
+
+export interface BlueprintStep {
+  step_no: string;
+  title: string;
+  detail: string;
+  tag?: string;
+  status?: "favorable" | "overspent" | string;
 }
 
 // ── Scene Prop Interfaces ────────────────────────────────────
@@ -171,10 +216,14 @@ export interface SplitScreenSceneProps {
 export interface DashboardUISceneProps {
   title: string;
   section_header?: string;
+  layout_mode?: DashboardLayoutMode;
   chart_data?: { label: string; value: number }[];
   top_kpi_controls?: TopKPIControl[];
-  main_chart?: MainChartConfig;
+  main_chart?: MainChartConfig | null;
   side_insight_panel?: SideInsightPanel;
+  blueprint_meta?: BlueprintMeta;
+  blueprint_steps?: BlueprintStep[];
+  data_points?: string[];
   style: SceneStyle;
 }
 
@@ -278,13 +327,16 @@ export interface NumberedStepsSceneData {
 export interface DashboardUISceneData {
   id: number;
   type: "dashboard_ui";
+  layout_mode?: DashboardLayoutMode;
   durationInSeconds: number;
   title: string;
   section_header?: string;
   chart_data?: { label: string; value: number }[];
   top_kpi_controls?: TopKPIControl[];
-  main_chart?: MainChartConfig;
+  main_chart?: MainChartConfig | null;
   side_insight_panel?: SideInsightPanel;
+  blueprint_meta?: BlueprintMeta;
+  blueprint_steps?: BlueprintStep[];
   data_points?: string[];
 }
 

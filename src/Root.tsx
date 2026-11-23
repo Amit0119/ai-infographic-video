@@ -43,7 +43,6 @@ const Background = ({ style }: { style: SceneStyle }) => {
         backgroundPosition: `${shift}px ${shift}px`,
         zIndex: 0,
       }}
-      from={-394}
     >
       <div
         style={{
@@ -390,6 +389,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
                   <DashboardUI
                     title={(scene as any).title || (scene as any).section_header}
                     section_header={(scene as any).section_header}
+                    layout_mode={(scene as any).layout_mode}
                     chart_data={scene.chart_data as any}
                     top_kpi_controls={(scene as any).top_kpi_controls}
                     main_chart={(scene as any).main_chart}

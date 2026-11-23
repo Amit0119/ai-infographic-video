@@ -2,15 +2,10 @@ import React from "react";
 import { AbsoluteFill, useVideoConfig, useCurrentFrame, spring, interpolate } from "remotion";
 import type { DashboardUISceneProps, MainChartConfig } from "../types";
 
-export const DashboardUI: React.FC<
-  DashboardUISceneProps & {
-    data_points?: string[];
-    blueprint_meta?: any;
-    blueprint_steps?: any[];
-  }
-> = ({
+export const DashboardUI: React.FC<DashboardUISceneProps> = ({
   title,
   section_header,
+  layout_mode,
   chart_data,
   top_kpi_controls,
   main_chart,
@@ -36,19 +31,24 @@ export const DashboardUI: React.FC<
   const subtextCol = style.subtextColor || "#94a3b8";
   const spotlightCol = "#facc15";
 
-  // Active Audio-Sync Highlight Lookup
-  const highlights: Array<{
-    start: number;
-    end: number;
-    kpis?: number[];
-    chart_rows?: number[];
-    steps?: number[];
-  }> = blueprint_meta?.highlights || [];
-
+  // Active audio-sync highlight lookup
+  const highlights = blueprint_meta?.highlights || [];
   const activeHighlight = highlights.find(
     (h) => currentTime >= h.start && currentTime <= h.end
   );
   const hasHighlightMode = highlights.length > 0 && Boolean(activeHighlight);
+
+  // Determine whether this scene has a renderable chart or should use Playbook Cards layout
+  const hasValidChart = Boolean(
+    main_chart &&
+      main_chart.component &&
+      ((main_chart.component === "Grouped_Bar_Chart" && Boolean(main_chart.categories?.length)) ||
+        (main_chart.component === "Multi_Line_Trend_Chart" &&
+          Boolean(main_chart.series?.length) &&
+          Boolean(main_chart.x_axis?.length)) ||
+        (main_chart.component === "Donut_Chart" && Boolean(main_chart.segments?.length)))
+  );
+  const isPlaybookCardsMode = layout_mode === "playbook_cards" || !hasValidChart;
 
   const formatCounter = (kpi: any, progress: number) => {
     if (typeof kpi.value === "number") {
@@ -65,7 +65,7 @@ export const DashboardUI: React.FC<
     return kpi.display_value || String(kpi.value);
   };
 
-  const formatSmartValue = (val: number, maxContext: number, chartTitle?: string) => {
+  const formatSmartValue = (val: number, chartTitle?: string) => {
     if (val === 0) return "0";
     const t = (chartTitle || "").toLowerCase();
     if (t.includes("(%)") || t.includes("accuracy") || t.includes("adherence") || t.includes("share")) {
@@ -89,6 +89,8 @@ export const DashboardUI: React.FC<
     if (chart.component === "Grouped_Bar_Chart" && chart.categories) {
       const maxVal = Math.max(...chart.categories.flatMap((c) => [c.budget, c.actual]), 1);
       const hasOverspent = chart.categories.some((c) => c.status === "overspent");
+      const baselineLabel = chart.baseline_label || "Target / Budget";
+      const actualLabel = chart.actual_label || "Actual / Favorable";
 
       return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
@@ -97,11 +99,11 @@ export const DashboardUI: React.FC<
             <div style={{ display: "flex", gap: 18, fontSize: 15, color: subtextCol }}>
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 13, height: 13, borderRadius: 3, background: secondary, display: "inline-block" }} />
-                Allocated Budget
+                {baselineLabel}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 13, height: 13, borderRadius: 3, background: accent, display: "inline-block" }} />
-                Favorable Actual
+                {actualLabel}
               </span>
               {hasOverspent && (
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -147,7 +149,7 @@ export const DashboardUI: React.FC<
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     <span style={{ color: isRowFocused ? spotlightCol : textCol, fontSize: 17, fontWeight: 700 }}>
-                      {cat.name || (cat as any).label}
+                      {cat.name || cat.label}
                     </span>
                     {isRowFocused && (
                       <span style={{ color: spotlightCol, fontSize: 11, fontWeight: 800, letterSpacing: "0.06em" }}>
@@ -159,7 +161,7 @@ export const DashboardUI: React.FC<
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: `${budgetWidth}%`, height: 12, background: secondary, borderRadius: 4, opacity: 0.85 }} />
                       <span style={{ color: subtextCol, fontSize: 14, fontWeight: 600 }}>
-                        {formatSmartValue(cat.budget, maxVal, chart.title)}
+                        {formatSmartValue(cat.budget, chart.title)}
                       </span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -173,7 +175,7 @@ export const DashboardUI: React.FC<
                         }}
                       />
                       <span style={{ color: textCol, fontSize: 15, fontWeight: 700 }}>
-                        {formatSmartValue(cat.actual, maxVal, chart.title)}
+                        {formatSmartValue(cat.actual, chart.title)}
                       </span>
                     </div>
                   </div>
@@ -201,11 +203,11 @@ export const DashboardUI: React.FC<
 
     if (chart.component === "Multi_Line_Trend_Chart" && chart.series && chart.x_axis) {
       const months = chart.x_axis;
-      const series1 = chart.series[0]?.data || (chart.series[0] as any)?.values || [];
-      const series2 = chart.series[1]?.data || (chart.series[1] as any)?.values || [];
+      const series1 = chart.series[0]?.data || chart.series[0]?.values || [];
+      const series2 = chart.series[1]?.data || chart.series[1]?.values || [];
 
-      const s1Color = (chart.series[0] as any)?.color || accent;
-      const s2Color = (chart.series[1] as any)?.color || primary;
+      const s1Color = chart.series[0]?.color || accent;
+      const s2Color = chart.series[1]?.color || primary;
 
       const maxDataVal = Math.max(...series1, ...series2, 1);
       const minDataVal = Math.min(...series1, ...series2, maxDataVal);
@@ -267,7 +269,7 @@ export const DashboardUI: React.FC<
                   <g key={gIdx}>
                     <line x1={padL} y1={y} x2={svgW - padR} y2={y} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
                     <text x={padL - 12} y={y + 5} fill={subtextCol} fontSize="14" fontWeight="600" textAnchor="end">
-                      {formatSmartValue(gridVal, maxVal, chart.title)}
+                      {formatSmartValue(gridVal, chart.title)}
                     </text>
                   </g>
                 );
@@ -291,8 +293,8 @@ export const DashboardUI: React.FC<
                 const pt1 = getXY(i, v1);
                 const pt2 = getXY(i, v2);
                 const isRevealed = i < visibleCount;
-                const isPeak = (chart as any).peak_callout ? (chart as any).peak_callout.month === m : m === "Oct";
-                const peakLabel = (chart as any).peak_callout ? (chart as any).peak_callout.label : "Peak";
+                const isPeak = chart.peak_callout ? chart.peak_callout.month === m : m === "Oct";
+                const peakLabel = chart.peak_callout ? chart.peak_callout.label : "Peak";
                 const highPt = pt1.y <= pt2.y ? pt1 : pt2;
 
                 return (
@@ -352,7 +354,7 @@ export const DashboardUI: React.FC<
             <div style={{ position: "relative", width: 310, height: 310, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width={310} height={310} viewBox="0 0 310 310" style={{ transform: "rotate(-90deg)" }}>
                 {chart.segments.map((seg, i) => {
-                  const percent = seg.percentage || (seg as any).share_pct || 0;
+                  const percent = seg.percentage || seg.share_pct || 0;
                   const segLength = (percent / 100) * circumference * chartProgress;
                   const offset = -((accumulatedPercent / 100) * circumference);
                   accumulatedPercent += percent;
@@ -364,7 +366,7 @@ export const DashboardUI: React.FC<
                       cy={155}
                       r={radius}
                       fill="transparent"
-                      stroke={(seg as any).color || palette[i % palette.length]}
+                      stroke={seg.color || palette[i % palette.length]}
                       strokeWidth={isSegFocused ? 44 : 36}
                       strokeDasharray={`${segLength} ${circumference}`}
                       strokeDashoffset={offset}
@@ -374,7 +376,7 @@ export const DashboardUI: React.FC<
               </svg>
               <div style={{ position: "absolute", textAlign: "center", width: "190px", padding: "0 10px" }}>
                 <div style={{ color: textCol, fontSize: 25, fontWeight: 800, lineHeight: 1.25 }}>
-                  {(chart as any).center_label || "100% Share"}
+                  {chart.center_label || "100% Share"}
                 </div>
               </div>
             </div>
@@ -385,8 +387,8 @@ export const DashboardUI: React.FC<
                   extrapolateLeft: "clamp",
                   extrapolateRight: "clamp",
                 });
-                const percent = seg.percentage || (seg as any).share_pct || 0;
-                const segColor = (seg as any).color || palette[i % palette.length];
+                const percent = seg.percentage || seg.share_pct || 0;
+                const segColor = seg.color || palette[i % palette.length];
                 const showDollarVal = seg.value >= 1000;
                 const isSegFocused = activeHighlight?.chart_rows?.includes(i) ?? false;
                 const isSegDimmed = hasHighlightMode && !isSegFocused;
@@ -404,13 +406,13 @@ export const DashboardUI: React.FC<
                       padding: "11px 16px",
                       borderRadius: 9,
                       border: isSegFocused ? `2px solid ${spotlightCol}` : "1px solid transparent",
-                      borderLeft: `6px solid ${ isSegFocused ? spotlightCol : segColor }`,
+                      borderLeft: `6px solid ${isSegFocused ? spotlightCol : segColor}`,
                       boxShadow: isSegFocused ? `0 0 ${20 * livePulse}px rgba(250, 204, 21, 0.35)` : "none",
                     }}
                   >
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       <span style={{ color: isSegFocused ? spotlightCol : textCol, fontSize: 16.5, fontWeight: 700 }}>
-                        {seg.label || (seg as any).name}
+                        {seg.label || seg.name}
                       </span>
                       {isSegFocused && (
                         <span style={{ color: spotlightCol, fontSize: 10.5, fontWeight: 800 }}>● LIVE AUDIO FOCUS</span>
@@ -440,7 +442,8 @@ export const DashboardUI: React.FC<
     return null;
   };
 
-  if (!top_kpi_controls && !main_chart && !blueprint_steps) {
+  // Fallback for legacy minimal dashboard scenes
+  if (!top_kpi_controls && !main_chart && !blueprint_steps && !side_insight_panel) {
     const safeData = chart_data?.length
       ? chart_data
       : (data_points || []).map((dp) => ({ label: String(dp).substring(0, 18), value: 75 }));
@@ -458,6 +461,310 @@ export const DashboardUI: React.FC<
       </AbsoluteFill>
     );
   }
+
+  const headerEyebrow =
+    blueprint_meta?.header_badge ||
+    (isPlaybookCardsMode ? "EXECUTIVE PLAYBOOK" : "DATA ANALYTICS ENGINE");
+
+  const statusPillText = blueprint_meta?.blueprint_code
+    ? `BLUEPRINT ID: ${blueprint_meta.blueprint_code}`
+    : isPlaybookCardsMode
+      ? "PLAYBOOK CARD VIEW"
+      : "LIVE TELEMETRY SYNC";
+
+  const renderPlaybookCardsZone = () => {
+    const steps = blueprint_steps || [];
+    const hasSteps = steps.length > 0;
+    const hasInsights = Boolean(side_insight_panel && side_insight_panel.bullets?.length);
+    const useTwoColCards = steps.length >= 4 || (!hasInsights && steps.length >= 2);
+
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: hasSteps && hasInsights ? "1.55fr 0.95fr" : "1fr",
+          gap: 22,
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        {/* LEFT / MAIN PLAYBOOK CARDS PANEL */}
+        {hasSteps && (
+        <div
+          style={{
+            background: "rgba(15, 23, 42, 0.86)",
+            backdropFilter: "blur(16px)",
+            border: `1px solid ${primary}40`,
+            borderRadius: 18,
+            padding: "24px 28px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+            minHeight: 0,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  background: `${accent}25`,
+                  color: accent,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {blueprint_meta?.phase_badge || "PLAYBOOK EXECUTION"}
+              </span>
+              <span style={{ color: textCol, fontSize: 21, fontWeight: 800 }}>{title}</span>
+            </div>
+            <span style={{ color: subtextCol, fontSize: 13, fontWeight: 700, letterSpacing: "0.06em" }}>
+              {blueprint_meta?.steps_header || "MANDATORY PLAYBOOK STEPS"}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: useTwoColCards ? "repeat(2, 1fr)" : "1fr",
+              gap: 16,
+              flex: 1,
+              alignContent: "center",
+            }}
+          >
+            {steps.map((step, sIdx) => {
+              const stepRevealFrame = 14 + sIdx * 16;
+              const stepSpring = Math.min(
+                1,
+                spring({ frame: Math.max(0, frame - stepRevealFrame), fps, config: { damping: 14, stiffness: 80 } })
+              );
+              const isStepFocused = activeHighlight?.steps?.includes(sIdx) ?? false;
+              const isStepDimmed = hasHighlightMode && !isStepFocused;
+              const isAlert = step.status === "overspent";
+              const stripeColor = isStepFocused
+                ? spotlightCol
+                : isAlert
+                  ? "#f87171"
+                  : sIdx % 2 === 0
+                    ? accent
+                    : primary;
+
+              return (
+                <div
+                  key={sIdx}
+                  style={{
+                    opacity: stepSpring * (isStepDimmed ? 0.42 : 1),
+                    transform: `translateY(${interpolate(stepSpring, [0, 1], [18, 0])}px) scale(${isStepFocused ? 1.02 : 1})`,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    background: isStepFocused ? "rgba(250, 204, 21, 0.12)" : "rgba(255,255,255,0.045)",
+                    padding: useTwoColCards ? "18px 20px" : "18px 22px",
+                    borderRadius: 14,
+                    border: isStepFocused ? `2px solid ${spotlightCol}` : "1px solid rgba(255,255,255,0.08)",
+                    borderLeft: `6px solid ${stripeColor}`,
+                    boxShadow: isStepFocused ? `0 0 ${24 * livePulse}px rgba(250, 204, 21, 0.38)` : "0 8px 20px rgba(0,0,0,0.25)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div
+                        style={{
+                          minWidth: 36,
+                          height: 36,
+                          borderRadius: 9,
+                          background: `${stripeColor}28`,
+                          color: stripeColor,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 800,
+                          fontSize: 16,
+                        }}
+                      >
+                        {step.step_no}
+                      </div>
+                      <span style={{ color: isStepFocused ? spotlightCol : textCol, fontSize: 19, fontWeight: 800, lineHeight: 1.25 }}>
+                        {step.title}
+                      </span>
+                    </div>
+                    {step.tag && (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 800,
+                          padding: "4px 10px",
+                          borderRadius: 7,
+                          background: isStepFocused ? "rgba(250, 204, 21, 0.25)" : `${stripeColor}20`,
+                          color: isStepFocused ? spotlightCol : stripeColor,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {isStepFocused ? "● FOCUS" : step.tag}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ color: isStepFocused ? "#f8fafc" : subtextCol, fontSize: 15.5, lineHeight: 1.45, margin: 0 }}>
+                    {step.detail}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {!hasInsights && blueprint_meta?.sla_timeline && (
+            <div
+              style={{
+                marginTop: 18,
+                padding: "14px 20px",
+                borderRadius: 12,
+                background: `linear-gradient(90deg, ${primary}22, ${accent}15)`,
+                border: `1px solid ${primary}65`,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div style={{ color: primary, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                  {blueprint_meta.sla_label || "TIMELINE / SLA"}
+                </div>
+                <div style={{ color: textCol, fontSize: 16, fontWeight: 700 }}>{blueprint_meta.sla_timeline}</div>
+              </div>
+              {blueprint_meta.owner_role && (
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ color: subtextCol, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                    PROCESS OWNER
+                  </div>
+                  <div style={{ color: accent, fontSize: 16, fontWeight: 700 }}>{blueprint_meta.owner_role}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        )}
+
+        {/* RIGHT GOVERNANCE & KEY TAKEAWAYS PANEL (when present) */}
+        {hasInsights && side_insight_panel && (
+          <div
+            style={{
+              background: "rgba(15, 23, 42, 0.84)",
+              backdropFilter: "blur(16px)",
+              border: `1px solid ${primary}35`,
+              borderRadius: 18,
+              padding: "24px 26px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <span
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: 6,
+                    background: `${primary}25`,
+                    color: primary,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  KEY GUIDELINES
+                </span>
+                <span style={{ color: textCol, fontSize: 19, fontWeight: 700 }}>{side_insight_panel.headline}</span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+                {side_insight_panel.bullets.map((bullet, bIdx) => {
+                  const bulletRevealFrame = 22 + bIdx * 20;
+                  const bulletSpring = Math.min(
+                    1,
+                    spring({ frame: Math.max(0, frame - bulletRevealFrame), fps, config: { damping: 14, stiffness: 75 } })
+                  );
+                  return (
+                    <div
+                      key={bIdx}
+                      style={{
+                        opacity: bulletSpring,
+                        transform: `translateX(${interpolate(bulletSpring, [0, 1], [24, 0])}px)`,
+                        display: "flex",
+                        gap: 12,
+                        alignItems: "flex-start",
+                        background: "rgba(255,255,255,0.04)",
+                        padding: "13px 15px",
+                        borderRadius: 12,
+                        borderLeft: `4px solid ${bIdx === 0 ? accent : primary}`,
+                      }}
+                    >
+                      <span style={{ color: primary, fontWeight: 800, fontSize: 17 }}>▸</span>
+                      <span style={{ color: textCol, fontSize: 15.5, lineHeight: 1.42 }}>{bullet}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+              {side_insight_panel.recommendation_badge && (
+                <div
+                  style={{
+                    padding: "13px 16px",
+                    borderRadius: 12,
+                    background: `linear-gradient(90deg, ${accent}20, ${primary}15)`,
+                    border: `1px solid ${accent}70`,
+                    boxShadow: `0 0 ${14 * livePulse}px ${accent}25`,
+                  }}
+                >
+                  <div style={{ color: accent, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                    ACTIONABLE TAKEAWAY
+                  </div>
+                  <div style={{ color: textCol, fontSize: 15, fontWeight: 700, lineHeight: 1.35 }}>
+                    {side_insight_panel.recommendation_badge}
+                  </div>
+                </div>
+              )}
+
+              {blueprint_meta?.sla_timeline && (
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderRadius: 12,
+                    background: "rgba(255,255,255,0.04)",
+                    border: `1px solid ${primary}45`,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <div style={{ color: primary, fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      {blueprint_meta.sla_label || "SLA TIMELINE"}
+                    </div>
+                    <div style={{ color: textCol, fontSize: 14.5, fontWeight: 700 }}>{blueprint_meta.sla_timeline}</div>
+                  </div>
+                  {blueprint_meta.owner_role && (
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ color: subtextCol, fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        OWNER
+                      </div>
+                      <div style={{ color: accent, fontSize: 14.5, fontWeight: 700 }}>{blueprint_meta.owner_role}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <AbsoluteFill
@@ -494,7 +801,7 @@ export const DashboardUI: React.FC<
           />
           <div>
             <div style={{ color: primary, fontSize: 13.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-              {(style.companyWatermark || "DEPTCAST ENTERPRISE") + " • PREDETERMINED PLAYBOOK"}
+              {(style.companyWatermark || "DEPTCAST ENTERPRISE") + " • " + headerEyebrow}
             </div>
             <h1 style={{ color: textCol, fontSize: 33, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>
               {section_header || title}
@@ -523,14 +830,14 @@ export const DashboardUI: React.FC<
             }}
           />
           <span style={{ color: textCol, fontSize: 13.5, fontWeight: 700, letterSpacing: "0.04em" }}>
-            {blueprint_meta?.blueprint_code ? `BLUEPRINT ID: ${blueprint_meta.blueprint_code}` : "LIVE TELEMETRY SYNC"}
+            {statusPillText}
           </span>
         </div>
       </div>
 
       {/* ZONE 1: TOP KPI GUARDRAILS */}
-      {top_kpi_controls && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22, marginBottom: 22 }}>
+      {top_kpi_controls && top_kpi_controls.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(3, top_kpi_controls.length)}, 1fr)`, gap: 22, marginBottom: 22 }}>
           {top_kpi_controls.map((kpi, idx) => {
             const cardSpring = Math.min(
               1,
@@ -619,248 +926,252 @@ export const DashboardUI: React.FC<
         </div>
       )}
 
-      {/* ZONE 2 & ZONE 3: MAIN CHART + PREDETERMINED BLUEPRINT PANEL */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.52fr 1fr", gap: 22, flex: 1, minHeight: 0 }}>
-        <div
-          style={{
-            background: "rgba(15, 23, 42, 0.82)",
-            backdropFilter: "blur(16px)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 18,
-            padding: "24px 28px",
-            boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          {main_chart && renderMainChart(main_chart)}
-        </div>
-
-        {blueprint_steps ? (
-          <div
-            style={{
-              background: "rgba(15, 23, 42, 0.86)",
-              backdropFilter: "blur(16px)",
-              border: `1px solid ${primary}40`,
-              borderRadius: 18,
-              padding: "22px 26px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <span
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: 6,
-                    background: `${accent}25`,
-                    color: accent,
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  {blueprint_meta?.phase_badge || "PREDETERMINED BLUEPRINT"}
-                </span>
-                <span style={{ color: subtextCol, fontSize: 13, fontWeight: 700 }}>
-                  {blueprint_meta?.steps_header || "KEY AI INSIGHTS"}
-                </span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {blueprint_steps.map((step, sIdx) => {
-                  const stepRevealFrame = 18 + sIdx * 18;
-                  const stepSpring = Math.min(
-                    1,
-                    spring({ frame: Math.max(0, frame - stepRevealFrame), fps, config: { damping: 14, stiffness: 75 } })
-                  );
-                  const isStepFocused = activeHighlight?.steps?.includes(sIdx) ?? false;
-                  const isStepDimmed = hasHighlightMode && !isStepFocused;
-
-                  return (
-                    <div
-                      key={sIdx}
-                      style={{
-                        opacity: stepSpring * (isStepDimmed ? 0.42 : 1),
-                        transform: `translateX(${interpolate(stepSpring, [0, 1], [24, 0])}px) scale(${isStepFocused ? 1.02 : 1})`,
-                        display: "flex",
-                        gap: 14,
-                        alignItems: "flex-start",
-                        background: isStepFocused ? "rgba(250, 204, 21, 0.12)" : "rgba(255,255,255,0.045)",
-                        padding: "13px 16px",
-                        borderRadius: 12,
-                        border: isStepFocused ? `2px solid ${spotlightCol}` : "1px solid transparent",
-                        borderLeft: `5px solid ${isStepFocused ? spotlightCol : sIdx === 0 ? accent : primary}`,
-                        boxShadow: isStepFocused ? `0 0 ${24 * livePulse}px rgba(250, 204, 21, 0.4)` : "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          minWidth: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          background: isStepFocused ? `${spotlightCol}30` : sIdx === 0 ? `${accent}25` : `${primary}25`,
-                          color: isStepFocused ? spotlightCol : sIdx === 0 ? accent : primary,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 800,
-                          fontSize: 15,
-                          marginTop: 2,
-                        }}
-                      >
-                        {step.step_no}
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                          <span style={{ color: isStepFocused ? spotlightCol : textCol, fontSize: 16.5, fontWeight: 700 }}>
-                            {step.title}
-                          </span>
-                          {step.tag && (
-                            <span
-                              style={{
-                                fontSize: 10.5,
-                                fontWeight: 800,
-                                padding: "2px 8px",
-                                borderRadius: 6,
-                                background: isStepFocused ? "rgba(250, 204, 21, 0.25)" : "rgba(255,255,255,0.08)",
-                                color: isStepFocused ? spotlightCol : primary,
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {isStepFocused ? "● FOCUS" : step.tag}
-                            </span>
-                          )}
-                        </div>
-                        <span style={{ color: isStepFocused ? "#f8fafc" : subtextCol, fontSize: 14, lineHeight: 1.38 }}>
-                          {step.detail}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {blueprint_meta?.sla_timeline && (
-              <div
-                style={{
-                  marginTop: 14,
-                  padding: "14px 18px",
-                  borderRadius: 12,
-                  background: `linear-gradient(90deg, ${primary}22, ${accent}15)`,
-                  border: `1px solid ${primary}65`,
-                  boxShadow: `0 0 ${14 * livePulse}px ${primary}25`,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <div style={{ color: primary, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
-                    {blueprint_meta?.sla_label || "VALIDATION STATUS"}
-                  </div>
-                  <div style={{ color: textCol, fontSize: 15.5, fontWeight: 700 }}>{blueprint_meta.sla_timeline}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ color: subtextCol, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
-                    ENGINE SOURCE
-                  </div>
-                  <div style={{ color: accent, fontSize: 15, fontWeight: 700 }}>{blueprint_meta.owner_role}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : side_insight_panel ? (
+      {/* ZONE 2 & ZONE 3: ADAPTIVE LAYOUT (PLAYBOOK CARDS vs. CHART DASHBOARD) */}
+      {isPlaybookCardsMode ? (
+        renderPlaybookCardsZone()
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "1.52fr 1fr", gap: 22, flex: 1, minHeight: 0 }}>
           <div
             style={{
               background: "rgba(15, 23, 42, 0.82)",
               backdropFilter: "blur(16px)",
-              border: `1px solid ${primary}35`,
+              border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 18,
               padding: "24px 28px",
+              boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
-              boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-                <span
+            {main_chart && renderMainChart(main_chart)}
+          </div>
+
+          {blueprint_steps && blueprint_steps.length > 0 ? (
+            <div
+              style={{
+                background: "rgba(15, 23, 42, 0.86)",
+                backdropFilter: "blur(16px)",
+                border: `1px solid ${primary}40`,
+                borderRadius: 18,
+                padding: "22px 26px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: 6,
+                      background: `${accent}25`,
+                      color: accent,
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {blueprint_meta?.phase_badge || "PREDETERMINED BLUEPRINT"}
+                  </span>
+                  <span style={{ color: subtextCol, fontSize: 13, fontWeight: 700 }}>
+                    {blueprint_meta?.steps_header || "KEY AI INSIGHTS"}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {blueprint_steps.map((step, sIdx) => {
+                    const stepRevealFrame = 18 + sIdx * 18;
+                    const stepSpring = Math.min(
+                      1,
+                      spring({ frame: Math.max(0, frame - stepRevealFrame), fps, config: { damping: 14, stiffness: 75 } })
+                    );
+                    const isStepFocused = activeHighlight?.steps?.includes(sIdx) ?? false;
+                    const isStepDimmed = hasHighlightMode && !isStepFocused;
+
+                    return (
+                      <div
+                        key={sIdx}
+                        style={{
+                          opacity: stepSpring * (isStepDimmed ? 0.42 : 1),
+                          transform: `translateX(${interpolate(stepSpring, [0, 1], [24, 0])}px) scale(${isStepFocused ? 1.02 : 1})`,
+                          display: "flex",
+                          gap: 14,
+                          alignItems: "flex-start",
+                          background: isStepFocused ? "rgba(250, 204, 21, 0.12)" : "rgba(255,255,255,0.045)",
+                          padding: "13px 16px",
+                          borderRadius: 12,
+                          border: isStepFocused ? `2px solid ${spotlightCol}` : "1px solid transparent",
+                          borderLeft: `5px solid ${isStepFocused ? spotlightCol : sIdx === 0 ? accent : primary}`,
+                          boxShadow: isStepFocused ? `0 0 ${24 * livePulse}px rgba(250, 204, 21, 0.4)` : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            minWidth: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: isStepFocused ? `${spotlightCol}30` : sIdx === 0 ? `${accent}25` : `${primary}25`,
+                            color: isStepFocused ? spotlightCol : sIdx === 0 ? accent : primary,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 800,
+                            fontSize: 15,
+                            marginTop: 2,
+                          }}
+                        >
+                          {step.step_no}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                            <span style={{ color: isStepFocused ? spotlightCol : textCol, fontSize: 16.5, fontWeight: 700 }}>
+                              {step.title}
+                            </span>
+                            {step.tag && (
+                              <span
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 800,
+                                  padding: "2px 8px",
+                                  borderRadius: 6,
+                                  background: isStepFocused ? "rgba(250, 204, 21, 0.25)" : "rgba(255,255,255,0.08)",
+                                  color: isStepFocused ? spotlightCol : primary,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {isStepFocused ? "● FOCUS" : step.tag}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ color: isStepFocused ? "#f8fafc" : subtextCol, fontSize: 14, lineHeight: 1.38 }}>
+                            {step.detail}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {blueprint_meta?.sla_timeline && (
+                <div
                   style={{
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    background: `${primary}25`,
-                    color: primary,
-                    fontSize: 13,
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
+                    marginTop: 14,
+                    padding: "14px 18px",
+                    borderRadius: 12,
+                    background: `linear-gradient(90deg, ${primary}22, ${accent}15)`,
+                    border: `1px solid ${primary}65`,
+                    boxShadow: `0 0 ${14 * livePulse}px ${primary}25`,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  AI INSIGHT ENGINE
-                </span>
-                <span style={{ color: textCol, fontSize: 21, fontWeight: 700 }}>{side_insight_panel.headline}</span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
-                {side_insight_panel.bullets.map((bullet, bIdx) => {
-                  const bulletRevealFrame = Math.floor(durationInFrames * 0.15) + bIdx * Math.floor(durationInFrames * 0.22);
-                  const bulletSpring = Math.min(
-                    1,
-                    spring({ frame: Math.max(0, frame - bulletRevealFrame), fps, config: { damping: 14, stiffness: 70 } })
-                  );
-                  return (
-                    <div
-                      key={bIdx}
-                      style={{
-                        opacity: bulletSpring,
-                        transform: `translateX(${interpolate(bulletSpring, [0, 1], [30, 0])}px)`,
-                        display: "flex",
-                        gap: 14,
-                        alignItems: "flex-start",
-                        background: "rgba(255,255,255,0.04)",
-                        padding: "14px 16px",
-                        borderRadius: 12,
-                        borderLeft: `4px solid ${bIdx === 0 ? primary : accent}`,
-                      }}
-                    >
-                      <span style={{ color: primary, fontWeight: 800, fontSize: 18 }}>▸</span>
-                      <span style={{ color: textCol, fontSize: 16.5, lineHeight: 1.42 }}>{bullet}</span>
+                  <div>
+                    <div style={{ color: primary, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                      {blueprint_meta?.sla_label || "VALIDATION STATUS"}
                     </div>
-                  );
-                })}
-              </div>
+                    <div style={{ color: textCol, fontSize: 15.5, fontWeight: 700 }}>{blueprint_meta.sla_timeline}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: subtextCol, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                      ENGINE SOURCE
+                    </div>
+                    <div style={{ color: accent, fontSize: 15, fontWeight: 700 }}>{blueprint_meta.owner_role}</div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {side_insight_panel.recommendation_badge && (
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: "15px 18px",
-                  borderRadius: 14,
-                  background: `linear-gradient(90deg, ${accent}20, ${primary}15)`,
-                  border: `1px solid ${accent}70`,
-                  boxShadow: `0 0 ${14 * livePulse}px ${accent}30`,
-                }}
-              >
-                <div style={{ color: accent, fontSize: 11.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
-                  STRATEGIC RECOMMENDATION
+          ) : side_insight_panel ? (
+            <div
+              style={{
+                background: "rgba(15, 23, 42, 0.82)",
+                backdropFilter: "blur(16px)",
+                border: `1px solid ${primary}35`,
+                borderRadius: 18,
+                padding: "24px 28px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                  <span
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 6,
+                      background: `${primary}25`,
+                      color: primary,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    AI INSIGHT ENGINE
+                  </span>
+                  <span style={{ color: textCol, fontSize: 21, fontWeight: 700 }}>{side_insight_panel.headline}</span>
                 </div>
-                <div style={{ color: textCol, fontSize: 15.5, fontWeight: 600, lineHeight: 1.35 }}>
-                  {side_insight_panel.recommendation_badge}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+                  {side_insight_panel.bullets.map((bullet, bIdx) => {
+                    const bulletRevealFrame = Math.floor(durationInFrames * 0.15) + bIdx * Math.floor(durationInFrames * 0.22);
+                    const bulletSpring = Math.min(
+                      1,
+                      spring({ frame: Math.max(0, frame - bulletRevealFrame), fps, config: { damping: 14, stiffness: 70 } })
+                    );
+                    return (
+                      <div
+                        key={bIdx}
+                        style={{
+                          opacity: bulletSpring,
+                          transform: `translateX(${interpolate(bulletSpring, [0, 1], [30, 0])}px)`,
+                          display: "flex",
+                          gap: 14,
+                          alignItems: "flex-start",
+                          background: "rgba(255,255,255,0.04)",
+                          padding: "14px 16px",
+                          borderRadius: 12,
+                          borderLeft: `4px solid ${bIdx === 0 ? primary : accent}`,
+                        }}
+                      >
+                        <span style={{ color: primary, fontWeight: 800, fontSize: 18 }}>▸</span>
+                        <span style={{ color: textCol, fontSize: 16.5, lineHeight: 1.42 }}>{bullet}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
-          </div>
-        ) : null}
-      </div>
+
+              {side_insight_panel.recommendation_badge && (
+                <div
+                  style={{
+                    marginTop: 18,
+                    padding: "15px 18px",
+                    borderRadius: 14,
+                    background: `linear-gradient(90deg, ${accent}20, ${primary}15)`,
+                    border: `1px solid ${accent}70`,
+                    boxShadow: `0 0 ${14 * livePulse}px ${accent}30`,
+                  }}
+                >
+                  <div style={{ color: accent, fontSize: 11.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                    STRATEGIC RECOMMENDATION
+                  </div>
+                  <div style={{ color: textCol, fontSize: 15.5, fontWeight: 600, lineHeight: 1.35 }}>
+                    {side_insight_panel.recommendation_badge}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      )}
     </AbsoluteFill>
   );
 };

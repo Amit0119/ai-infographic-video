@@ -33,7 +33,7 @@ export const VarianceBarChart: React.FC<VarianceBarChartProps> = ({
   const barWidth = 40;
   const groupGap = 60;
   const barGap = 8;
-  const chartWidth = data.length * (barWidth * 2 + barGap) + (data.length - 1) * groupGap;
+  
 
   return (
     <div style={{ ...style, display: "flex", flexDirection: "row", alignItems: "flex-end", height: chartHeight + 60, gap: groupGap }}>

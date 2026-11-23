@@ -182,6 +182,7 @@ class ListSceneModel(BaseSceneModel):
 
 class PremiumChartSceneModel(BaseSceneModel):
     type: Literal["heat_map", "dashboard_ui", "GlowingDonutChart", "VarianceBarChart", "GlassmorphismBadge"]
+    layout_mode: Optional[Literal["chart_dashboard", "playbook_cards", "hybrid"]] = None
     title: str = ""
     section_header: Optional[str] = None
     heading: str = ""
@@ -966,6 +967,34 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
             cleaned["title"] = str(cleaned.get("title") or cleaned.get("section_header") or "Executive Overview")
             if not isinstance(cleaned.get("chart_data"), list):
                 cleaned["chart_data"] = []
+
+            # Auto-infer layout_mode if the LLM omitted it
+            raw_mode = str(cleaned.get("layout_mode") or "").lower().strip()
+            has_chart = isinstance(cleaned.get("main_chart"), dict) and bool(cleaned["main_chart"].get("component"))
+            if raw_mode not in ("chart_dashboard", "playbook_cards"):
+                raw_mode = "chart_dashboard" if has_chart else "playbook_cards"
+            cleaned["layout_mode"] = raw_mode
+
+            # Never keep fake chart data in pure playbook_cards scenes
+            if raw_mode == "playbook_cards":
+                cleaned["main_chart"] = None
+
+            # Normalize blueprint_steps so DashboardUI cards never break
+            steps = cleaned.get("blueprint_steps")
+            if isinstance(steps, list):
+                norm_steps = []
+                for s_idx, st in enumerate(steps, start=1):
+                    if not isinstance(st, dict):
+                        continue
+                    norm_steps.append({
+                        "step_no": str(st.get("step_no") or f"{s_idx:02d}"),
+                        "title": str(st.get("title") or f"Step {s_idx}"),
+                        "detail": str(st.get("detail") or ""),
+                        "tag": str(st.get("tag") or "ACTION"),
+                        "status": str(st.get("status") or "favorable"),
+                    })
+                cleaned["blueprint_steps"] = norm_steps
+
             _normalize_3zone_chart(cleaned)
         elif stype == "title":
             cleaned["title"] = str(cleaned.get("title") or "Summary")
@@ -1185,60 +1214,135 @@ def _detect_brand(text: str) -> Optional[dict]:
             return brand_config
     return None
 
+# ── Dynamic Prompt-to-Scene & Layout Planner ─────────────────
+
+def _infer_prompt_plan(
+    topic: str,
+    initial_prompt: Optional[str] = None,
+    is_spreadsheet: bool = False,
+) -> dict[str, Any]:
+    """Detects requested scene count (2..10) and layout mode from user prompt."""
+    combined = f"{topic or ''} {initial_prompt or ''}".lower()
+
+    # Extract explicit scene/slide/section count if mentioned (clamped to 2..10)
+    match = re.search(r"\b(\d{1,2})\s*[-]?\s*(?:scenes?|slides?|sections?|parts?|chapters?)\b", combined)
+    explicit_count = max(2, min(10, int(match.group(1)))) if match else None
+
+    playbook_signals = (
+        "playbook", "policy", "sop", "onboarding", "checklist", "guide", "handbook",
+        "workflow", "process", "leave", "posh", "wfh", "work from home", "town hall",
+        "gift policy", "playbook cards", "rules",
+    )
+    chart_signals = (
+        "chart", "graph", "variance", "budget vs actual", "bva", "financial",
+        "revenue", "expense", "forecast", "metrics", "analytics", "sales data",
+        "quarterly", "kpi dashboard", "trend",
+    )
+
+    wants_no_charts = any(k in combined for k in ("no chart", "without chart", "cards only", "no graph"))
+    wants_hybrid = any(k in combined for k in ("mix", "hybrid", "both"))
+    playbook_hits = sum(1 for k in playbook_signals if k in combined)
+    chart_hits = sum(1 for k in chart_signals if k in combined)
+
+    if wants_no_charts:
+        layout_preference = "playbook_cards"
+    elif is_spreadsheet:
+        layout_preference = "chart_dashboard"
+    elif wants_hybrid or (playbook_hits > 0 and chart_hits > 0):
+        layout_preference = "hybrid"
+    elif chart_hits > playbook_hits:
+        layout_preference = "chart_dashboard"
+    elif playbook_hits > chart_hits:
+        layout_preference = "playbook_cards"
+    else:
+        layout_preference = "hybrid"
+
+    if explicit_count:
+        scene_count_instruction = f"EXACTLY {explicit_count} scenes (do not return fewer or more than {explicit_count} scenes)."
+    elif is_spreadsheet:
+        scene_count_instruction = "between 3 and 5 scenes, matching the natural groupings in the dataset."
+    else:
+        scene_count_instruction = "between 3 and 6 scenes, dynamically choosing the exact count that best covers the prompt without fluff."
+
+    if layout_preference == "playbook_cards":
+        layout_instruction = (
+            'Use layout_mode="playbook_cards" for all scenes. Do NOT fabricate fake charts; '
+            'set "main_chart": null and populate 3 to 4 structured cards in "blueprint_steps", '
+            'plus "top_kpi_controls" and "side_insight_panel".'
+        )
+    elif layout_preference == "chart_dashboard":
+        layout_instruction = (
+            'Use layout_mode="chart_dashboard" with genuine data charts ("Multi_Line_Trend_Chart", '
+            '"Donut_Chart", or "Grouped_Bar_Chart" in "main_chart") alongside "top_kpi_controls" and "blueprint_steps".'
+        )
+    else:
+        layout_instruction = (
+            'Choose layout_mode PER SCENE: use "playbook_cards" (with "main_chart": null and 3-4 cards in "blueprint_steps") '
+            'for policy/process/SOP scenes, and "chart_dashboard" (with "main_chart") ONLY when real quantitative metrics or trends exist.'
+        )
+
+    return {
+        "explicit_count": explicit_count,
+        "layout_preference": layout_preference,
+        "scene_count_instruction": scene_count_instruction,
+        "layout_instruction": layout_instruction,
+    }
+
+
 # ── Universal Multi-Agent Prompts ────────────────────────────
 
 RESEARCHER_PROMPT_TEMPLATE = """
-Persona: Act as an Enterprise Strategy & Operations Lead creating a high-impact 3-Scene Executive Playbook for DeptCast.
-Adapt strictly to the domain of the Input Topic/Data (whether HR Policies like Leave, LTA, Working Hours, Work from Home, Town Hall, Mediclaim, Travel, Gift Policy, POSH, OR Finance/Operations like Annual Budget, Cost Optimization, Sales).
+Persona: Act as an Enterprise Strategy & Operations Lead creating a high-impact Executive Video Script for DeptCast.
+Adapt strictly to the domain of the Input Topic/Data (HR policies, SOPs, Onboarding, Finance, Operations, or Analytics).
 
-Structure a 3-scene executive breakdown:
-- Scene 1: Core Policy/Framework Overview, Key Quotas/Targets & Multi-Period Trend Analysis.
-- Scene 2: Category/Entitlement Breakdown, Allocation Share & Process Rules.
-- Scene 3: Compliance Scenarios, Eligibility/ROI Benchmarks & Executive Governance.
+Scene Count Requirement: {scene_count_instruction}
+Visual Layout Requirement: {layout_instruction}
+
+For each scene, clearly define:
+1. Scene Title & Section Header
+2. Layout Mode (`playbook_cards` for steps/rules/policies OR `chart_dashboard` ONLY when real numbers/trends exist)
+3. 3 Concrete Top KPIs/Guardrails (e.g., SLA days, policy limits, percentages, or metrics)
+4. Either 3-4 Actionable Playbook Cards (if `playbook_cards`) OR Exact Chart Data + Key Insights (if `chart_dashboard`)
+5. Spoken Narration (2-3 crisp sentences, 35-55 words)
 
 Input Topic/Data: {input_data}
 Additional Instructions: {initial_prompt}
 
-Return a detailed 3-scene breakdown with concrete numbers, percentages, KPIs, and actionable insights tailored strictly to this topic.
+Return a structured scene-by-scene breakdown following the exact scene count and layout rules above.
 """
 
 VISUAL_DIRECTOR_PROMPT_TEMPLATE = """
-You are the Visual Director Agent for the DeptCast 3-Zone Remotion Dashboard Engine.
-Convert the Researcher's breakdown into a valid JSON array of EXACTLY 3 `dashboard_ui` scenes.
+You are the Visual Director Agent for the DeptCast Remotion Video Engine.
+Convert the Researcher's breakdown into a valid JSON array of scenes.
 
-Researcher Breakdown:
-{script}
+STRICT REQUIREMENTS:
+- Scene Count: {scene_count_instruction}
+- Layout Rules: {layout_instruction}
 
-STRICT SCHEMA RULES FOR EVERY SCENE IN THE JSON ARRAY:
-1. Scene 1 (`id`: 1, `durationInSeconds`: 15) MUST use `"component": "Multi_Line_Trend_Chart"` inside `main_chart`:
-   - `x_axis`: array of 6 to 9 time/phase labels (e.g., ["Q1", "Q2", "Q3", "Q4", "Target", "Projected"])
-   - `series`: array of 2 objects:
-     `{{"name": "Primary Metric", "color": "#34d399", "data": [numbers], "values": [numbers]}}`
-     `{{"name": "Baseline Metric", "color": "#38bdf8", "data": [numbers], "values": [numbers]}}`
-   - `peak_callout`: `{{"month": "<one label from x_axis>", "value": <number>, "label": "<Short Callout>"}}`
+SCHEMA FOR EVERY SCENE:
+- `"id"`: sequential integer starting at 1
+- `"type"`: `"dashboard_ui"`
+- `"layout_mode"`: `"playbook_cards"` OR `"chart_dashboard"`
+- `"durationInSeconds"`: 15
+- `"title"` and `"section_header"`: concise strings (e.g. `"DEPTCAST PLAYBOOK | STEP 01 / 05"`)
+- `"narration"`: 2-3 clear spoken sentences (35-55 words)
+- `"top_kpi_controls"`: array of 3 objects:
+  `{{"label": "KPI Name", "value": <number>, "prefix": "$" or "", "unit": "%" or " Days" or "", "variance_pct": <number>, "status_badge": "SHORT TAG", "traffic_light": "green" | "red"}}`
+- `"blueprint_meta"`:
+  `{{"phase_badge": "SHORT PHASE TAG", "steps_header": "PLAYBOOK STEPS" or "KEY INSIGHTS", "sla_label": "TIMELINE / SLA", "sla_timeline": "e.g. Day +5 Close", "owner_role": "Owner Role", "header_badge": "PLAYBOOK" or "DATA ANALYTICS"}}`
+- `"blueprint_steps"`: array of 3 to 4 structured cards:
+  `{{"step_no": "01", "title": "Card Title", "detail": "Concise actionable explanation", "tag": "SHORT TAG", "status": "favorable" | "overspent"}}`
+- `"side_insight_panel"`:
+  `{{"headline": "Key Takeaways", "bullets": ["Point 1", "Point 2", "Point 3"], "recommendation_badge": "ACTIONABLE TAKEAWAY"}}`
 
-2. Scene 2 (`id`: 2, `durationInSeconds`: 15) MUST use `"component": "Donut_Chart"` inside `main_chart`:
-   - `title`: string
-   - `center_label`: string (e.g., "100% Share" or "Policy Breakdown")
-   - `segments`: array of 4 to 5 objects, whose `percentage`/`share_pct` sum to 100:
-     `{{"name": "Category", "label": "Category", "value": <number>, "percentage": <number>, "share_pct": <number>, "color": "#38bdf8"}}`
+CONDITIONAL `main_chart` RULE:
+- If `"layout_mode"` is `"playbook_cards"`: MUST set `"main_chart": null` (never invent fake charts).
+- If `"layout_mode"` is `"chart_dashboard"`: MUST include ONE of these inside `"main_chart"`:
+  1. `Multi_Line_Trend_Chart`: `{{"component": "Multi_Line_Trend_Chart", "title": "...", "x_axis": [...], "series": [{{"name": "...", "color": "#34d399", "data": [...], "values": [...]}}, {{"name": "...", "color": "#38bdf8", "data": [...], "values": [...]}}], "peak_callout": {{"month": "...", "value": 0, "label": "..."}}}}`
+  2. `Donut_Chart`: `{{"component": "Donut_Chart", "title": "...", "center_label": "100% Share", "segments": [{{"name": "...", "label": "...", "value": 50, "percentage": 50, "share_pct": 50, "color": "#38bdf8"}}]}}`
+  3. `Grouped_Bar_Chart`: `{{"component": "Grouped_Bar_Chart", "title": "...", "baseline_label": "Target / Budget", "actual_label": "Actual", "categories": [{{"name": "...", "label": "...", "budget": 100, "actual": 95, "variance_pct": -5.0, "status": "favorable"}}]}}`
 
-3. Scene 3 (`id`: 3, `durationInSeconds`: 14) MUST use `"component": "Grouped_Bar_Chart"` inside `main_chart`:
-   - `title`: string
-   - `categories`: array of 4 to 5 objects:
-     `{{"name": "Item", "label": "Item", "budget": <baseline_number>, "actual": <target_or_actual_number>, "variance_pct": <number>, "status": "favorable" | "overspent"}}`
-     (Use `"status": "favorable"` whenever higher numbers mean positive outcomes/compliance/ROI, and `"overspent"` only for cost overruns or violations).
-
-4. Every scene MUST also include:
-   - `"type": "dashboard_ui"`
-   - `"title"` and `"section_header"` (strings)
-   - `"narration"`: 2 clear, engaging spoken sentences (35-45 words) explaining the metrics.
-   - `"top_kpi_controls"`: array of 3 objects:
-     `{{"label": "KPI Name", "value": <number>, "prefix": "$" or "", "unit": "%" or " Days" or "", "variance_pct": <number>, "status_badge": "SHORT TAG", "traffic_light": "green" | "red"}}`
-   - `"side_insight_panel"`:
-     `{{"headline": "Section Insight", "bullets": ["Insight 1", "Insight 2", "Insight 3"], "recommendation_badge": "ACTIONABLE TAKEAWAY"}}`
-
-Return ONLY the raw JSON array of 3 scenes. No markdown fences.
+Return ONLY the raw JSON array of scenes. No markdown fences.
 """
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -1304,8 +1408,12 @@ async def list_predetermined_blueprints():
 @app.post("/generate-explainer")
 async def generate_explainer(payload: ExplainerRequestModel):
     try:
-        # 1. Check if topic matches a Predetermined DeptCast Blueprint first
-        matched_bp = _match_predetermined_blueprint(payload.topic)
+        # 1. Check if topic matches a Predetermined DeptCast Blueprint first (skip if user gave a custom prompt)
+        matched_bp = (
+            None
+            if (payload.initial_prompt and payload.initial_prompt.strip())
+            else _match_predetermined_blueprint(payload.topic)
+        )
         if matched_bp:
             matched_bp["scenes"] = _normalize_scenes(matched_bp.get("scenes", []))
             validated = StoryboardModel.model_validate(matched_bp)
@@ -1350,20 +1458,28 @@ async def generate_explainer(payload: ExplainerRequestModel):
         if context or financial_summary:
             input_data_with_context = f"Topic: {payload.topic}\n\n{financial_summary}\n\n{context}".strip()
 
+        plan = _infer_prompt_plan(payload.topic, payload.initial_prompt, is_spreadsheet=False)
+
         researcher_prompt = PromptTemplate(
-            input_variables=["input_data", "initial_prompt"],
+            input_variables=["input_data", "initial_prompt", "scene_count_instruction", "layout_instruction"],
             template=RESEARCHER_PROMPT_TEMPLATE
         )
         script = await _invoke_with_retry(researcher_prompt, {
             "input_data": input_data_with_context,
-            "initial_prompt": payload.initial_prompt or "None"
+            "initial_prompt": payload.initial_prompt or "None",
+            "scene_count_instruction": plan["scene_count_instruction"],
+            "layout_instruction": plan["layout_instruction"],
         })
 
         director_prompt = ChatPromptTemplate.from_messages([
             ("system", VISUAL_DIRECTOR_PROMPT_TEMPLATE),
             ("user", "{script}")
         ])
-        raw_res = await _invoke_with_retry(director_prompt, {"script": script})
+        raw_res = await _invoke_with_retry(director_prompt, {
+            "script": script,
+            "scene_count_instruction": plan["scene_count_instruction"],
+            "layout_instruction": plan["layout_instruction"],
+        })
         cleaned = _strip_markdown_fences(str(raw_res))
         parsed = json.loads(cleaned)
 
@@ -1421,8 +1537,8 @@ async def analyze_data(
     topic_input: Optional[str] = Form(None)
 ):
     try:
-        # Check if topic_input or initial_prompt matches a Predetermined Blueprint (when no Excel sheet is forced)
-        if not file and topic_input:
+        # Check if topic_input matches a Predetermined Blueprint (skip if user gave a custom prompt)
+        if not file and topic_input and not (initial_prompt and initial_prompt.strip()):
             matched_bp = _match_predetermined_blueprint(topic_input)
             if matched_bp:
                 matched_bp["scenes"] = _normalize_scenes(matched_bp.get("scenes", []))
@@ -1482,20 +1598,31 @@ async def analyze_data(
         if brand:
             input_data = f"[Company: {brand['name']} | Industry: {brand['industry']}] " + input_data
 
+        is_spreadsheet = bool(
+            file and os.path.splitext(file.filename or "")[1].lower() in (".xls", ".xlsx", ".csv")
+        )
+        plan = _infer_prompt_plan(video_title, initial_prompt, is_spreadsheet=is_spreadsheet)
+
         researcher_prompt = PromptTemplate(
-            input_variables=["input_data", "initial_prompt"],
+            input_variables=["input_data", "initial_prompt", "scene_count_instruction", "layout_instruction"],
             template=RESEARCHER_PROMPT_TEMPLATE
         )
         script = await _invoke_with_retry(researcher_prompt, {
             "input_data": input_data,
-            "initial_prompt": initial_prompt or "None"
+            "initial_prompt": initial_prompt or "None",
+            "scene_count_instruction": plan["scene_count_instruction"],
+            "layout_instruction": plan["layout_instruction"],
         })
 
         director_prompt = ChatPromptTemplate.from_messages([
             ("system", VISUAL_DIRECTOR_PROMPT_TEMPLATE),
             ("user", "{script}")
         ])
-        raw_res = await _invoke_with_retry(director_prompt, {"script": script})
+        raw_res = await _invoke_with_retry(director_prompt, {
+            "script": script,
+            "scene_count_instruction": plan["scene_count_instruction"],
+            "layout_instruction": plan["layout_instruction"],
+        })
         cleaned = _strip_markdown_fences(str(raw_res))
         parsed = json.loads(cleaned)
 
@@ -1635,7 +1762,7 @@ async def fetch_broll(query: str):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "[https://api.pexels.com/videos/search](https://api.pexels.com/videos/search)",
+                "https://api.pexels.com/videos/search",
                 headers={"Authorization": pexels_key},
                 params={"query": query, "per_page": 5, "orientation": "landscape"}
             )
