@@ -1132,20 +1132,170 @@ def _estimate_audio_duration(audio_path: str, text: str, default_dur: float = 15
             return round(max(word_based_sec, bitrate_est + 1.0), 1)
     return max(default_dur, word_based_sec)
 
-# ── Edge-TTS Audio Helper (With gTTS Fallback) ───────────────
+# ── Edge-TTS Audio Helper (0.864s Human Pauses + Live Highlight Sync + gTTS Fallback) ──
 
 EDGE_TTS_VOICE = "en-US-ChristopherNeural"
+EDGE_TTS_RATE = "-2%"
+HUMAN_PAUSE_FRAMES = 36
+HUMAN_PAUSE_SEC = 0.864  # 36 MPEG frames * 24ms = 0.864s natural pause
+
+
+def _split_narration_segments(text: str) -> list[str]:
+    """Splits narration into spoken segments for natural pauses and audio-synced spotlights."""
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return []
+    if " ... " in cleaned:
+        raw_parts = [p.strip() for p in cleaned.split(" ... ") if p.strip()]
+    else:
+        raw_parts = [p.strip() for p in re.split(r"(?<=[.!?])\s+", cleaned) if p.strip()]
+
+    segments: list[str] = []
+    for part in raw_parts:
+        if segments and len(part.split()) < 4:
+            segments[-1] = f"{segments[-1]} {part}"
+        else:
+            segments.append(part)
+    return segments or [cleaned]
+
+
+def _extract_chart_labels(scene: dict) -> list[str]:
+    mc = scene.get("main_chart")
+    if not isinstance(mc, dict):
+        return []
+    comp = mc.get("component")
+    if comp == "Grouped_Bar_Chart":
+        return [
+            str(c.get("name") or c.get("label") or "")
+            for c in (mc.get("categories") or [])
+            if isinstance(c, dict)
+        ]
+    if comp == "Donut_Chart":
+        return [
+            str(s.get("label") or s.get("name") or "")
+            for s in (mc.get("segments") or [])
+            if isinstance(s, dict)
+        ]
+    return []
+
+
+def _match_chart_rows(seg_text: str, labels: list[str]) -> list[int]:
+    stop = {
+        "the", "and", "for", "with", "cost", "costs", "total", "phase",
+        "step", "rate", "share", "target", "budget", "actual",
+    }
+    seg_words = set(re.findall(r"[a-z0-9]+", seg_text.lower()))
+    matched = []
+    for idx, label in enumerate(labels):
+        tokens = [
+            w for w in re.findall(r"[a-z0-9]+", label.lower())
+            if len(w) >= 3 and w not in stop
+        ]
+        if any(t in seg_words for t in tokens):
+            matched.append(idx)
+    return matched
+
+
+def _build_segment_targets(scene: dict, segments: list[str]) -> list[dict]:
+    """Maps each spoken segment to KPI cards, chart rows, and playbook steps."""
+    meta = scene.get("blueprint_meta") if isinstance(scene.get("blueprint_meta"), dict) else {}
+    existing = meta.get("highlights")
+    if isinstance(existing, list) and len(existing) == len(segments):
+        return [
+            {
+                "kpis": list(h.get("kpis") or []),
+                "chart_rows": list(h.get("chart_rows") or []),
+                "steps": list(h.get("steps") or []),
+            }
+            for h in existing
+            if isinstance(h, dict)
+        ]
+
+    n_seg = max(1, len(segments))
+    n_kpis = len(scene.get("top_kpi_controls") or [])
+    n_steps = len(scene.get("blueprint_steps") or [])
+    chart_labels = _extract_chart_labels(scene)
+    n_rows = len(chart_labels)
+
+    targets = []
+    for idx, seg_text in enumerate(segments):
+        kpi_ids = [i for i in range(n_kpis) if (i * n_seg) // max(1, n_kpis) == idx] if n_kpis else []
+        if not kpi_ids and n_kpis:
+            kpi_ids = [idx % n_kpis]
+
+        step_ids = [i for i in range(n_steps) if (i * n_seg) // max(1, n_steps) == idx] if n_steps else []
+        if not step_ids and n_steps:
+            step_ids = [idx % n_steps]
+
+        row_ids: list[int] = []
+        if n_rows:
+            row_ids = _match_chart_rows(seg_text, chart_labels)
+            if not row_ids:
+                row_ids = [i for i in range(n_rows) if (i * n_seg) // max(1, n_rows) == idx]
+
+        targets.append({
+            "kpis": kpi_ids,
+            "chart_rows": row_ids,
+            "steps": step_ids,
+        })
+    return targets
+
+
+async def _fetch_edge_segment_bytes(text: str) -> bytes:
+    import edge_tts
+    comm = edge_tts.Communicate(text=text, voice=EDGE_TTS_VOICE, rate=EDGE_TTS_RATE)
+    audio_bytes = bytearray()
+    async for chunk in comm.stream():
+        if chunk["type"] == "audio":
+            audio_bytes.extend(chunk["data"])
+    if len(audio_bytes) < 100:
+        raise ValueError("Empty Edge-TTS segment audio")
+    return bytes(audio_bytes)
+
 
 async def generate_edge_audio(scene: dict, text: str, output_path: str):
-    """Generate TTS audio using edge-tts with automatic gTTS fallback if 403 occurs, and sync scene duration."""
-    import edge_tts
+    """Generates segmented Edge-TTS audio with 0.864s human pauses, live highlight windows, and gTTS fallback."""
     from gtts import gTTS
+
+    segments = _split_narration_segments(text)
+    targets = _build_segment_targets(scene, segments)
+    highlights: list[dict[str, Any]] = []
+
     try:
-        communicate = edge_tts.Communicate(text=text, voice=EDGE_TTS_VOICE)
-        await communicate.save(output_path)
+        combined_mp3 = bytearray()
+        cursor_sec = 0.0
+
+        for idx, seg_text in enumerate(segments):
+            seg_bytes = await _fetch_edge_segment_bytes(seg_text)
+            # Edge-TTS outputs 48kbps CBR MP3 (~6000 bytes/sec, 144 bytes/frame)
+            seg_duration = len(seg_bytes) / 6000.0
+            start_t = round(cursor_sec, 2)
+            end_t = round(cursor_sec + seg_duration, 2)
+
+            tgt = targets[idx] if idx < len(targets) else {"kpis": [], "chart_rows": [], "steps": []}
+            highlights.append({
+                "start": start_t,
+                "end": end_t,
+                "kpis": tgt["kpis"],
+                "chart_rows": tgt["chart_rows"],
+                "steps": tgt["steps"],
+            })
+
+            combined_mp3.extend(seg_bytes)
+            cursor_sec += seg_duration
+
+            # Inject 0.864s natural human pause between spoken segments
+            if idx < len(segments) - 1 and len(seg_bytes) >= 144:
+                silent_frame = seg_bytes[-144:]
+                combined_mp3.extend(silent_frame * HUMAN_PAUSE_FRAMES)
+                cursor_sec += HUMAN_PAUSE_SEC
+
+        with open(output_path, "wb") as f:
+            f.write(combined_mp3)
+
         if not os.path.exists(output_path) or os.path.getsize(output_path) < 100:
-            raise ValueError("Empty Edge-TTS audio file")
-        print(f"[TTS - Edge] Generated {os.path.basename(output_path)}")
+            raise ValueError("Empty combined Edge-TTS audio file")
+        print(f"[TTS - Edge] Generated {os.path.basename(output_path)} ({len(segments)} segments with 0.864s pauses)")
     except Exception as e:
         print(f"[FALLBACK - gTTS] Edge-TTS failed ({e}), using gTTS for {os.path.basename(output_path)}...")
         if os.path.exists(output_path):
@@ -1153,13 +1303,38 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
                 os.remove(output_path)
             except OSError:
                 pass
-        gTTS(text=text, lang="en", slow=False).save(output_path)
+        clean_full = " ".join(segments) if segments else text
+        gTTS(text=clean_full, lang="en", slow=False).save(output_path)
+
+        # Build proportional fallback highlight windows from word counts
+        est_total = max(1.0, _estimate_audio_duration(output_path, clean_full, 15.0) - 1.2)
+        word_counts = [max(1, len(s.split())) for s in segments]
+        total_words = sum(word_counts) or 1
+        cursor_sec = 0.0
+        highlights = []
+        for idx, wc in enumerate(word_counts):
+            seg_dur = est_total * (wc / total_words)
+            tgt = targets[idx] if idx < len(targets) else {"kpis": [], "chart_rows": [], "steps": []}
+            highlights.append({
+                "start": round(cursor_sec, 2),
+                "end": round(cursor_sec + seg_dur, 2),
+                "kpis": tgt["kpis"],
+                "chart_rows": tgt["chart_rows"],
+                "steps": tgt["steps"],
+            })
+            cursor_sec += seg_dur
 
     scene["durationInSeconds"] = _estimate_audio_duration(
         output_path, text, float(scene.get("durationInSeconds", 15.0))
     )
     scene["captions"] = []
 
+    if scene.get("type") == "dashboard_ui" and highlights:
+        if not isinstance(scene.get("blueprint_meta"), dict):
+            scene["blueprint_meta"] = {}
+        scene["blueprint_meta"]["highlights"] = highlights
+
+        
 # ── Known Brand Database ─────────────────────────────────────
 
 KNOWN_BRANDS: dict[str, dict] = {
