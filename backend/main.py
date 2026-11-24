@@ -4,7 +4,13 @@ import sys
 import json
 import glob
 import math
+import time
+import uuid
+import shutil
 import asyncio
+import threading
+import subprocess
+from datetime import datetime
 from contextlib import asynccontextmanager
 from typing import Any, Optional, Union, Literal, Annotated, Type
 
@@ -34,6 +40,7 @@ from langchain_core.output_parsers import StrOutputParser
 load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+REMOTION_COMPOSITION_ID = os.getenv("REMOTION_COMPOSITION_ID", "AI-Infographic")
 
 from google import genai
 GEMINI_CLIENT: Optional[genai.Client] = None
@@ -1254,7 +1261,7 @@ async def _fetch_edge_segment_bytes(text: str) -> bytes:
 
 
 async def generate_edge_audio(scene: dict, text: str, output_path: str):
-    """Generates segmented Edge-TTS audio with 0.864s human pauses, live highlight windows, and gTTS fallback."""
+    """Generates segmented Edge-TTS audio with 0.864s human pauses, smooth highlight windows, and gTTS fallback."""
     from gtts import gTTS
 
     segments = _split_narration_segments(text)
@@ -1270,7 +1277,12 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
             # Edge-TTS outputs 48kbps CBR MP3 (~6000 bytes/sec, 144 bytes/frame)
             seg_duration = len(seg_bytes) / 6000.0
             start_t = round(cursor_sec, 2)
-            end_t = round(cursor_sec + seg_duration, 2)
+
+            # Hold the spotlight across the 0.864s pause (and tail padding on the final segment)
+            # so cards transition smoothly instead of flashing all-bright during silence gaps.
+            is_last = idx == len(segments) - 1
+            hold_extension = 1.2 if is_last else HUMAN_PAUSE_SEC
+            end_t = round(cursor_sec + seg_duration + hold_extension, 2)
 
             tgt = targets[idx] if idx < len(targets) else {"kpis": [], "chart_rows": [], "steps": []}
             highlights.append({
@@ -1285,7 +1297,7 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
             cursor_sec += seg_duration
 
             # Inject 0.864s natural human pause between spoken segments
-            if idx < len(segments) - 1 and len(seg_bytes) >= 144:
+            if not is_last and len(seg_bytes) >= 144:
                 silent_frame = seg_bytes[-144:]
                 combined_mp3.extend(silent_frame * HUMAN_PAUSE_FRAMES)
                 cursor_sec += HUMAN_PAUSE_SEC
@@ -1314,10 +1326,11 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
         highlights = []
         for idx, wc in enumerate(word_counts):
             seg_dur = est_total * (wc / total_words)
+            is_last = idx == len(word_counts) - 1
             tgt = targets[idx] if idx < len(targets) else {"kpis": [], "chart_rows": [], "steps": []}
             highlights.append({
                 "start": round(cursor_sec, 2),
-                "end": round(cursor_sec + seg_dur, 2),
+                "end": round(cursor_sec + seg_dur + (1.2 if is_last else 0.0), 2),
                 "kpis": tgt["kpis"],
                 "chart_rows": tgt["chart_rows"],
                 "steps": tgt["steps"],
@@ -1334,7 +1347,107 @@ async def generate_edge_audio(scene: dict, text: str, output_path: str):
             scene["blueprint_meta"] = {}
         scene["blueprint_meta"]["highlights"] = highlights
 
-        
+# ── Remotion MP4 Renderer (Windows-Safe, Live Progress, H.264/yuv420p) ──
+
+def _render_remotion_video(project_root: str, quality: str = "high") -> dict[str, str]:
+    """Renders the Remotion composition into a unique Chrome-playable H.264 MP4 with live terminal progress."""
+    out_dir = os.path.join(project_root, "out")
+    os.makedirs(out_dir, exist_ok=True)
+
+    video_id = f"vid-{uuid.uuid4().hex[:6]}"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_filename = f"deptcast_{timestamp}_{video_id}.mp4"
+    output_path = os.path.join(out_dir, output_filename)
+
+    # Prefer local node_modules/.bin/remotion.cmd directly so Windows npx.cmd never hangs or prompts
+    local_remotion = os.path.join(
+        project_root,
+        "node_modules",
+        ".bin",
+        "remotion.cmd" if os.name == "nt" else "remotion",
+    )
+    if os.path.exists(local_remotion):
+        base_cmd = [local_remotion]
+    else:
+        npx_bin = (
+            shutil.which("npx.cmd")
+            or shutil.which("npx")
+            or ("npx.cmd" if os.name == "nt" else "npx")
+        )
+        base_cmd = [npx_bin, "--no-install", "remotion"]
+
+    is_fast = str(quality or "high").lower().strip() in ("fast", "preview", "low", "draft")
+    cmd = base_cmd + [
+        "render",
+        REMOTION_COMPOSITION_ID,
+        output_path,
+        "--codec=h264",
+        "--pixel-format=yuv420p",
+        f"--crf={'28' if is_fast else '23'}",
+        "--concurrency=2",
+    ]
+    if is_fast:
+        # 1440x810 keeps sharp readability with even H.264 dimensions while cutting render time
+        cmd.append("--scale=0.75")
+
+    print(f"[REMOTION RENDER] Starting ({quality}): {' '.join(cmd)}", flush=True)
+
+    proc = subprocess.Popen(
+        cmd,
+        cwd=project_root,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+    )
+
+    recent_logs: list[str] = []
+    timed_out = False
+    timeout_sec = 1200  # 20 minutes safety cap
+
+    def _kill_on_timeout():
+        nonlocal timed_out
+        timed_out = True
+        if proc.poll() is None:
+            proc.kill()
+
+    timer = threading.Timer(timeout_sec, _kill_on_timeout)
+    timer.start()
+    try:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            clean_line = line.rstrip()
+            if clean_line:
+                print(f"[REMOTION] {clean_line}", flush=True)
+                recent_logs.append(clean_line)
+                if len(recent_logs) > 40:
+                    recent_logs.pop(0)
+        proc.wait()
+    finally:
+        timer.cancel()
+        if proc.poll() is None:
+            proc.kill()
+
+    if timed_out:
+        err_tail = "\n".join(recent_logs[-15:]) or "No output received from Remotion."
+        raise RuntimeError(f"Remotion render timed out after {timeout_sec}s. Last output:\n{err_tail}")
+
+    if proc.returncode != 0 or not os.path.exists(output_path) or os.path.getsize(output_path) < 1024:
+        err_tail = "\n".join(recent_logs[-20:]) or "Unknown Remotion render error"
+        print(f"[REMOTION RENDER ERROR]\n{err_tail}", flush=True)
+        raise RuntimeError(f"Remotion render failed (exit {proc.returncode}): {err_tail}")
+
+    print(f"[REMOTION RENDER] Completed: {output_filename} ({os.path.getsize(output_path)} bytes)", flush=True)
+    return {
+        "video_id": video_id,
+        "filename": output_filename,
+        "path": output_path,
+    }
+
+
 # ── Known Brand Database ─────────────────────────────────────
 
 KNOWN_BRANDS: dict[str, dict] = {
@@ -1828,7 +1941,7 @@ async def analyze_data(
 # ── Endpoint: /approve ────────────────────────────────────────
 
 @app.post("/approve")
-async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
+async def approve_storyboard(storyboard_data: dict, quality: str = "high", render: bool = True):
     import logging
     logger = logging.getLogger("uvicorn.error")
     
@@ -1843,9 +1956,8 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
             logger.error(f"Storyboard validation failed: {e}")
             raise HTTPException(status_code=422, detail=f"Invalid storyboard schema: {e}")
 
-        absolute_public_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "public")
-        )
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        absolute_public_dir = os.path.join(project_root, "public")
         os.makedirs(absolute_public_dir, exist_ok=True)
         _cleanup_old_audio(absolute_public_dir)
 
@@ -1865,9 +1977,7 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
                 sum(float(s.get("durationInSeconds", 15.0)) for s in scenes), 1
             )
 
-        absolute_storyboard_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "src", "data", "storyboard.json")
-        )
+        absolute_storyboard_path = os.path.join(project_root, "src", "data", "storyboard.json")
         os.makedirs(os.path.dirname(absolute_storyboard_path), exist_ok=True)
 
         def remove_nans(obj):
@@ -1883,11 +1993,30 @@ async def approve_storyboard(storyboard_data: dict, quality: str = "high"):
         with open(absolute_storyboard_path, "w", encoding="utf-8") as f:
             json.dump(cleaned_storyboard, f, indent=2)
 
-        return {
+        # Render fresh MP4 so /download/latest and the UI player always serve the new video
+        render_info = None
+        if render:
+            try:
+                render_info = await asyncio.to_thread(_render_remotion_video, project_root, quality)
+            except Exception as render_err:
+                logger.error(f"Remotion MP4 render failed: {render_err}")
+                raise HTTPException(status_code=500, detail=f"Video render failed: {render_err}")
+
+        response_payload: dict[str, Any] = {
             "status": "success",
             "message": f"Storyboard approved! {generated_count} audio track(s) generated.",
             "total_duration_seconds": storyboard_data.get("video", {}).get("duration"),
         }
+        if render_info:
+            response_payload["message"] = (
+                f"Video rendered successfully! {generated_count} audio track(s) generated."
+            )
+            response_payload["video_id"] = render_info["video_id"]
+            response_payload["video_filename"] = render_info["filename"]
+            response_payload["video_url"] = f"/download/{render_info['filename']}"
+            response_payload["latest_url"] = "/download/latest"
+
+        return response_payload
     except HTTPException:
         raise
     except Exception as e:
@@ -1937,7 +2066,7 @@ async def fetch_broll(query: str):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "https://api.pexels.com/videos/search",
+                "[https://api.pexels.com/videos/search](https://api.pexels.com/videos/search)",
                 headers={"Authorization": pexels_key},
                 params={"query": query, "per_page": 5, "orientation": "landscape"}
             )
@@ -1958,6 +2087,12 @@ async def fetch_broll(query: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch B-roll: {e}")
 
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
 @app.get("/download/latest")
 async def download_latest_video():
     out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "out"))
@@ -1966,8 +2101,29 @@ async def download_latest_video():
     mp4_files = glob.glob(os.path.join(out_dir, "*.mp4"))
     if not mp4_files:
         raise HTTPException(status_code=404, detail="No generated videos found.")
-    latest_file = max(mp4_files, key=os.path.getctime)
-    return FileResponse(path=latest_file, media_type="video/mp4", filename=os.path.basename(latest_file))
+    latest_file = max(mp4_files, key=os.path.getmtime)
+    return FileResponse(
+        path=latest_file,
+        media_type="video/mp4",
+        filename=os.path.basename(latest_file),
+        headers=NO_CACHE_HEADERS,
+    )
+
+@app.get("/download/{filename}")
+async def download_specific_video(filename: str):
+    safe_name = os.path.basename(filename)
+    if not safe_name.endswith(".mp4"):
+        raise HTTPException(status_code=400, detail="Only .mp4 files can be downloaded.")
+    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "out"))
+    file_path = os.path.join(out_dir, safe_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Requested video not found.")
+    return FileResponse(
+        path=file_path,
+        media_type="video/mp4",
+        filename=safe_name,
+        headers=NO_CACHE_HEADERS,
+    )
 
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 os.makedirs(static_dir, exist_ok=True)
@@ -1987,5 +2143,5 @@ if __name__ == "__main__":
 
     bp_payload = _match_predetermined_blueprint(blueprint_key) or PREDETERMINED_BLUEPRINTS["annual_budget"]
     print(f"[BLUEPRINT ENGINE] Generating TTS & Storyboard for: {bp_payload['video']['title']}")
-    res = asyncio.run(approve_storyboard(bp_payload))
+    res = asyncio.run(approve_storyboard(bp_payload, render=False))
     print(f"[SUCCESS] {res}")

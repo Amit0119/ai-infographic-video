@@ -220,7 +220,7 @@
                             <div style="display: flex; gap: 2rem;">
                                 <div class="form-group" style="flex: 1;">
                                     <label>Custom Brand Name</label>
-                                    <input type="text" id="settingBrandName" placeholder="e.g. Acme Corp">
+                                    <input type="text" id="settingBrandName" placeholder="e.g. DeptCast">
                                 </div>
                                 <div class="form-group" style="flex: 1;">
                                     <label>Custom Logo URL</label>
@@ -277,8 +277,8 @@
                                 <div id="dataUploadSection">
                                     <div class="drop-zone" id="dropZone">
                                         <svg viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                        <p class="drop-text">Drag & Drop your Document (.docx, .pdf, .txt, .json, .csv) here or <span style="color: var(--primary); text-decoration: underline;">browse files</span></p>
-                                        <input type="file" id="excelFile" accept=".docx,.pdf,.txt,.json,.csv" hidden>
+                                        <p class="drop-text">Drag & Drop your Document (.xlsx, .xls, .docx, .pdf, .txt, .json, .csv) here or <span style="color: var(--primary); text-decoration: underline;">browse files</span></p>
+                                        <input type="file" id="excelFile" accept=".xlsx,.xls,.docx,.pdf,.txt,.json,.csv" hidden>
                                     </div>
                                     <div id="fileNameDisplay" class="file-name-display"></div>
                                     
@@ -377,20 +377,18 @@
             </div>
             
             <div style="width: 100%; height: 450px; background: #000; display: flex; align-items: center; justify-content: center; position: relative;">
-                <iframe id="modalIframe" src="http://localhost:3000" style="width: 100%; height: 100%; border: none;"></iframe>
+                <video id="modalVideo" controls playsinline style="width: 100%; height: 100%; background: #000;"></video>
             </div>
             
             <div style="padding: 1.5rem 2rem; background: rgba(0,0,0,0.2); display: flex; gap: 1rem; justify-content: flex-end; align-items: center;">
                 <div class="share-box" style="margin: 0; flex: 1; display: flex; gap: 0.5rem;">
-                    <input type="text" id="modalShareLink" value="https://app.aigraphica.com/share/vid-847291" readonly style="padding: 10px; font-size: 0.85rem; flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-main);">
+                    <input type="text" id="modalShareLink" value="" readonly style="padding: 10px; font-size: 0.85rem; flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--text-main);">
                     <button id="modalCopyBtn" class="btn-outline" style="padding: 10px 16px; white-space: nowrap;" onclick="copyLink('modalShareLink', 'modalCopyBtn')">🔗 Copy Link</button>
                 </div>
                 <button id="modalDownloadBtn" style="background: #34d399; color: #064e3b;">Download .mp4</button>
             </div>
         </div>
     </div>
-
-
 
     <!-- Delete Template Modal -->
     <div id="deleteTemplateModal" class="modal-overlay hidden">
@@ -417,15 +415,15 @@
     </div>
 
     <!-- PUBLIC SHARE VIEW -->
-    <div id="view-share" class="hidden" style="position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; align-items: center; padding: 2rem; overflow-y: auto;">
+    <div id="view-share" class="hidden" style="position: fixed; inset: 0; background: var(--bg-base); z-index: 9999; display: flex; flex-direction: column; align-items: center; padding: 2rem; overflow-y: auto;">
         <div style="margin-bottom: 2rem; display: flex; align-items: center;">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            <span id="shareBrandName" style="color: white; font-size: 1.5rem; font-weight: bold; margin-left: 0.5rem;">Info<span class="highlight">graphic</span></span>
+            <span id="shareBrandName" style="color: white; font-size: 1.5rem; font-weight: bold; margin-left: 0.5rem;">DeptCast</span>
         </div>
         
         <div class="card" style="width: 100%; max-width: 900px; padding: 0; overflow: hidden; border-color: rgba(255,255,255,0.1);">
             <div style="width: 100%; aspect-ratio: 16/9; background: #000; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <iframe id="shareIframe" src="http://localhost:3000" style="width: 100%; height: 100%; border: none;"></iframe>
+                <video id="shareVideo" controls playsinline style="width: 100%; height: 100%; background: #000;"></video>
             </div>
             
             <div style="padding: 2rem; display: flex; justify-content: space-between; align-items: flex-start; background: rgba(0,0,0,0.2);">
@@ -509,15 +507,17 @@
             document.getElementById('videoModalTitle').innerText = "Share Project";
             
             const linkId = url.split('/').pop();
-            const btn = document.getElementById('modalDownloadBtn');
-            if (btn) btn.onclick = () => downloadProjectVideo(linkId);
-            
             const projects = JSON.parse(localStorage.getItem('saved_projects') || '[]');
             const proj = projects.find(p => p.id === linkId);
-            if (proj && proj.payload) {
-                const encodedProps = encodeURIComponent(JSON.stringify(proj.payload));
-                const iframe = document.getElementById('modalIframe');
-                if (iframe) iframe.src = `http://localhost:3000/?props=${encodedProps}`;
+            const videoSrc = (proj && proj.videoUrl) ? proj.videoUrl : '/download/latest';
+
+            const btn = document.getElementById('modalDownloadBtn');
+            if (btn) btn.onclick = () => downloadProjectVideo(linkId, videoSrc);
+
+            const videoEl = document.getElementById('modalVideo');
+            if (videoEl) {
+                videoEl.src = `${videoSrc}?t=${Date.now()}`;
+                videoEl.load();
             }
             
             document.getElementById('videoModal').classList.remove('hidden');
@@ -545,11 +545,12 @@
             document.getElementById('videoModal').classList.remove('hidden');
         }
         function closeViewModal() {
+            const videoEl = document.getElementById('modalVideo');
+            if (videoEl) videoEl.pause();
             document.getElementById('videoModal').classList.add('hidden');
         }
         
         function resumeDraft() {
-            // Simulated state restoration from database
             currentStoryboard = {
                 style: { backgroundColor: "#0f172a", primaryColor: "#38bdf8", textColor: "#ffffff" },
                 scenes: [
@@ -573,7 +574,6 @@
             const profileName = localStorage.getItem('cfg_profileName') || 'Rajesh CFO';
             const profileAvatar = localStorage.getItem('cfg_profileAvatar') || '';
             
-            // Apply brand name
             const brandEl = document.getElementById('dynamicBrandName');
             if (brandName.toLowerCase() === 'infographic') {
                 brandEl.innerHTML = `Info<span class="highlight" style="color: ${primaryColor}">graphic</span>`;
@@ -583,7 +583,6 @@
                 brandEl.style.fontWeight = 'bold';
             }
             
-            // Apply profile
             document.getElementById('dynamicProfileName').innerText = profileName;
             const avatarEl = document.getElementById('dynamicProfileAvatar');
             if (profileAvatar && (profileAvatar.startsWith('http') || profileAvatar.startsWith('data:image/'))) {
@@ -597,7 +596,6 @@
                 avatarEl.style.background = 'linear-gradient(135deg, #38bdf8, #818cf8)';
             }
             
-            // Apply primary color globally via CSS variable
             document.documentElement.style.setProperty('--primary', primaryColor);
             document.getElementById('brandLogoSvg').style.stroke = primaryColor;
         }
@@ -709,6 +707,7 @@
         // Initialize App
         applyGlobalBranding();
         loadCustomTemplates();
+        loadProjects();
 
         // --- Drag & Drop ---
         const dropZone = document.getElementById('dropZone');
@@ -1029,19 +1028,22 @@
                     body: JSON.stringify(currentStoryboard)
                 });
                 if (!response.ok) throw new Error(await response.text());
-                
-                const linkId = Math.floor(Math.random() * 900000) + 100000;
-                const link = `${window.location.origin}/share/vid-${linkId}`;
+                const data = await response.json();
+
+                const vidId = data.video_id || `vid-${Math.floor(Math.random() * 900000) + 100000}`;
+                const videoUrl = data.video_url || '/download/latest';
+                const link = `${window.location.origin}/share/${vidId}`;
                 document.getElementById('shareLinkInput').value = link;
                 
                 // Save to Project Library
                 let projects = JSON.parse(localStorage.getItem('saved_projects') || '[]');
                 const titleStr = currentStoryboard?.scenes?.[0]?.title || document.getElementById('topicInput')?.value || (attachedFile ? attachedFile.name : 'Untitled Project');
                 projects.unshift({
-                    id: `vid-${linkId}`,
+                    id: vidId,
                     title: titleStr,
                     date: new Date().toLocaleDateString(),
                     url: link,
+                    videoUrl: videoUrl,
                     status: 'Completed',
                     payload: currentStoryboard
                 });
@@ -1062,10 +1064,16 @@
         document.getElementById('fastPreviewBtn').addEventListener('click', () => renderVideo('fast'));
         document.getElementById('approveBtn').addEventListener('click', () => renderVideo('high'));
 
-        function downloadProjectVideo(projectId) {
+        function downloadProjectVideo(projectId, explicitUrl) {
+            let downloadUrl = explicitUrl;
+            if (!downloadUrl) {
+                const projects = JSON.parse(localStorage.getItem('saved_projects') || '[]');
+                const proj = projectId === 'recent' ? projects[0] : projects.find(p => p.id === projectId);
+                downloadUrl = (proj && proj.videoUrl) ? proj.videoUrl : '/download/latest';
+            }
             const a = document.createElement('a');
-            a.href = '/download/latest';
-            a.download = `Infographic_${projectId}.mp4`;
+            a.href = `${downloadUrl}?t=${Date.now()}`;
+            a.download = `DeptCast_${projectId}.mp4`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1098,31 +1106,32 @@
         // --- Route Interception ---
         (function initRouter() {
             if (window.location.pathname.startsWith('/share/vid-')) {
-                // Completely isolate the view
                 document.querySelector('.sidebar').style.display = 'none';
                 document.querySelector('.navbar').style.display = 'none';
                 document.querySelector('.main-content').style.display = 'none';
-                
-                // Show only the share view
                 document.getElementById('view-share').classList.remove('hidden');
-                
-                // Populate Metadata from LocalStorage if available
+
+                const savedBrand = localStorage.getItem('cfg_brandName') || 'DeptCast';
+                const shareBrandEl = document.getElementById('shareBrandName');
+                if (shareBrandEl) shareBrandEl.innerText = savedBrand;
+
                 const linkId = window.location.pathname.split('/').pop();
                 const projects = JSON.parse(localStorage.getItem('saved_projects') || '[]');
                 const proj = projects.find(p => p.id === linkId);
-                
+                const videoSrc = (proj && proj.videoUrl) ? proj.videoUrl : '/download/latest';
+
                 if (proj) {
                     document.getElementById('shareProjectTitle').innerText = proj.title;
                     document.getElementById('shareProjectDate').innerText = `Generated on ${proj.date}`;
-                    
-                    const btn = document.getElementById('shareViewDownloadBtn');
-                    if (btn) btn.onclick = () => downloadProjectVideo(proj.id);
-                    
-                    if (proj.payload) {
-                        const encodedProps = encodeURIComponent(JSON.stringify(proj.payload));
-                        const iframe = document.getElementById('shareIframe');
-                        if (iframe) iframe.src = `http://localhost:3000/?props=${encodedProps}`;
-                    }
+                }
+
+                const btn = document.getElementById('shareViewDownloadBtn');
+                if (btn) btn.onclick = () => downloadProjectVideo(linkId, videoSrc);
+
+                const videoEl = document.getElementById('shareVideo');
+                if (videoEl) {
+                    videoEl.src = `${videoSrc}?t=${Date.now()}`;
+                    videoEl.load();
                 }
             }
         })();
