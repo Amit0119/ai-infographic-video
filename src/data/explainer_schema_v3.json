@@ -1,0 +1,95 @@
+{
+  "video": {
+    "title": "Leave Policy Update 2026",
+    "duration": 50,
+    "fps": 30,
+    "width": 1920,
+    "height": 1080
+  },
+  "style": {
+    "theme": "clean_light",
+    "backgroundColor": "#F8FAFC",
+    "surfaceColor": "#FFFFFF",
+    "primaryColor": "#2563EB",
+    "secondaryColor": "#0EA5E9",
+    "accentColor": "#10B981",
+    "textColor": "#0F172A",
+    "subtextColor": "#475569",
+    "fontFamily": "Inter",
+    "companyWatermark": "DeptCast"
+  },
+  "scenes": [
+    {
+      "id": 1,
+      "type": "hero_hook",
+      "durationInSeconds": 10,
+      "badge": "POLICY UPDATE",
+      "headline": "New Leave Policy 2026",
+      "tagline": "Simpler approvals. Faster time off.",
+      "icon": "calendar-check",
+      "narration": "Good news team! Our updated 2026 leave policy makes planning time off simpler and faster for everyone."
+    },
+    {
+      "id": 2,
+      "type": "split_compare",
+      "durationInSeconds": 14,
+      "headline": "Know Your Two Leave Types",
+      "left": {
+        "label": "Planned Leave",
+        "stat": "3 Days Notice",
+        "subtext": "For vacations & personal days",
+        "icon": "sun",
+        "accent": "#2563EB"
+      },
+      "right": {
+        "label": "Sick Leave",
+        "stat": "Same-Day Ping",
+        "subtext": "No prior notice needed",
+        "icon": "heart-pulse",
+        "accent": "#10B981"
+      },
+      "narration": "There are two simple tracks. For planned vacations, apply at least three days early. If you fall sick, just ping your manager the same morning."
+    },
+    {
+      "id": 3,
+      "type": "step_flow",
+      "durationInSeconds": 14,
+      "headline": "How to Apply in 3 Steps",
+      "steps": [
+        {
+          "step": 1,
+          "title": "Pick Dates",
+          "subtext": "Open HR Portal",
+          "icon": "calendar"
+        },
+        {
+          "step": 2,
+          "title": "Auto-Notify",
+          "subtext": "Manager gets alert",
+          "icon": "send"
+        },
+        {
+          "step": 3,
+          "title": "24h Approval",
+          "subtext": "Balance updates live",
+          "icon": "check-circle"
+        }
+      ],
+      "narration": "Applying takes under a minute. Pick your dates in the HR portal, your manager gets notified automatically, and approvals wrap up within twenty-four hours."
+    },
+    {
+      "id": 4,
+      "type": "checklist_outro",
+      "durationInSeconds": 12,
+      "headline": "3 Quick Rules to Remember",
+      "items": [
+        "Carry forward up to 10 unused leaves",
+        "2+ sick days need a doctor's note",
+        "Check live balance anytime on HR Portal"
+      ],
+      "cta_text": "Questions? Reach out on #hr-help",
+      "icon": "shield-check",
+      "narration": "Before you go, remember three quick rules: you can carry forward up to ten unused leaves, two or more sick days need a doctor's note, and your live balance is always on the HR portal."
+    }
+  ]
+}

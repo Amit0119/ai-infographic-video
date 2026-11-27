@@ -1,8 +1,12 @@
 import React from "react";
-import { Composition, Audio, staticFile, AbsoluteFill } from "remotion";
+import { Composition, Audio, staticFile, AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
 import { getAudioDurationInSeconds } from "@remotion/media-utils";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { slide } from "@remotion/transitions/slide";
+import { HeroHookScene } from "./components/explainer/HeroHookScene";
+import { SplitCompareScene } from "./components/explainer/SplitCompareScene";
+import { StepFlowScene } from "./components/explainer/StepFlowScene";
+import { ChecklistOutroScene } from "./components/explainer/ChecklistOutroScene";
 import { TitleScene } from "./components/TitleScene";
 import { KPIAnimation } from "./components/KPIAnimation";
 import { BarChart } from "./components/BarChart";
@@ -21,7 +25,6 @@ import { SplitScreen } from "./components/SplitScreen";
 import { DashboardUI } from "./components/DashboardUI";
 import storyboard from "./data/storyboard.json";
 import type { Storyboard, StoryboardScene, SceneStyle } from "./types";
-import { useCurrentFrame, interpolate } from "remotion";
 
 // Load Inter Font dynamically
 import { loadFont } from "@remotion/google-fonts/Inter";
@@ -31,8 +34,65 @@ try {
   console.log("Font already loaded or failed to load");
 }
 
-const Background = ({ style }: { style: SceneStyle }) => {
+const EXPLAINER_SCENE_TYPES = new Set([
+  "hero_hook",
+  "split_compare",
+  "step_flow",
+  "checklist_outro",
+]);
+
+const isExplainerStoryboard = (scenes: StoryboardScene[]) =>
+  scenes.some((s) => EXPLAINER_SCENE_TYPES.has(s.type));
+
+const Background = ({ style, isExplainer }: { style: SceneStyle; isExplainer: boolean }) => {
   const frame = useCurrentFrame();
+
+  if (isExplainer || style.theme === "clean_light") {
+    const driftA = Math.sin(frame / 90) * 40;
+    const driftB = Math.cos(frame / 110) * 45;
+    const bg = style.backgroundColor || "#F8FAFC";
+    const primary = style.primaryColor || "#2563EB";
+    const accent = style.accentColor || "#10B981";
+
+    return (
+      <AbsoluteFill style={{ backgroundColor: bg, overflow: "hidden", zIndex: 0 }}>
+        {/* Soft Ambient Top-Right Orb */}
+        <div
+          style={{
+            position: "absolute",
+            top: -180 + driftA,
+            right: -140 - driftB,
+            width: 680,
+            height: 680,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${primary}18 0%, transparent 70%)`,
+          }}
+        />
+        {/* Soft Ambient Bottom-Left Orb */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: -220 - driftA,
+            left: -160 + driftB,
+            width: 720,
+            height: 720,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${accent}18 0%, transparent 70%)`,
+          }}
+        />
+        {/* Very Subtle Dot Pattern */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "radial-gradient(rgba(15, 23, 42, 0.055) 1.5px, transparent 1.5px)",
+            backgroundSize: "38px 38px",
+          }}
+        />
+      </AbsoluteFill>
+    );
+  }
+
   const shift = interpolate(frame, [0, 900], [0, -100], { extrapolateRight: "extend" });
   return (
     <AbsoluteFill
@@ -58,13 +118,14 @@ const Background = ({ style }: { style: SceneStyle }) => {
 const data = storyboard as unknown as Storyboard;
 
 const getTotalDurationInFrames = (scenes: StoryboardScene[], fps: number) => {
-  const transitionFrames = Math.round(fps * 1.5);
+  const isExplainer = isExplainerStoryboard(scenes);
+  const transitionFrames = Math.round(fps * (isExplainer ? 0.5 : 1.5));
   const total = scenes.reduce(
-    (total, scene) => total + ((scene as any).dynamicDuration || scene.durationInSeconds * fps),
+    (sum, scene) => sum + ((scene as any).dynamicDuration || Math.round(scene.durationInSeconds * fps)),
     0
   );
   const overlaps = Math.max(0, scenes.length - 1) * transitionFrames;
-  return total - overlaps;
+  return Math.max(1, total - overlaps);
 };
 
 const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) => {
@@ -73,10 +134,14 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
   const frame = useCurrentFrame();
   const totalFrames = getTotalDurationInFrames(scenes, fps);
 
+  const isExplainer = isExplainerStoryboard(scenes);
   const hasDashboardUI = scenes.some((s) => s.type === "dashboard_ui");
-  const globalScale = hasDashboardUI
-    ? 1.0
-    : interpolate(frame, [0, totalFrames], [1.0, 1.03], { extrapolateRight: "clamp" });
+  const transitionDuration = Math.round(fps * (isExplainer ? 0.5 : 1.5));
+
+  const globalScale =
+    hasDashboardUI || isExplainer
+      ? 1.0
+      : interpolate(frame, [0, totalFrames], [1.0, 1.03], { extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill
@@ -85,24 +150,85 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
         transformOrigin: "center center",
       }}
     >
-      <Background style={style} />
+      <Background style={style} isExplainer={isExplainer} />
 
       <Audio src={staticFile("bgm.mp3")} volume={0.12} loop />
 
       <TransitionSeries>
         {scenes.flatMap((scene, index) => {
-          const durationInFrames = (scene as any).dynamicDuration || scene.durationInSeconds * fps;
+          const durationInFrames =
+            (scene as any).dynamicDuration || Math.round(scene.durationInSeconds * fps);
+
+          const transitionEl =
+            index > 0 ? (
+              <TransitionSeries.Transition
+                key={`trans-${scene.id}`}
+                presentation={slide({ direction: "from-right" })}
+                timing={linearTiming({ durationInFrames: transitionDuration })}
+              />
+            ) : null;
 
           switch (scene.type) {
+            case "hero_hook":
+              return [
+                transitionEl,
+                <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
+                  {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                  <HeroHookScene
+                    badge={scene.badge}
+                    headline={scene.headline}
+                    tagline={scene.tagline}
+                    icon={scene.icon}
+                    style={style}
+                  />
+                </TransitionSeries.Sequence>,
+              ];
+
+            case "split_compare":
+              return [
+                transitionEl,
+                <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
+                  {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                  <SplitCompareScene
+                    headline={scene.headline}
+                    left={scene.left}
+                    right={scene.right}
+                    style={style}
+                  />
+                </TransitionSeries.Sequence>,
+              ];
+
+            case "step_flow":
+              return [
+                transitionEl,
+                <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
+                  {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                  <StepFlowScene
+                    headline={scene.headline}
+                    steps={scene.steps}
+                    style={style}
+                  />
+                </TransitionSeries.Sequence>,
+              ];
+
+            case "checklist_outro":
+              return [
+                transitionEl,
+                <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
+                  {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
+                  <ChecklistOutroScene
+                    headline={scene.headline}
+                    items={scene.items}
+                    cta_text={scene.cta_text}
+                    icon={scene.icon}
+                    style={style}
+                  />
+                </TransitionSeries.Sequence>,
+              ];
+
             case "title":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -113,13 +239,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "kpi":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -139,13 +259,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "bar_chart":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -161,13 +275,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "pie_chart":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -178,13 +286,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "timeline":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -195,13 +297,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "line_chart":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -218,13 +314,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "highlight":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -245,13 +335,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "comparison":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -267,13 +351,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "bullet_points":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -288,13 +366,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "numbered_steps":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -309,13 +381,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "heat_map":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -331,13 +397,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "hierarchy_pyramid":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -353,13 +413,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "split_screen":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -376,13 +430,7 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
 
             case "dashboard_ui":
               return [
-                index > 0 ? (
-                  <TransitionSeries.Transition
-                    key={`trans-${scene.id}`}
-                    presentation={slide()}
-                    timing={linearTiming({ durationInFrames: Math.round(fps * 1.5) })}
-                  />
-                ) : null,
+                transitionEl,
                 <TransitionSeries.Sequence key={scene.id} durationInFrames={durationInFrames}>
                   {scene.narration && <Audio src={staticFile(`scene_${scene.id}.mp3`)} />}
                   {scene.brollUrl && <BRollBackground src={scene.brollUrl} style={style} />}
@@ -409,7 +457,30 @@ const InfographicVideo: React.FC<{ data: Storyboard }> = ({ data: compData }) =>
         })}
       </TransitionSeries>
 
-      {!hasDashboardUI && (
+      {isExplainer && style.companyWatermark && (
+        <div
+          style={{
+            position: "absolute",
+            top: 34,
+            right: 48,
+            padding: "8px 20px",
+            borderRadius: 999,
+            backgroundColor: "rgba(255, 255, 255, 0.82)",
+            border: "1px solid rgba(15, 23, 42, 0.08)",
+            color: style.textColor || "#0F172A",
+            fontSize: 20,
+            fontWeight: 800,
+            letterSpacing: "0.02em",
+            fontFamily: style.fontFamily || "Inter, sans-serif",
+            zIndex: 1000,
+            boxShadow: "0 4px 14px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          {style.companyWatermark}
+        </div>
+      )}
+
+      {!hasDashboardUI && !isExplainer && (
         style.companyWatermark ? (
           <div
             style={{
@@ -464,7 +535,7 @@ export const RemotionRoot: React.FC = () => {
           const clonedData = JSON.parse(JSON.stringify(props.data));
           const currentFps = clonedData.video.fps || 30;
           for (const scene of clonedData.scenes) {
-            let dynamicDuration = scene.durationInSeconds * currentFps;
+            let dynamicDuration = Math.round(scene.durationInSeconds * currentFps);
             if (scene.narration) {
               try {
                 const url = staticFile(`scene_${scene.id}.mp3`);

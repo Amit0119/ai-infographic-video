@@ -2,7 +2,9 @@
 // Storyboard & Scene Type Definitions
 // ============================================================
 export interface SceneStyle {
+  theme?: "clean_light" | "dark" | string;
   backgroundColor: string;
+  surfaceColor?: string;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -12,6 +14,89 @@ export interface SceneStyle {
   currencySymbol?: string;
   companyWatermark?: string;
   videoOverlayColor?: string;
+}
+
+// ── Animated Explainer v3 Sub-Types (Track B) ────────────────
+
+export interface SplitCompareSide {
+  label: string;
+  stat: string;
+  subtext: string;
+  icon: string;
+  accent?: string;
+}
+
+export interface StepFlowItem {
+  step: number;
+  title: string;
+  subtext: string;
+  icon: string;
+}
+
+export interface HeroHookSceneProps {
+  badge?: string;
+  headline: string;
+  tagline?: string;
+  icon?: string;
+  style: SceneStyle;
+}
+
+export interface SplitCompareSceneProps {
+  headline: string;
+  left: SplitCompareSide;
+  right: SplitCompareSide;
+  style: SceneStyle;
+}
+
+export interface StepFlowSceneProps {
+  headline: string;
+  steps: StepFlowItem[];
+  style: SceneStyle;
+}
+
+export interface ChecklistOutroSceneProps {
+  headline: string;
+  items: string[];
+  cta_text?: string;
+  icon?: string;
+  style: SceneStyle;
+}
+
+export interface HeroHookSceneData {
+  id: number;
+  type: "hero_hook";
+  durationInSeconds: number;
+  badge?: string;
+  headline: string;
+  tagline?: string;
+  icon?: string;
+}
+
+export interface SplitCompareSceneData {
+  id: number;
+  type: "split_compare";
+  durationInSeconds: number;
+  headline: string;
+  left: SplitCompareSide;
+  right: SplitCompareSide;
+}
+
+export interface StepFlowSceneData {
+  id: number;
+  type: "step_flow";
+  durationInSeconds: number;
+  headline: string;
+  steps: StepFlowItem[];
+}
+
+export interface ChecklistOutroSceneData {
+  id: number;
+  type: "checklist_outro";
+  durationInSeconds: number;
+  headline: string;
+  items: string[];
+  cta_text?: string;
+  icon?: string;
 }
 
 // ── 3-Zone Executive Dashboard & Dynamic Playbook Sub-Types ──
@@ -369,6 +454,10 @@ export interface SplitScreenSceneData {
 }
 
 export type StoryboardScene = (
+  | HeroHookSceneData
+  | SplitCompareSceneData
+  | StepFlowSceneData
+  | ChecklistOutroSceneData
   | TitleSceneData
   | KPISceneData
   | BarChartSceneData
@@ -396,7 +485,7 @@ export interface Storyboard {
   video: {
     title: string;
     duration: number;
-    audience: string;
+    audience?: string;
     fps: number;
     width: number;
     height: number;

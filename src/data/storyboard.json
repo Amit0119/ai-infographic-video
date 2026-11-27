@@ -1,555 +1,98 @@
 {
-  "template_category": "Finance & Accounts",
-  "blueprint_id": "FIN_ANNUAL_BUDGET_PLAYBOOK_V1",
-  "match_keywords": [
-    "annual budget",
-    "how to create an annual budget",
-    "budget planning framework",
-    "budget playbook",
-    "enterprise annual budget"
-  ],
   "video": {
-    "title": "How to Create an Annual Budget: Enterprise Blueprint",
-    "duration": 80.3,
-    "audience": "Department Heads, FP&A Teams & Executive Leadership",
+    "title": "Leave Policy Update 2026",
+    "duration": 50.8,
     "fps": 30,
     "width": 1920,
     "height": 1080
   },
   "style": {
-    "backgroundColor": "#0b1120",
-    "primaryColor": "#38bdf8",
-    "secondaryColor": "#818cf8",
-    "accentColor": "#34d399",
-    "textColor": "#ffffff",
-    "subtextColor": "#94a3b8",
+    "theme": "clean_light",
+    "backgroundColor": "#F8FAFC",
+    "surfaceColor": "#FFFFFF",
+    "primaryColor": "#2563EB",
+    "secondaryColor": "#0EA5E9",
+    "accentColor": "#10B981",
+    "textColor": "#0F172A",
+    "subtextColor": "#475569",
     "fontFamily": "Inter",
-    "currencySymbol": "$",
-    "companyWatermark": "DeptCast Enterprise Blueprint"
+    "companyWatermark": "DeptCast"
   },
   "scenes": [
     {
       "id": 1,
-      "type": "dashboard_ui",
-      "durationInSeconds": 19.7,
-      "title": "Blueprint Phase 1: Historical Baseline & Strategic Alignment",
-      "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 01 / 04",
-      "narration": "Creating an enterprise annual budget begins with Phase One: establishing your historical baseline and strategic alignment. Review the past twelve months of actual spend, lock in realistic revenue growth targets, and align every department head on macro inflation assumptions before issuing budget templates.",
-      "blueprint_meta": {
-        "template_name": "Finance & Accounts Playbook",
-        "blueprint_code": "BP-FIN-01",
-        "phase_badge": "PHASE 1: BASELINE & TARGETING",
-        "owner_role": "CFO & FP&A Lead",
-        "sla_timeline": "Weeks 1 - 2 (Q4 Kickoff)",
-        "required_inputs": [
-          "Trailing 12-Month Actuals Ledger",
-          "Executive Revenue & EBITDA Target Mandate",
-          "Macro Inflation & FX Rate Assumptions"
-        ]
-      },
-      "blueprint_steps": [
-        {
-          "step_no": "01",
-          "title": "Audit Trailing 12M Actuals",
-          "detail": "Cleanse one-time anomalies and identify baseline recurring run-rate across all cost centers.",
-          "tag": "MANDATORY INPUT",
-          "status": "favorable"
-        },
-        {
-          "step_no": "02",
-          "title": "Lock Revenue & Margin Guardrails",
-          "detail": "Define top-down growth targets (+15% YoY) and minimum operating margin thresholds.",
-          "tag": "EXECUTIVE GATE",
-          "status": "favorable"
-        },
-        {
-          "step_no": "03",
-          "title": "Publish Standardized Assumptions",
-          "detail": "Circulate fixed inflation (4.5%), merit increment caps, and headcount bands to department heads.",
-          "tag": "TEMPLATE LOCKED",
-          "status": "favorable"
-        }
-      ],
-      "top_kpi_controls": [
-        {
-          "label": "Baseline Audit Window",
-          "value": 12.0,
-          "prefix": "",
-          "unit": " Months",
-          "variance_pct": 100.0,
-          "status_badge": "HISTORICAL BASELINE",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Target Revenue Growth",
-          "value": 15.0,
-          "prefix": "+",
-          "unit": "%",
-          "variance_pct": 15.0,
-          "status_badge": "TOP-DOWN MANDATE",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Inflation Assumption Cap",
-          "value": 4.5,
-          "prefix": "",
-          "unit": "%",
-          "variance_pct": -1.2,
-          "status_badge": "MACRO GUARDRAIL",
-          "traffic_light": "green"
-        }
-      ],
-      "main_chart": {
-        "component": "Multi_Line_Trend_Chart",
-        "title": "Phase 1 Trajectory: Prior Actuals vs Target Budget Baseline ($K)",
-        "x_axis": [
-          "Q1 Prior",
-          "Q2 Prior",
-          "Q3 Prior",
-          "Q4 Est",
-          "Q1 Plan",
-          "Q2 Plan",
-          "Q3 Plan",
-          "Q4 Plan"
-        ],
-        "series": [
-          {
-            "name": "Planned Revenue Trajectory ($K)",
-            "color": "#34d399",
-            "data": [
-              420.0,
-              445.0,
-              470.0,
-              500.0,
-              535.0,
-              575.0,
-              615.0,
-              660.0
-            ],
-            "values": [
-              420.0,
-              445.0,
-              470.0,
-              500.0,
-              535.0,
-              575.0,
-              615.0,
-              660.0
-            ]
-          },
-          {
-            "name": "Controlled Expense Envelope ($K)",
-            "color": "#38bdf8",
-            "data": [
-              360.0,
-              375.0,
-              390.0,
-              405.0,
-              420.0,
-              440.0,
-              455.0,
-              475.0
-            ],
-            "values": [
-              360.0,
-              375.0,
-              390.0,
-              405.0,
-              420.0,
-              440.0,
-              455.0,
-              475.0
-            ]
-          }
-        ],
-        "peak_callout": {
-          "month": "Q4 Plan",
-          "value": 660,
-          "label": "Target Margin Expansion"
-        }
-      },
-      "side_insight_panel": {
-        "headline": "Phase 1 Blueprint Checklist",
-        "bullets": [
-          "Strip out non-recurring expenses from last year's baseline before forecasting.",
-          "Align sales capacity with marketing pipeline assumptions prior to departmental submissions.",
-          "Enforce a single standardized input sheet across all cost-center owners."
-        ],
-        "recommendation_badge": "GATE 1: BASELINE SIGN-OFF"
-      },
-      "chart_data": [],
+      "type": "hero_hook",
+      "durationInSeconds": 10.7,
+      "badge": "POLICY UPDATE",
+      "headline": "New Leave Policy 2026",
+      "tagline": "Simpler approvals. Faster time off.",
+      "icon": "calendar-check",
+      "narration": "Good news team! Our updated 2026 leave policy makes planning time off simpler and faster for everyone.",
       "captions": []
     },
     {
       "id": 2,
-      "type": "dashboard_ui",
-      "durationInSeconds": 21.0,
-      "title": "Blueprint Phase 2: Cost Categorization & Zero-Based Allocation",
-      "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 02 / 04",
-      "narration": "In Phase Two, structure the budget using strict cost categorization and zero-based allocation rules. Separate fixed commitments from variable growth drivers, dedicating fifty percent to core operations, thirty percent to strategic growth and R and D, and twenty percent to contingency reserves and administration.",
-      "blueprint_meta": {
-        "template_name": "Finance & Accounts Playbook",
-        "blueprint_code": "BP-FIN-02",
-        "phase_badge": "PHASE 2: COST ARCHITECTURE",
-        "owner_role": "Department Heads & Cost Owners",
-        "sla_timeline": "Weeks 3 - 4 (Bottom-Up Build)",
-        "required_inputs": [
-          "Fixed vs Variable Cost Schedule",
-          "Approved Headcount & Hiring Roadmap",
-          "Zero-Based Vendor & SaaS Justification"
-        ]
+      "type": "split_compare",
+      "durationInSeconds": 14.3,
+      "headline": "Know Your Two Leave Types",
+      "left": {
+        "label": "Planned Leave",
+        "stat": "3 Days Notice",
+        "subtext": "For vacations & personal days",
+        "icon": "sun",
+        "accent": "#2563EB"
       },
-      "blueprint_steps": [
-        {
-          "step_no": "01",
-          "title": "Separate Fixed vs Variable OPEX",
-          "detail": "Lock contractual rent, payroll, and core licenses separately from volume-driven marketing and cloud spend.",
-          "tag": "50% CORE OPS",
-          "status": "favorable"
-        },
-        {
-          "step_no": "02",
-          "title": "Fund High-ROI Growth & CAPEX",
-          "detail": "Require business-case ROI payback models for all R&D, automation, and new market expansion requests.",
-          "tag": "30% GROWTH POOL",
-          "status": "favorable"
-        },
-        {
-          "step_no": "03",
-          "title": "Ring-Fence Risk & Buffer Reserve",
-          "detail": "Hold a dedicated 10% unallocated contingency reserve under CFO control to absorb mid-year shocks.",
-          "tag": "20% ADMIN & BUFFER",
-          "status": "favorable"
-        }
-      ],
-      "top_kpi_controls": [
-        {
-          "label": "Core Fixed Operations",
-          "value": 50.0,
-          "prefix": "",
-          "unit": "%",
-          "variance_pct": 0.0,
-          "status_badge": "BASELINE OPEX",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Strategic Growth & R&D",
-          "value": 30.0,
-          "prefix": "",
-          "unit": "%",
-          "variance_pct": 5.0,
-          "status_badge": "ROI GATED",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Contingency & G&A Buffer",
-          "value": 20.0,
-          "prefix": "",
-          "unit": "%",
-          "variance_pct": -2.5,
-          "status_badge": "RISK RESERVE",
-          "traffic_light": "green"
-        }
-      ],
-      "main_chart": {
-        "component": "Donut_Chart",
-        "title": "Predetermined Enterprise Allocation Blueprint (50 / 30 / 20 Rule)",
-        "center_label": "100% Allocation",
-        "segments": [
-          {
-            "name": "Core Operations & Payroll",
-            "label": "Core Operations & Payroll",
-            "value": 50.0,
-            "percentage": 50.0,
-            "share_pct": 50.0,
-            "color": "#38bdf8"
-          },
-          {
-            "name": "Strategic Growth & R&D",
-            "label": "Strategic Growth & R&D",
-            "value": 20.0,
-            "percentage": 20.0,
-            "share_pct": 20.0,
-            "color": "#34d399"
-          },
-          {
-            "name": "Digital & CAPEX Upgrades",
-            "label": "Digital & CAPEX Upgrades",
-            "value": 10.0,
-            "percentage": 10.0,
-            "share_pct": 10.0,
-            "color": "#818cf8"
-          },
-          {
-            "name": "G&A Support & Compliance",
-            "label": "G&A Support & Compliance",
-            "value": 10.0,
-            "percentage": 10.0,
-            "share_pct": 10.0,
-            "color": "#f59e0b"
-          },
-          {
-            "name": "Unallocated CFO Contingency",
-            "label": "Unallocated CFO Contingency",
-            "value": 10.0,
-            "percentage": 10.0,
-            "share_pct": 10.0,
-            "color": "#a855f7"
-          }
-        ]
+      "right": {
+        "label": "Sick Leave",
+        "stat": "Same-Day Ping",
+        "subtext": "No prior notice needed",
+        "icon": "heart-pulse",
+        "accent": "#10B981"
       },
-      "side_insight_panel": {
-        "headline": "Phase 2 Allocation Guardrails",
-        "bullets": [
-          "Apply zero-based justification to all discretionary software and consulting renewals.",
-          "Tie variable sales and marketing releases to quarterly revenue milestone achievement.",
-          "Prevent departments from embedding hidden buffers inside line-item estimates."
-        ],
-        "recommendation_badge": "GATE 2: ZERO-BASED AUDIT"
-      },
-      "chart_data": [],
+      "narration": "There are two simple tracks. For planned vacations, apply at least three days early. If you fall sick, just ping your manager the same morning.",
       "captions": []
     },
     {
       "id": 3,
-      "type": "dashboard_ui",
-      "durationInSeconds": 20.8,
-      "title": "Blueprint Phase 3: Cross-Functional Consolidation & Stress Testing",
-      "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 03 / 04",
-      "narration": "Phase Three focuses on cross-functional consolidation, scenario stress-testing, and executive trade-offs. FP and A reconciles bottom-up departmental submissions against top-down ceilings, trims over-budget requests in administrative functions, and models downside sensitivity before board approval.",
-      "blueprint_meta": {
-        "template_name": "Finance & Accounts Playbook",
-        "blueprint_code": "BP-FIN-03",
-        "phase_badge": "PHASE 3: CHALLENGE & APPROVAL",
-        "owner_role": "Executive Committee & FP&A",
-        "sla_timeline": "Weeks 5 - 6 (Review & Lock)",
-        "required_inputs": [
-          "Consolidated Master P&L + Cashflow Model",
-          "Base / Best / Downside Scenario Matrix",
-          "Departmental Trade-Off & Revision Log"
-        ]
-      },
-      "blueprint_steps": [
+      "type": "step_flow",
+      "durationInSeconds": 12.6,
+      "headline": "How to Apply in 3 Steps",
+      "steps": [
         {
-          "step_no": "01",
-          "title": "Reconcile Top-Down vs Bottom-Up Gap",
-          "detail": "Identify departments exceeding allocation ceilings and conduct structured challenge sessions.",
-          "tag": "GAP RESOLUTION",
-          "status": "favorable"
+          "step": 1,
+          "title": "Pick Dates",
+          "subtext": "Open HR Portal",
+          "icon": "calendar"
         },
         {
-          "step_no": "02",
-          "title": "Run 3-Scenario Stress Tests",
-          "detail": "Simulate Base (100%), Upside (+15%), and Downside (-15% revenue) cash runway impacts.",
-          "tag": "SENSITIVITY MODEL",
-          "status": "favorable"
+          "step": 2,
+          "title": "Auto-Notify",
+          "subtext": "Manager gets alert",
+          "icon": "send"
         },
         {
-          "step_no": "03",
-          "title": "Secure Final Board Sign-Off",
-          "detail": "Freeze approved annual cost envelopes and issue quarterly release schedules to ERP.",
-          "tag": "BOARD APPROVAL",
-          "status": "favorable"
+          "step": 3,
+          "title": "24h Approval",
+          "subtext": "Balance updates live",
+          "icon": "check-circle"
         }
       ],
-      "top_kpi_controls": [
-        {
-          "label": "Scenario Models Tested",
-          "value": 3.0,
-          "prefix": "",
-          "unit": " Cases",
-          "variance_pct": 100.0,
-          "status_badge": "BASE / BEST / DOWNSIDE",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Submission Trim Ratio",
-          "value": 8.5,
-          "prefix": "-",
-          "unit": "%",
-          "variance_pct": -8.5,
-          "status_badge": "OVERAGE RATIONALIZED",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Minimum Cash Runway",
-          "value": 18.0,
-          "prefix": "",
-          "unit": " Months",
-          "variance_pct": 20.0,
-          "status_badge": "STRESS TEST PASSED",
-          "traffic_light": "green"
-        }
-      ],
-      "main_chart": {
-        "component": "Grouped_Bar_Chart",
-        "title": "Departmental Draft Request vs Approved Blueprint Ceiling ($K)",
-        "categories": [
-          {
-            "name": "Engineering & R&D",
-            "label": "Engineering & R&D",
-            "budget": 240.0,
-            "actual": 250.0,
-            "variance_pct": 4.17,
-            "status": "favorable"
-          },
-          {
-            "name": "Sales & Marketing",
-            "label": "Sales & Marketing",
-            "budget": 210.0,
-            "actual": 195.0,
-            "variance_pct": -7.14,
-            "status": "favorable"
-          },
-          {
-            "name": "Cloud & Operations",
-            "label": "Cloud & Operations",
-            "budget": 180.0,
-            "actual": 170.0,
-            "variance_pct": -5.56,
-            "status": "favorable"
-          },
-          {
-            "name": "G&A & Facilities",
-            "label": "G&A & Facilities",
-            "budget": 130.0,
-            "actual": 110.0,
-            "variance_pct": -15.38,
-            "status": "favorable"
-          }
-        ]
-      },
-      "side_insight_panel": {
-        "headline": "Phase 3 Governance Controls",
-        "bullets": [
-          "Trim non-customer-facing G&A requests first to close the bottom-up submission gap.",
-          "Pre-define hiring freeze triggers if Q1 or Q2 revenue falls below the 90% threshold.",
-          "Lock final approved numbers into the ERP cost-center master before fiscal day one."
-        ],
-        "recommendation_badge": "GATE 3: BOARD RATIFICATION"
-      },
-      "chart_data": [],
+      "narration": "Applying takes under a minute. Pick your dates in the HR portal, your manager gets notified automatically, and approvals wrap up within twenty-four hours.",
       "captions": []
     },
     {
       "id": 4,
-      "type": "dashboard_ui",
-      "durationInSeconds": 18.8,
-      "title": "Blueprint Phase 4: Variance Governance & Rolling Forecasts",
-      "section_header": "TEMPLATE: FINANCE & ACCOUNTS  |  BLUEPRINT STEP 04 / 04",
-      "narration": "Finally, Phase Four operationalizes the budget through monthly Budget-versus-Actual governance and rolling quarterly forecasts. Enforce automated alerts whenever any cost center deviates by more than five percent, and reallocate idle funds toward high-performing initiatives throughout the year.",
-      "blueprint_meta": {
-        "template_name": "Finance & Accounts Playbook",
-        "blueprint_code": "BP-FIN-04",
-        "phase_badge": "PHASE 4: ROLLING GOVERNANCE",
-        "owner_role": "FP&A & Department Controllers",
-        "sla_timeline": "Monthly Close (Day +5 SLA)",
-        "required_inputs": [
-          "Monthly ERP Actuals vs Budget Report",
-          "Root-Cause Variance Explanations (>5%)",
-          "Rolling 4-Quarter Forecast Update"
-        ]
-      },
-      "blueprint_steps": [
-        {
-          "step_no": "01",
-          "title": "Publish Monthly BvA Flash Report",
-          "detail": "Deliver automated Budget vs Actual scorecards within 5 business days of month-end close.",
-          "tag": "DAY +5 SLA",
-          "status": "favorable"
-        },
-        {
-          "step_no": "02",
-          "title": "Enforce \u00b15% Variance Thresholds",
-          "detail": "Require corrective action plans for any line item breaching the 5% tolerance band.",
-          "tag": "VARIANCE TRIGGER",
-          "status": "favorable"
-        },
-        {
-          "step_no": "03",
-          "title": "Execute Quarterly Rolling Re-Forecast",
-          "detail": "Update projections every quarter and shift unused budget to high-ROI growth channels.",
-          "tag": "AGILE REALLOCATION",
-          "status": "favorable"
-        }
+      "type": "checklist_outro",
+      "durationInSeconds": 13.2,
+      "headline": "3 Quick Rules to Remember",
+      "items": [
+        "Carry forward up to 10 unused leaves",
+        "2+ sick days need a doctor's note",
+        "Check live balance anytime on HR Portal"
       ],
-      "top_kpi_controls": [
-        {
-          "label": "Variance Alert Threshold",
-          "value": 5.0,
-          "prefix": "\u00b1",
-          "unit": "%",
-          "variance_pct": 0.0,
-          "status_badge": "AUTO TRIGGER",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Monthly Close SLA",
-          "value": 5.0,
-          "prefix": "Day ",
-          "unit": "",
-          "variance_pct": 100.0,
-          "status_badge": "BvA REPORTING",
-          "traffic_light": "green"
-        },
-        {
-          "label": "Forecast Accuracy Target",
-          "value": 96.5,
-          "prefix": "",
-          "unit": "%",
-          "variance_pct": 3.5,
-          "status_badge": "ROLLING 4Q",
-          "traffic_light": "green"
-        }
-      ],
-      "main_chart": {
-        "component": "Grouped_Bar_Chart",
-        "title": "Quarterly Governance: Static Budget vs Rolling Forecast Accuracy (%)",
-        "categories": [
-          {
-            "name": "Q1 Variance Control",
-            "label": "Q1 Variance Control",
-            "budget": 92.0,
-            "actual": 97.0,
-            "variance_pct": 5.43,
-            "status": "favorable"
-          },
-          {
-            "name": "Q2 Agility Score",
-            "label": "Q2 Agility Score",
-            "budget": 89.0,
-            "actual": 96.0,
-            "variance_pct": 7.87,
-            "status": "favorable"
-          },
-          {
-            "name": "Q3 Cost Adherence",
-            "label": "Q3 Cost Adherence",
-            "budget": 86.0,
-            "actual": 96.0,
-            "variance_pct": 11.63,
-            "status": "favorable"
-          },
-          {
-            "name": "Q4 Year-End Landing",
-            "label": "Q4 Year-End Landing",
-            "budget": 84.0,
-            "actual": 98.0,
-            "variance_pct": 16.67,
-            "status": "favorable"
-          }
-        ]
-      },
-      "side_insight_panel": {
-        "headline": "Phase 4 Continuous Execution",
-        "bullets": [
-          "Treat the annual budget as a dynamic governance guardrail rather than a static document.",
-          "Require formal CFO sign-off for any cross-departmental budget transfers above $10K.",
-          "Link department head quarterly KPIs directly to forecast accuracy and cost discipline."
-        ],
-        "recommendation_badge": "GATE 4: CONTINUOUS CONTROL"
-      },
-      "chart_data": [],
+      "cta_text": "Questions? Reach out on #hr-help",
+      "icon": "shield-check",
+      "narration": "Before you go, remember three quick rules: you can carry forward up to ten unused leaves, two or more sick days need a doctor's note, and your live balance is always on the HR portal.",
       "captions": []
     }
   ]

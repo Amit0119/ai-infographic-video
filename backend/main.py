@@ -104,7 +104,10 @@ app.add_middleware(
 # ── Pydantic Schema Validation (With 3-Zone & Blueprint Support) ──
 
 class SceneStyleModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    theme: Optional[str] = "clean_light"
     backgroundColor: str = "#0b1120"
+    surfaceColor: Optional[str] = "#ffffff"
     primaryColor: str = "#38bdf8"
     secondaryColor: str = "#818cf8"
     accentColor: str = "#34d399"
@@ -112,7 +115,7 @@ class SceneStyleModel(BaseModel):
     subtextColor: str = "#94a3b8"
     fontFamily: str = "Inter"
     currencySymbol: Optional[str] = "$"
-    companyWatermark: Optional[str] = "DeptCast Enterprise Blueprint"
+    companyWatermark: Optional[str] = "DeptCast"
 
 class VideoMetaModel(BaseModel):
     title: str = "Enterprise Video"
@@ -211,7 +214,40 @@ class SplitScreenSceneModel(BaseSceneModel):
     left_content: str = ""
     right_content: str = ""
 
+# ── Animated Explainer v3 Scene Models (Track B) ─────────────
+
+class HeroHookSceneModel(BaseSceneModel):
+    type: Literal["hero_hook"]
+    badge: Optional[str] = "POLICY UPDATE"
+    headline: str = ""
+    tagline: Optional[str] = ""
+    icon: Optional[str] = "calendar-check"
+
+class SplitCompareSceneModel(BaseSceneModel):
+    type: Literal["split_compare"]
+    headline: str = ""
+    left: dict[str, Any] = {}
+    right: dict[str, Any] = {}
+
+class StepFlowSceneModel(BaseSceneModel):
+    type: Literal["step_flow"]
+    headline: str = ""
+    steps: list[dict[str, Any]] = []
+
+class ChecklistOutroSceneModel(BaseSceneModel):
+    type: Literal["checklist_outro"]
+    headline: str = ""
+    items: list[str] = []
+    cta_text: Optional[str] = ""
+    icon: Optional[str] = "shield-check"
+
+EXPLAINER_SCENE_TYPES = ("hero_hook", "split_compare", "step_flow", "checklist_outro")
+
 SceneModel = Union[
+    HeroHookSceneModel,
+    SplitCompareSceneModel,
+    StepFlowSceneModel,
+    ChecklistOutroSceneModel,
     TitleSceneModel,
     KPISceneModel,
     ChartSceneModel,
@@ -220,7 +256,7 @@ SceneModel = Union[
     ListSceneModel,
     PremiumChartSceneModel,
     HierarchySceneModel,
-    SplitScreenSceneModel
+    SplitScreenSceneModel,
 ]
 
 class StoryboardModel(BaseModel):
@@ -905,8 +941,8 @@ def _convert_contract_to_storyboard(payload: dict) -> dict:
                 s["type"] = "dashboard_ui"
             if "duration_seconds" in s and "durationInSeconds" not in s:
                 s["durationInSeconds"] = float(s["duration_seconds"])
-            if not s.get("title"):
-                s["title"] = s.get("section_header", f"Executive Scene {idx}")
+            if s.get("type") not in EXPLAINER_SCENE_TYPES and not s.get("title"):
+                s["title"] = s.get("headline") or s.get("section_header") or f"Executive Scene {idx}"
             nar = s.get("narration", "")
             if isinstance(nar, dict):
                 s["narration"] = nar.get("vo_text", "").strip()
@@ -962,6 +998,7 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
 
         stype = str(cleaned.get("type", "dashboard_ui")).lower().strip()
         valid_types = [
+            "hero_hook", "split_compare", "step_flow", "checklist_outro",
             "title", "kpi", "bar_chart", "pie_chart", "timeline",
             "line_chart", "highlight", "comparison", "bullet_points", "numbered_steps",
             "heat_map", "hierarchy_pyramid", "split_screen", "dashboard_ui"
@@ -1052,6 +1089,39 @@ def _normalize_scenes(raw_scenes: Any) -> list[dict[str, Any]]:
             cleaned["heading"] = str(cleaned.get("heading") or "Key Points")
             if not isinstance(cleaned.get("content_points"), list):
                 cleaned["content_points"] = cleaned.get("points", []) if isinstance(cleaned.get("points"), list) else []
+        elif stype == "hero_hook":
+            cleaned["badge"] = str(cleaned.get("badge") or "POLICY UPDATE")
+            cleaned["headline"] = str(cleaned.get("headline") or cleaned.get("title") or "Policy Update")
+            cleaned["tagline"] = str(cleaned.get("tagline") or cleaned.get("subtitle") or "")
+            cleaned["icon"] = str(cleaned.get("icon") or "calendar-check")
+        elif stype == "split_compare":
+            cleaned["headline"] = str(cleaned.get("headline") or cleaned.get("title") or "Key Comparison")
+            if not isinstance(cleaned.get("left"), dict):
+                cleaned["left"] = {"label": "Option A", "stat": "-", "subtext": "", "icon": "sun", "accent": "#2563EB"}
+            if not isinstance(cleaned.get("right"), dict):
+                cleaned["right"] = {"label": "Option B", "stat": "-", "subtext": "", "icon": "heart-pulse", "accent": "#10B981"}
+        elif stype == "step_flow":
+            cleaned["headline"] = str(cleaned.get("headline") or cleaned.get("title") or "How It Works")
+            raw_steps = cleaned.get("steps")
+            if not isinstance(raw_steps, list):
+                cleaned["steps"] = []
+            else:
+                cleaned["steps"] = [
+                    {
+                        "step": int(st.get("step", s_i)),
+                        "title": str(st.get("title") or f"Step {s_i}"),
+                        "subtext": str(st.get("subtext") or ""),
+                        "icon": str(st.get("icon") or "check-circle"),
+                    }
+                    for s_i, st in enumerate(raw_steps[:3], start=1)
+                    if isinstance(st, dict)
+                ]
+        elif stype == "checklist_outro":
+            cleaned["headline"] = str(cleaned.get("headline") or cleaned.get("title") or "Key Rules to Remember")
+            raw_items = cleaned.get("items")
+            cleaned["items"] = [str(x) for x in raw_items] if isinstance(raw_items, list) else []
+            cleaned["cta_text"] = str(cleaned.get("cta_text") or "")
+            cleaned["icon"] = str(cleaned.get("icon") or "shield-check")
 
         normalized.append(cleaned)
 
@@ -1130,12 +1200,12 @@ def _estimate_audio_duration(audio_path: str, text: str, default_dur: float = 15
         pass
 
     words = len((text or "").split())
-    word_based_sec = max(13.0, round((words / 2.45) + 1.5, 1))
+    word_based_sec = max(6.0, round((words / 2.45) + 1.2, 1))
     if os.path.exists(audio_path):
         size_bytes = os.path.getsize(audio_path)
         # Edge-TTS uses ~6KB/sec (48kbps) and gTTS uses ~4KB/sec (32kbps)
         bitrate_est = size_bytes / 5500.0
-        if 8.0 <= bitrate_est <= 35.0:
+        if 4.0 <= bitrate_est <= 35.0:
             return round(max(word_based_sec, bitrate_est + 1.0), 1)
     return max(default_dur, word_based_sec)
 
@@ -1856,7 +1926,18 @@ async def analyze_data(
                 input_data = f"Corporate Data:\n{df.to_csv(index=False)}"
             elif file_ext == '.json':
                 data = json.loads(contents.decode('utf-8'))
-                if "video_metadata" in data or ("scenes" in data and any("top_kpi_controls" in s for s in data.get("scenes", []))):
+                is_direct_storyboard = (
+                    "video_metadata" in data
+                    or (
+                        "scenes" in data
+                        and any(
+                            "top_kpi_controls" in s or s.get("type") in EXPLAINER_SCENE_TYPES
+                            for s in data.get("scenes", [])
+                            if isinstance(s, dict)
+                        )
+                    )
+                )
+                if is_direct_storyboard:
                     converted = _convert_contract_to_storyboard(data)
                     converted["scenes"] = _normalize_scenes(converted.get("scenes", []))
                     validated = StoryboardModel.model_validate(converted)
@@ -2066,7 +2147,7 @@ async def fetch_broll(query: str):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                "[https://api.pexels.com/videos/search](https://api.pexels.com/videos/search)",
+                "https://api.pexels.com/videos/search",
                 headers={"Authorization": pexels_key},
                 params={"query": query, "per_page": 5, "orientation": "landscape"}
             )
@@ -2137,11 +2218,26 @@ app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 # ── Direct CLI Runner for Blueprint + TTS Generation ─────────
 
 if __name__ == "__main__":
-    blueprint_key = "annual_budget"
-    if len(sys.argv) > 2 and sys.argv[1] == "--blueprint":
-        blueprint_key = sys.argv[2]
+    should_render = "--render" in sys.argv
+    quality = "fast" if "--fast" in sys.argv else "high"
 
-    bp_payload = _match_predetermined_blueprint(blueprint_key) or PREDETERMINED_BLUEPRINTS["annual_budget"]
-    print(f"[BLUEPRINT ENGINE] Generating TTS & Storyboard for: {bp_payload['video']['title']}")
-    res = asyncio.run(approve_storyboard(bp_payload, render=False))
-    print(f"[SUCCESS] {res}")
+    if "--json" in sys.argv:
+        idx = sys.argv.index("--json")
+        if idx + 1 >= len(sys.argv):
+            raise SystemExit("Usage: python backend/main.py --json <path/to/storyboard.json> [--render] [--fast]")
+        json_path = sys.argv[idx + 1]
+        with open(json_path, "r", encoding="utf-8") as jf:
+            payload = json.load(jf)
+        title = payload.get("video", {}).get("title", os.path.basename(json_path))
+        print(f"[EXPLAINER ENGINE] Generating TTS & Storyboard for: {title} (render={should_render}, quality={quality})")
+        res = asyncio.run(approve_storyboard(payload, quality=quality, render=should_render))
+        print(f"[SUCCESS] {res}")
+    else:
+        blueprint_key = "annual_budget"
+        if len(sys.argv) > 2 and sys.argv[1] == "--blueprint":
+            blueprint_key = sys.argv[2]
+
+        bp_payload = _match_predetermined_blueprint(blueprint_key) or PREDETERMINED_BLUEPRINTS["annual_budget"]
+        print(f"[BLUEPRINT ENGINE] Generating TTS & Storyboard for: {bp_payload['video']['title']}")
+        res = asyncio.run(approve_storyboard(bp_payload, quality=quality, render=should_render))
+        print(f"[SUCCESS] {res}")
